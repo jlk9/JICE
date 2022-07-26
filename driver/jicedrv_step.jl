@@ -220,107 +220,107 @@ function step_therm_1(dt)
         end # tr_snow
 
         # Clean up :(
-        icepack_step_therm1(dt=dt, ncat=ncat, nilyr=nilyr, nslyr=nslyr, &
-            aicen_init = aicen_init(i,:), &
-            vicen_init = vicen_init(i,:), &
-            vsnon_init = vsnon_init(i,:), &
-            aice = aice(i),   aicen = aicen(i,:), &
-            vice = vice(i),   vicen = vicen(i,:), &
-            vsno = vsno(i),   vsnon = vsnon(i,:), &
-            uvel = uvel(i),   vvel  = vvel(i),    &
-            Tsfc = trcrn(i,nt_Tsfc,:),                 &
-            zqsn = trcrn(i,nt_qsno:nt_qsno+nslyr-1,:), & 
-            zqin = trcrn(i,nt_qice:nt_qice+nilyr-1,:), & 
-            zSin = trcrn(i,nt_sice:nt_sice+nilyr-1,:), & 
-            alvl = trcrn(i,nt_alvl,:),                 & 
-            vlvl = trcrn(i,nt_vlvl,:),                 & 
-            apnd = trcrn(i,nt_apnd,:),                 & 
-            hpnd = trcrn(i,nt_hpnd,:),                 & 
-            ipnd = trcrn(i,nt_ipnd,:),                 & 
-            iage = trcrn(i,nt_iage,:),                 &
-            FY   = trcrn(i,nt_FY,:),                   & 
-            rsnwn  = rsnwn (:,:),            &
-            smicen = smicen(:,:),            &
-            smliqn = smliqn(:,:),            &
-            aerosno = aerosno(:,:,:),        &
-            aeroice = aeroice(:,:,:),        &
-            isosno  = isosno(:,:),           &
-            isoice  = isoice(:,:),           &
-            uatm = uatm(i), vatm = vatm(i),  &
-            wind = wind(i), zlvl = zlvl(i),  &
-            Qa   = Qa(i),   rhoa = rhoa(i),  &
-            Qa_iso = Qa_iso(i,:),            &
-            Tair = Tair(i), Tref = Tref(i),  &
-            Qref = Qref(i), Uref = Uref(i),  &
-            Qref_iso = Qref_iso(i,:),        &
-            Cdn_atm_ratio = Cdn_atm_ratio(i),&
-            Cdn_ocn       = Cdn_ocn(i),      &
-            Cdn_ocn_skin  = Cdn_ocn_skin(i), &
-            Cdn_ocn_floe  = Cdn_ocn_floe(i), &
-            Cdn_ocn_keel  = Cdn_ocn_keel(i), &
-            Cdn_atm       = Cdn_atm(i),      &
-            Cdn_atm_skin  = Cdn_atm_skin(i), &
-            Cdn_atm_floe  = Cdn_atm_floe(i), &
-            Cdn_atm_pond  = Cdn_atm_pond(i), &
-            Cdn_atm_rdg   = Cdn_atm_rdg(i),  &
-            hfreebd  = hfreebd(i),    hkeel     = hkeel(i),       &
-            hdraft   = hdraft(i),     hridge    = hridge(i),      &
-            distrdg  = distrdg(i),    dkeel     = dkeel(i),       &
-            lfloe    = lfloe(i),      dfloe     = dfloe(i),       &
-            strax    = strax(i),      stray     = stray(i),       &
-            strairxT = strairxT(i),   strairyT  = strairyT(i),    &
-            potT     = potT(i),       sst       = sst(i),         &
-            sss      = sss(i),        Tf        = Tf(i),          &
-            strocnxT = strocnxT(i),   strocnyT  = strocnyT(i),    &
-            fbot     = fbot(i),       frzmlt    = frzmlt(i),      &
-            Tbot     = Tbot(i),       Tsnice    = Tsnice(i),      &
-            rside    = rside(i),      fside     = fside(i),       &
-            fsnow    = fsnow(i),      frain     = frain(i),       &
-            fpond    = fpond(i),      fsloss    = fsloss(i),      &
-            fsurf    = fsurf(i),      fsurfn    = fsurfn(i,:),    &
-            fcondtop = fcondtop(i),   fcondtopn = fcondtopn(i,:), &
-            fcondbot = fcondbot(i),   fcondbotn = fcondbotn(i,:), &
-            fswsfcn  = fswsfcn(i,:),  fswintn   = fswintn(i,:),   &
-            fswthrun = fswthrun(i,:),                             &
-            fswthrun_vdr = fswthrun_vdr(i,:),                       &
-            fswthrun_vdf = fswthrun_vdf(i,:),                       &
-            fswthrun_idr = fswthrun_idr(i,:),                       &
-            fswthrun_idf = fswthrun_idf(i,:),                       &
-            fswabs    = fswabs(i),                                &
-            flwout   = flwout(i),     flw       = flw(i),         &
-            fsens    = fsens(i),      fsensn    = fsensn(i,:),    &
-            flat     = flat(i),       flatn     = flatn(i,:),     &
-            fresh    = fresh(i),      fsalt     = fsalt(i),       &
-            fhocn    = fhocn(i),                                  &
-            fswthru   = fswthru(i),                               &
-            fswthru_vdr= fswthru_vdr(i),                          &
-            fswthru_vdf= fswthru_vdf(i),                          &
-            fswthru_idr= fswthru_idr(i),                          &
-            fswthru_idf= fswthru_idf(i),                          &
-            flatn_f  = flatn_f(i,:),  fsensn_f  = fsensn_f(i,:),  &
-            fsurfn_f = fsurfn_f(i,:),                             &
-            fcondtopn_f = fcondtopn_f(i,:),                       &
-            faero_atm   = faero_atm(i,1:n_aero),                  &
-            faero_ocn   = faero_ocn(i,1:n_aero),                  &
-            fiso_atm    = fiso_atm   (i,:),                       &
-            fiso_ocn    = fiso_ocn   (i,:),                       &
-            fiso_evap   = fiso_evap  (i,:),                       &
-            HDO_ocn     = HDO_ocn (i),                            &
-            H2_16O_ocn  = H2_16O_ocn (i),                         &
-            H2_18O_ocn  = H2_18O_ocn (i),                         &
-            Sswabsn  = Sswabsn(i,:,:),Iswabsn   = Iswabsn(i,:,:), &
-            evap = evap(i), evaps = evaps(i), evapi = evapi(i),   &
-            dhsn     = dhsn(i,:),     ffracn    = ffracn(i,:),    &
-            meltt    = meltt(i),      melttn    = melttn(i,:),    &
-            meltb    = meltb(i),      meltbn    = meltbn(i,:),    &
-            melts    = melts(i),      meltsn    = meltsn(i,:),    &
-            congel   = congel(i),     congeln   = congeln(i,:),   &
-            snoice   = snoice(i),     snoicen   = snoicen(i,:),   &
-            dsnow    = dsnow(i),      dsnown    = dsnown(i,:),    &
-            meltsliqn= meltsliqn(i,:), &
-            lmask_n  = lmask_n(i),    lmask_s   = lmask_s(i),     &
-            mlt_onset=mlt_onset(i),   frz_onset = frz_onset(i),   &
-            yday = yday,  prescribed_ice = prescribed_ice)
+        jicepack_step_therm1(dt, ncat, nilyr, nslyr,
+            aicen_init[i,:],
+            vicen_init[i,:],
+            vsnon_init[i,:],
+            aice[i],   aicen[i,:],
+            vice[i],   vicen[i,:],
+            vsno[i],   vsnon[i,:],
+            uvel[i],   vvel[i],   
+            trcrn[i,nt_Tsfc,:],
+            trcrn[i,nt_qsno:nt_qsno+nslyr-1,:],
+            trcrn[i,nt_qice:nt_qice+nilyr-1,:],
+            trcrn[i,nt_sice:nt_sice+nilyr-1,:],
+            trcrn[i,nt_alvl,:],
+            trcrn[i,nt_vlvl,:],
+            trcrn[i,nt_apnd,:],
+            trcrn[i,nt_hpnd,:],
+            trcrn[i,nt_ipnd,:],
+            trcrn[i,nt_iage,:],
+            trcrn[i,nt_FY,:],
+            rsnwn[:,:],
+            smicen[:,:],
+            smliqn[:,:],
+            aerosno[:,:,:],
+            aeroice[:,:,:],
+            isosno[:,:],
+            isoice[:,:],
+            uatm[i], vatm[i],
+            wind[i], zlvl[i],
+            Qa[i],   rhoa[i],
+            Qa_iso[i,:],
+            Tair[i], Tref[i],
+            Qref[i], Uref[i],
+            Qref_iso[i,:],
+            Cdn_atm_ratio[i],
+            Cdn_ocn[i],
+            Cdn_ocn_skin[i],
+            Cdn_ocn_floe[i],
+            Cdn_ocn_keel[i],
+            Cdn_atm[i],
+            Cdn_atm_skin[i],
+            Cdn_atm_floe[i],
+            Cdn_atm_pond[i],
+            Cdn_atm_rdg[i], 
+            hfreebd[i],    hkeel[i],
+            hdraft[i],     hridge[i],
+            distrdg[i],    dkeel[i],
+            lfloe[i],      dfloe[i],
+            strax[i],      stray[i],
+            strairxT[i],   strairyT[i],
+            potT[i],       sst[i],
+            sss[i],        Tf[i],
+            strocnxT[i],   strocnyT[i],
+            fbot[i],       frzmlt[i],
+            Tbot[i],       Tsnice[i],
+            rside[i],      fside[i],
+            fsnow[i],      frain[i],
+            fpond[i],      fsloss[i],
+            fsurf[i],      fsurfn[i,:],
+            fcondtop[i],   fcondtopn[i,:],
+            fcondbot[i],   fcondbotn[i,:],
+            fswsfcn[i,:],  fswintn[i,:],
+            fswthrun[i,:],
+            fswthrun_vdr[i,:],
+            fswthrun_vdf[i,:],
+            fswthrun_idr[i,:],
+            fswthrun_idf[i,:],
+            fswabs[i],
+            flwout[i],     flw[i],
+            fsens[i],      fsensn[i,:],
+            flat[i],       flatn[i,:],
+            fresh[i],      fsalt[i],
+            fhocn[i],
+            fswthru[i],
+            fswthru_vdr[i],
+            fswthru_vdf[i],
+            fswthru_idr[i],
+            fswthru_idf[i],
+            flatn_f[i,:],  fsensn_f[i,:],
+            fsurfn_f[i,:],
+            fcondtopn_f[i,:],
+            faero_atm[i,1:n_aero],
+            faero_ocn[i,1:n_aero],
+            fiso_atm[i,:],
+            fiso_ocn[i,:],
+            fiso_evap[i,:],
+            HDO_ocn[i],
+            H2_16O_ocn[i],
+            H2_18O_ocn[i],
+            Sswabsn[i,:,:], Iswabsn[i,:,:],
+            evap[i], evaps[i], evapi[i],
+            dhsn[i,:],     ffracn[i,:],
+            meltt[i],      melttn[i,:],
+            meltb[i],      meltbn[i,:],
+            melts[i],      meltsn[i,:],
+            congel[i],     congeln[i,:],
+            snoice[i],     snoicen[i,:],
+            dsnow[i],      dsnown[i,:],
+            meltsliqn[i,:],
+            lmask_n[i],    lmask_s[i],
+            mlt_onset[i],   frz_onset[i]
+            yday, prescribed_ice)
 
         if (tr_aero)
             for n = 1:ncat
