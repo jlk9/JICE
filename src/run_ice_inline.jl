@@ -1,7 +1,7 @@
 # Written by Joseph Kump (josek97@utexas.edu)
 # Basic code that is just ice temperature in column, with no formulation or melting.
 # This version eliminates vectorized operations, enabling use of Enzyme.jl
-# It also reduces the number of memory allocation substantially, increasing runtime
+# It also reduces the number of memory allocations substantially, increasing runtime
 # and lowering memory footprint.
 
 include("./jcmodel_struct.jl")
