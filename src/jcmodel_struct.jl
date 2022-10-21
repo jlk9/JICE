@@ -17,19 +17,37 @@ const ahmax  = 0.3      # m      thickness above which albedo is constant
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
 
-# JCModel struct
-# Properties:
-#   H      (m)            total ice thickness, float
-#   N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
-#   S      (partsperthou) salinity, assumed to be constant throughout ice here, float
-#   L      (J kg^-1)      latent heat of sublimation, float
-#   T_frz  (K)            freezing point of water at salinity S, float
-#   I_0    (W m^-2)       the penetrating solar flux at the top surface, float
-#   T_0    (K)            initial temps, array of floats (length K+1, including skin layer)
-#   nt     (dim'less)     number of time steps, int
-#   Δt     (s)            size of each time step, float
-#   u_star (m/s)          friction velocity
-#   T_w    (K)            temperature of sea surface
+#= JCModel struct
+Properties:
+    N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
+    nt     (dim'less)   number of time steps, int
+    H      (m)          total ice thickness, float
+    L      (J kg^-1)    latent heat of sublimation, float
+    T_frz  (K)          freezing point of water at salinity S, float
+    i_0    (W m^-2)     the penetrating solar flux reduction at the top surface, float
+    κ_i    ()           extinction coefficient, float
+    Δt     (sec)        size of time step, float
+    u_star ()           friction velocity, float
+    T_w    (K)          temperature of sea surface
+    α      ()           albedo, float
+    T_0    (C)          initial temps, array of floats (length N_i+1, including skin layer)
+    F_0    (W/m^2)      total heat flux at surface, array of floats
+    dF_0   (W/m^2 C)    derivative total heat flux at surface, array of floats
+
+    Δh          (m)     thickness of each layer, Vector{Float64}
+    Δh̄          (m)     averaged thickness of each layer, Vector{Float64}
+    S           (ppt)   salinity, Vector{Float64}
+    c_i         (J/kg)  specific heat of ice, Vector{Float64}
+    K           (W/m K) thermal conductivity of sea ice, Vector{Float64}
+    K̄           (W/m K) pairwise-averaged thermal conductivity of sea ice, Vector{Float64}
+    I_pen       (W m^2) penetrating solar flux, Vector{Float64}
+    maindiag    ()      main diagonal of tridiagonal system to solve, Vector{Float64}
+    subdiag     ()      sub diagonal of tridiagonal system to solve, Vector{Float64}
+    supdiag     ()      super diagonal of tridiagonal system to solve, Vector{Float64}
+
+    T_array     ()      array of temperatures stored at each timestep, Matrix{Float64}
+    Δh_array    ()      array of layer thicknesses stored at each timestep, Matrix{Float64}
+=#
 mutable struct JCModel
 
     # Variables that must be provided to initialize the model
@@ -55,7 +73,6 @@ mutable struct JCModel
     # Variables that are created based on the above:
     Δh::Vector{Float64}
     Δh̄::Vector{Float64}
-    #T_nplus::Vector{Float64}
     S::Vector{Float64}
     c_i::Vector{Float64}
     K::Vector{Float64}

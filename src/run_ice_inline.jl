@@ -7,24 +7,15 @@
 include("./jcmodel_struct.jl")
 include("./atmodel_struct.jl")
 
-# Model function
-# Inputs:
-#   H      (m)            total ice thickness, float
-#   N_i      (dim'less)   number of ice layers, int (we consider the surface "skin layer")
-#   S      (partsperthou) salinity, assumed to be constant throughout ice here, float
-#   C_0    (J m^-3 k^-1)  initial volumetric heat capacity of ice (length K+1, including skin layer)
-#   L      (J kg^-1)      latent heat of sublimation, float
-#   T_frz  (K)            freezing point of water at salinity S, float
-#   I_0    (W m^-2)       penetrating solar flux at top surface, float
-#   κ_i                   extinction coefficient
-#   T_0    (K)            initial temps, array of floats (length K+1, including skin layer)
-#   nt     (dim'less)     number of time steps, int
-#   Δt     (s)            size of each time step, float
-#   u_star (m/s)          friction velocity
-#   T_w    (K)            temperature of sea surface
-#
-# Output:
-#   T_n    (K)            the sea ice layer temperatures at initial time + nt*dt, array of K+1 floats
+#= Model Function
+Input:
+    jcmodel         an initialized JCModel object
+    atmodel         an initialized ATModel object for surface flux computations
+
+Output:
+    Technically nothing, but the function updates jcmodel's T_array and Δh_arrays to have a log
+    of updated ice temperatures and thicknesses
+=#
 function run_ice(jcmodel, atmodel)
 
     T_n     = deepcopy(jcmodel.T_0)
@@ -34,7 +25,11 @@ function run_ice(jcmodel, atmodel)
 
     compute_surface_flux(jcmodel, atmodel)
 
-    generate_I_pen(jcmodel.I_pen, jcmodel.i_0*(1-jcmodel.α)*atmodel.F_sw, jcmodel.κ_i, jcmodel.N_i)
+    generate_I_pen(jcmodel.I_pen, jcmodel.i_0*(1-jcmodel.α)*atmodel.F_sw, jcmodel.κ_i, jcmodel.H, jcmodel.N_i)
+
+    println(jcmodel.F_0)
+    println(jcmodel.dF_0)
+    println(jcmodel.I_pen)
 
     T_mltS = 0 #t_mlt(jcmodel.S)
 
@@ -209,11 +204,13 @@ end
 end
 
 # Gets the penetrating solar radiation for this column of sea ice
-@inline function generate_I_pen(I_pen, I_0, κ_i, N_i)
+# NOTE: since we don't update this at each time step, we're doing just
+# initial depth of each layer
+@inline function generate_I_pen(I_pen, I_0, κ_i, H, N_i)
 
     for k in 0:N_i
         z      = k / N_i
-        I_pen[k+1] = I_0*exp(-κ_i*z)
+        I_pen[k+1] = I_0*exp(-κ_i*z*H)
     end
 
     return nothing
@@ -256,11 +253,12 @@ function compute_surface_flux(jcmodel, atmodel)
     jcmodel.α = 0.7 # CHANGE TO NOT PRESET later
 
     # Now compute total surface flux:
-    jcmodel.F_0 = (1-jcmodel.α)*jcmodel.i_0*atmodel.F_sw + atmodel.F_Ld - (atmodel.F_Lu + atmodel.F_l + atmodel.F_s) .+ zeros(Float64, jcmodel.nt)
+    jcmodel.F_0 = (1-jcmodel.α)*jcmodel.i_0*atmodel.F_sw + atmodel.F_Ld + atmodel.F_Lu + atmodel.F_l + atmodel.F_s .+ zeros(Float64, jcmodel.nt)
 
     # And now compute derivative of flux:
     jcmodel.dF_0 = set_atm_dflux_values(atmodel, T_sf) .+ zeros(Float64, jcmodel.nt)
 
+    return nothing
 end
 
 # Computes the change in thickness of the bottom ice layer due to growth / melting
