@@ -12,6 +12,7 @@ const c_w    = 3900.0   # J kg K specific heat of seawater (estimate)
 const c_h    = 0.006    #        heat transfer coefficient
 const L_0    = 334000.0 # J / kg latent heat of fusion of fresh ice
 const S_max  = 3.2      # ppt    maximum salinity of sea ice
+const ahmax  = 0.3      # m      thickness above which albedo is constant
 
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
@@ -38,11 +39,12 @@ mutable struct JCModel
     H::Float64
     L::Float64
     T_frz::Float64
-    I_0::Float64
+    i_0::Float64
     κ_i::Float64
     Δt::Float64
     u_star::Float64
     T_w::Float64
+    α::Float64
 
     T_0::Vector{Float64}
     # Top layer fluxes
@@ -69,11 +71,11 @@ mutable struct JCModel
 end
 
 # Constructs a JCModel object given the initial parameters
-function initialize_JCModel(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function initialize_JCModel(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
     Δh, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(H, N_i)
 
-    model = JCModel(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+    model = JCModel(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
                    Δh, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array)
 
     return model

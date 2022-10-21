@@ -25,10 +25,24 @@ using Enzyme, Test, Printf, LinearAlgebra
 #   T_n    (K)            the sea ice layer temperatures at initial time + nt*dt, array of K+1 floats
 
 # Basic test with some common values for sea ice:
-function test_temp_thickness(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function test_temp_thickness(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
-    jcmodel = initialize_JCModel(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
-    run_ice(jcmodel)
+    # "Educated" guess for some normal atmospheric values
+    F_Ld  = 0.0
+    F_sw  = 120.0 
+    T_a   = -34.0
+    Θ_a   = T_a*(1000.0/1045.6)^0.286
+    ρ_a   = 1.4224
+    Q_a   = 0.005 #?
+    c_p   = 0.7171
+    L_vap = 2260.0
+    L_ice = 334.0
+    U_a   = zeros(Float64, 3)
+
+    atmodel = initialize_ATModel(nt, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
+
+    jcmodel = initialize_JCModel(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    run_ice(jcmodel, atmodel)
 
     println("1. Basic temp test. Initial temps are:")
     println(T_0)
@@ -40,7 +54,7 @@ function test_temp_thickness(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, 
     println("Thicknesses over time are: (should be close to initial in bottom)")
     println(jcmodel.Δh_array)
 
-    @time run_ice(jcmodel)
+    @time run_ice(jcmodel, atmodel)
 
 end
 
@@ -266,7 +280,7 @@ N_i    = 9
 L      = 2260000.0
 #T_frz  = 271.35
 T_frz  = 271.35 - 273.15
-I_0    = 0.0
+i_0    = 0.0
 κ_i    = 0.0
 G_snow = 0.0
 #T_0    = 273.15 .- [20.0, 18.0, 16.0, 14.0, 12.0, 10.0, 8.0, 6.0, 4.0, 2.0]
@@ -279,7 +293,7 @@ T_w    = 274.47 - 273.15 # typical temp in K for sea surface in arctic
 F_0    = zeros(Float64, nt)
 dF_0   = zeros(Float64, nt)
 
-test_temp_thickness(N_i, nt, H, L, T_frz, I_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+test_temp_thickness(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 println("")#=
 test_tridiagonal_solve(T_0, N_i)
 println("")
