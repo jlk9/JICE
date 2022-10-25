@@ -5,7 +5,7 @@
 # and lowering memory footprint.
 
 include("./jcmodel_struct.jl")
-include("./atmodel_struct.jl")
+include("./surface_flux.jl")
 
 #= Model Function
 Input:
@@ -27,9 +27,9 @@ function run_ice(jcmodel, atmodel)
 
     generate_I_pen(jcmodel.I_pen, jcmodel.i_0*(1-jcmodel.α)*atmodel.F_sw, jcmodel.κ_i, jcmodel.H, jcmodel.N_i)
 
-    println(jcmodel.F_0)
-    println(jcmodel.dF_0)
-    println(jcmodel.I_pen)
+    #println(jcmodel.F_0)
+    #println(jcmodel.dF_0)
+    #println(jcmodel.I_pen)
 
     T_mltS = 0 #t_mlt(jcmodel.S)
 
@@ -39,7 +39,7 @@ function run_ice(jcmodel, atmodel)
     # Main loop of temperature modifications:
     for step in 1:jcmodel.nt
 
-        run_ice_step(jcmodel.N_i, jcmodel.S, jcmodel.L, jcmodel.T_frz, jcmodel.i_0, jcmodel.κ_i, jcmodel.Δh, jcmodel.Δh̄,
+        run_ice_step(jcmodel.N_i, jcmodel.S, jcmodel.L, jcmodel.T_frz, jcmodel.κ_i, jcmodel.Δh, jcmodel.Δh̄,
                     T_n, T_nplus, jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.F_0[step], jcmodel.dF_0[step], 
                     jcmodel.maindiag, jcmodel.subdiag, jcmodel.supdiag, jcmodel.Δt, jcmodel.u_star, jcmodel.T_w)
 
@@ -55,7 +55,8 @@ function run_ice(jcmodel, atmodel)
 end
 
 # Runs a single time step of the thermodynamic model for easier AD implementation
-@inline function run_ice_step(N_i, S, L, T_frz, i_0, κ_i, Δh, Δh̄, T_old, T_new, c_i, K, K̄, I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
+@inline function run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_old, T_new, c_i, K, K̄,
+                              I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
 
     # Getting the average thicknesses of each layer:
     for i in 1:N_i
@@ -243,20 +244,25 @@ end
 # Computes the (constant) atmospheric flux affecting the model
 function compute_surface_flux(jcmodel, atmodel)
 
-    T_sf = jcmodel.T_0[1]
-
     # Compute atmospheric fluxes dependent on ice:
-    set_atm_helper_values(atmodel, T_sf, H, 5)
-    set_atm_flux_values(atmodel, T_sf)
+    set_atm_helper_values(atmodel, jcmodel.T_0[1], jcmodel.H, 5)
+    set_atm_flux_values(atmodel, jcmodel.T_0[1])
+    set_atm_dflux_values(atmodel, jcmodel.T_0[1])
 
     # Reduce shortwave flux with albedo
     jcmodel.α = 0.7 # CHANGE TO NOT PRESET later
 
     # Now compute total surface flux:
-    jcmodel.F_0 = (1-jcmodel.α)*jcmodel.i_0*atmodel.F_sw + atmodel.F_Ld + atmodel.F_Lu + atmodel.F_l + atmodel.F_s .+ zeros(Float64, jcmodel.nt)
-
+    jcmodel.F_0[1] = (1-jcmodel.α)*jcmodel.i_0*atmodel.F_sw + atmodel.F_Ld + atmodel.F_Lu + atmodel.F_l + atmodel.F_s
     # And now compute derivative of flux:
-    jcmodel.dF_0 = set_atm_dflux_values(atmodel, T_sf) .+ zeros(Float64, jcmodel.nt)
+    jcmodel.dF_0[1] = atmodel.dF_Lu + atmodel.dF_s + atmodel.dF_l
+
+    # Apply to all time values since we (for now) assume constant flux:
+    for k in 2:nt
+
+        jcmodel.F_0[k]  = jcmodel.F_0[1]
+        jcmodel.dF_0[k] = jcmodel.dF_0[1]
+    end
 
     return nothing
 end
