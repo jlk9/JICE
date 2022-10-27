@@ -131,7 +131,7 @@ function test_run_ice_one_step(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w
     ∂f_∂subdiag  = ones(Float64, N_i)
     ∂f_∂supdiag  = ones(Float64, N_i)
 
-    # REDO WITH NEW VARIABLES:
+    # Running autodiff here
     ∂f_∂T_w = autodiff(run_ice_step, Const, Const(N_i), Duplicated(S, ∂f_∂S), Const(L), Const(T_frz),
     Const(κ_i), Duplicated(Δh, ∂f_∂h), Duplicated(Δh̄, ∂f_∂h̄), Duplicated(T_n, ∂f_∂T_n),
     Duplicated(T_nplus, ∂f_∂T_nplus), Duplicated(c_i, ∂f_∂c_i), Duplicated(K, ∂f_∂K), Duplicated(K̄, ∂f_∂K̄),
