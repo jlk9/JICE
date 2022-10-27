@@ -63,6 +63,7 @@ function run_ice_adjoint_hT_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     ∂f_∂K        = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂K̄        = zeros(Float64, jcmodel.N_i)
     ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i+1)
+    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i)
     ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
@@ -71,7 +72,7 @@ function run_ice_adjoint_hT_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     autodiff(run_ice_step, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
     Const(jcmodel.κ_i), Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄), Duplicated(jcmodel.T_array[:,step], ∂f_∂T_old),
     Duplicated(jcmodel.T_array[:,step+1], ∂f_∂T_new), Duplicated(jcmodel.c_i, ∂f_∂c_i), Duplicated(jcmodel.K, ∂f_∂K), Duplicated(jcmodel.K̄, ∂f_∂K̄),
-    Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Const(jcmodel.F_0[step]), Const(jcmodel.dF_0[step]), Duplicated(jcmodel.maindiag, ∂f_∂maindiag),
+    Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Duplicated(jcmodel.q_i, ∂f_∂q_i), Const(jcmodel.F_0[step]), Const(jcmodel.dF_0[step]), Duplicated(jcmodel.maindiag, ∂f_∂maindiag),
     Duplicated(jcmodel.subdiag, ∂f_∂subdiag), Duplicated(jcmodel.supdiag, ∂f_∂supdiag), Const(jcmodel.Δt), Const(jcmodel.u_star),
     Const(jcmodel.T_w))
     
@@ -92,6 +93,7 @@ function run_ice_adjoint_Tw_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     ∂f_∂K        = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂K̄        = zeros(Float64, jcmodel.N_i)
     ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i+1)
+    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i)
     ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
@@ -100,7 +102,7 @@ function run_ice_adjoint_Tw_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     ∂f_∂T_w = autodiff(run_ice_step, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
     Const(jcmodel.κ_i), Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄), Duplicated(jcmodel.T_array[:,step], ∂f_∂T_old),
     Duplicated(jcmodel.T_array[:,step+1], ∂f_∂T_new), Duplicated(jcmodel.c_i, ∂f_∂c_i), Duplicated(jcmodel.K, ∂f_∂K), Duplicated(jcmodel.K̄, ∂f_∂K̄),
-    Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Const(jcmodel.F_0[step]), Const(jcmodel.dF_0[step]), Duplicated(jcmodel.maindiag, ∂f_∂maindiag),
+    Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Duplicated(jcmodel.q_i, ∂f_∂q_i), Const(jcmodel.F_0[step]), Const(jcmodel.dF_0[step]), Duplicated(jcmodel.maindiag, ∂f_∂maindiag),
     Duplicated(jcmodel.subdiag, ∂f_∂subdiag), Duplicated(jcmodel.supdiag, ∂f_∂supdiag), Const(jcmodel.Δt), Const(jcmodel.u_star),
     Active(jcmodel.T_w))
     

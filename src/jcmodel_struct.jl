@@ -3,16 +3,17 @@
 
 const V_a    = 0.025
 const K_a    = 0.03
-const T_mlt0 = 273.15   # K      melting point of freshwater
-const ρ_0    = 917.0    # kg/m^3 density of fresh (pure) ice
-const ρ_i    = 917.0    # kg/m^3 density of sea ice
-const ρ_w    = 1025.0   # kg/m^3 density of seawater (based on common estimate)
-const c_0    = 2106.0   # J/kg/K specific heat of fresh ice
-const c_w    = 3900.0   # J kg K specific heat of seawater (estimate)
-const c_h    = 0.006    #        heat transfer coefficient
-const L_0    = 334000.0 # J / kg latent heat of fusion of fresh ice
-const S_max  = 3.2      # ppt    maximum salinity of sea ice
-const ahmax  = 0.3      # m      thickness above which albedo is constant
+const T_mlt0 = 273.15   # K         melting point of freshwater
+const ρ_0    = 917.0    # kg/m^3    density of fresh (pure) ice
+const ρ_i    = 917.0    # kg/m^3    density of sea ice
+const ρ_w    = 1025.0   # kg/m^3    density of seawater (based on common estimate)
+const c_0    = 2106.0   # J/kg/K    specific heat of fresh ice
+const c_w    = 3900.0   # J kg K    specific heat of seawater (estimate)
+const c_h    = 0.006    #           heat transfer coefficient
+const L_0    = 334000.0 # J / kg    latent heat of fusion of fresh ice
+const μ      = 0.054    # deg/ppt   liquidus ratio between the freezing temperature and salinity of brine
+const S_max  = 3.2      # ppt       maximum salinity of sea ice
+const ahmax  = 0.3      # m         thickness above which albedo is constant
 
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
@@ -54,6 +55,7 @@ mutable struct JCModel
     N_i::Int64
     N_t::Int64
 
+    H::Float64
     L::Float64
     T_frz::Float64
     i_0::Float64
@@ -63,21 +65,20 @@ mutable struct JCModel
     T_w::Float64
     α::Float64
 
-    Δh::Vector{Float64}
     T_0::Vector{Float64}
     # Top layer fluxes
     F_0::Vector{Float64}
     dF_0::Vector{Float64}
 
     # Variables that are created based on the above:
-    H::Float64
-
+    Δh::Vector{Float64}
     Δh̄::Vector{Float64}
     S::Vector{Float64}
     c_i::Vector{Float64}
     K::Vector{Float64}
     K̄::Vector{Float64}
     I_pen::Vector{Float64}
+    q_i::Vector{Float64}
     maindiag::Vector{Float64}
     subdiag::Vector{Float64}
     supdiag::Vector{Float64}
@@ -88,15 +89,17 @@ mutable struct JCModel
 end
 
 # Constructs a JCModel object given the initial parameters
-function initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
+function initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
-    Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
 
-    # Sum up Δh to get h
-    H = sum(Δh)
+    # Get initial thicknesses of each layer:
+    for k in 1:N_i
+        Δh[k+1] = H / N_i
+    end
 
-    model = JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, Δh, T_0, F_0, dF_0,
-                   H, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array)
+    model = JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
+                   Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array)
 
     return model
 end
@@ -105,6 +108,7 @@ end
 function allocate_memory(N_i, N_t)
 
     # Getting Δz̄ (averages of adjacent thicknesses, length K)
+    Δh = zeros(Float64, N_i+1)
     Δh̄ = zeros(Float64, N_i)
 
     # Other intermediate data to keep:
@@ -113,6 +117,7 @@ function allocate_memory(N_i, N_t)
     K     = zeros(Float64, N_i+1)
     K̄     = zeros(Float64, N_i)
     I_pen = zeros(Float64, N_i+1)
+    q_i   = zeros(Float64, N_i+1)
 
     maindiag = zeros(Float64, N_i+1)
     subdiag  = zeros(Float64, N_i)
@@ -120,6 +125,6 @@ function allocate_memory(N_i, N_t)
     T_array  = zeros(Float64, N_i+1, N_t+1)
     Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array
+    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array
 
 end

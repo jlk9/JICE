@@ -25,12 +25,12 @@ using Enzyme, Test, Printf, LinearAlgebra
 #   T_n    (K)            the sea ice layer temperatures at initial time + N_t*dt, array of K+1 floats
 
 # Basic test with some common values for sea ice:
-function test_temp_thickness(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+function test_temp_thickness(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                              F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
-    jcmodel = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
+    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
     println("1. Basic temp test. Initial temps are:")
@@ -97,12 +97,14 @@ function test_tridiagonal_solve(T_0, N_i)
     #println(∂z_∂sp)
 end
 
-function test_run_ice_one_step(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
+function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     println("5. Now let's try sensitivity analysis on run_ice_step itself. In particular, the ice thickness to the water temperature:")
 
     # First we need to get our intermediate variables:
-    Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
-    H       = sum(Δh)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    for k in 1:N_i
+        Δh[k+1] = H / N_i
+    end
     T_n     = T_0
     T_nplus = zeros(Float64, N_i+1)
     generate_S(S, N_i)
@@ -110,14 +112,20 @@ function test_run_ice_one_step(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 
 
     println("Let's begin by seeing what one step of the ice model yields. New thicknesses and temps:")
     run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_n, T_nplus, c_i, K, K̄,
-                 I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
+                 I_pen, q_i, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
 
     println(Δh)
     println(T_nplus)
 
     # Now we'll reset for autodiff test:
-    Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    for k in 1:N_i
+        Δh[k+1] = H / N_i
+    end
     T_n    = T_0
+    T_nplus = zeros(Float64, N_i+1)
+    generate_S(S, N_i)
+    generate_I_pen(I_pen, i_0, κ_i, H, N_i)
 
     ∂f_∂S        = ones(Float64, N_i+1)
     ∂f_∂h        = ones(Float64, N_i+1)
@@ -128,6 +136,7 @@ function test_run_ice_one_step(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 
     ∂f_∂K        = ones(Float64, N_i+1)
     ∂f_∂K̄        = ones(Float64, N_i)
     ∂f_∂I_pen    = ones(Float64, N_i+1)
+    ∂f_∂q_i      = ones(Float64, N_i+1)
     ∂f_∂maindiag = ones(Float64, N_i+1)
     ∂f_∂subdiag  = ones(Float64, N_i)
     ∂f_∂supdiag  = ones(Float64, N_i)
@@ -136,24 +145,24 @@ function test_run_ice_one_step(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 
     ∂f_∂T_w = autodiff(run_ice_step, Const, Const(N_i), Duplicated(S, ∂f_∂S), Const(L), Const(T_frz),
     Const(κ_i), Duplicated(Δh, ∂f_∂h), Duplicated(Δh̄, ∂f_∂h̄), Duplicated(T_n, ∂f_∂T_n),
     Duplicated(T_nplus, ∂f_∂T_nplus), Duplicated(c_i, ∂f_∂c_i), Duplicated(K, ∂f_∂K), Duplicated(K̄, ∂f_∂K̄),
-    Duplicated(I_pen, ∂f_∂I_pen), Const(F_0[1]), Const(dF_0[1]), Duplicated(maindiag, ∂f_∂maindiag),
+    Duplicated(I_pen, ∂f_∂I_pen), Duplicated(q_i, ∂f_∂q_i), Const(F_0[1]), Const(dF_0[1]), Duplicated(maindiag, ∂f_∂maindiag),
     Duplicated(subdiag, ∂f_∂subdiag), Duplicated(supdiag, ∂f_∂supdiag), Const(Δt), Const(u_star), Active(T_w))
 
     println("Now the autodiff test. Thicknesses and temps should be the same:")
     println(Δh)
     println(T_nplus)
 
-    println("∂f_∂T_w is (should be negative)")
+    println("∂f_∂T_w is")
     println(∂f_∂T_w)
 end
 
-function test_adjoint_temp(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+function test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                             F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
     println("6. A test of the adjoint method implementation as shown in tutorial by Sarah Williamson. First we'll run a forward loop:")
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
+    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
     println("Now we'll go backwards.")
@@ -182,7 +191,7 @@ function test_adjoint_temp(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh,
         # Needs to be the same as our original T_0
         T_ϵp              = deepcopy(T_0)
         T_ϵp[init_layer] += ϵ
-        jcmodelp          = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_ϵp, F_0, dF_0)
+        jcmodelp          = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp, F_0, dF_0)
         run_ice(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
@@ -190,7 +199,7 @@ function test_adjoint_temp(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh,
 
         T_ϵn              = deepcopy(T_0)
         T_ϵn[init_layer] -= ϵ
-        jcmodeln          = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_ϵn, F_0, dF_0)
+        jcmodeln          = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn, F_0, dF_0)
         run_ice(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
@@ -212,13 +221,13 @@ function test_adjoint_temp(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh,
     println(rel_errors)
 end
 
-function test_adjoint_T_w(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+function test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                           F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
     println("7. A test of the adjoint method on the adjacent water temperature and its effect on thickness:")
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
+    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
     
     println("Now we'll go backwards.")
@@ -240,13 +249,13 @@ function test_adjoint_T_w(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, 
     for ϵ in step_sizes
 
         # Needs to be the same as our original T_0
-        jcmodelp = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w + ϵ, Δh, T_0, F_0, dF_0)
+        jcmodelp = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w + ϵ, T_0, F_0, dF_0)
         run_ice(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
         Δh_ϵp_value = jcmodelp.Δh_array[N_i+1, N_t+1]
 
-        jcmodeln = initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w - ϵ, Δh, T_0, F_0, dF_0)
+        jcmodeln = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w - ϵ, T_0, F_0, dF_0)
         run_ice(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
@@ -269,16 +278,16 @@ function test_adjoint_T_w(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, 
 end
 
 N_i    = 5
+N_t    = 4
+H      = 2.0
 L      = 2260000.0
 T_frz  = 271.35 - 273.15
 i_0    = 0.7
 κ_i    = 1.4
 T_0    = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
-N_t    = 4
 Δt     = 1.0
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
-Δh     = [0.0, 0.4, 0.4, 0.4, 0.4, 0.4]
 F_0    = zeros(Float64, N_t)
 dF_0   = zeros(Float64, N_t)
 
@@ -294,21 +303,21 @@ L_vap = 2260.0
 L_ice = 334.0
 U_a   = zeros(Float64, 3)
 
-test_temp_thickness(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+test_temp_thickness(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 println("")
 test_tridiagonal_solve(T_0, N_i)
 println("")
-test_run_ice_one_step(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0[1], dF_0[1])
+test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0[1], dF_0[1])
 println("")
-
+ 
 T_0  = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
 N_t  = 100 # other variables are same as before, except external fluxes
 F_0  = zeros(Float64, N_t)
 dF_0 = zeros(Float64, N_t)
 
-test_adjoint_temp(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 println("")
-test_adjoint_T_w(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0,
+test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
