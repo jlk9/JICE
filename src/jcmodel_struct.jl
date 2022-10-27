@@ -20,7 +20,7 @@ const Tsf_errmax = 0.01     # For numerical test of convergence
 #= JCModel struct
 Properties:
     N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
-    nt     (dim'less)   number of time steps, int
+    N_t     (dim'less)   number of time steps, int
     H      (m)          total ice thickness, float
     L      (J kg^-1)    latent heat of sublimation, float
     T_frz  (K)          freezing point of water at salinity S, float
@@ -52,9 +52,8 @@ mutable struct JCModel
 
     # Variables that must be provided to initialize the model
     N_i::Int64
-    nt::Int64
+    N_t::Int64
 
-    H::Float64
     L::Float64
     T_frz::Float64
     i_0::Float64
@@ -64,14 +63,15 @@ mutable struct JCModel
     T_w::Float64
     α::Float64
 
+    Δh::Vector{Float64}
     T_0::Vector{Float64}
     # Top layer fluxes
-    # TODO: derive from lines ~98-217 in icepack_therm_shared.F90
     F_0::Vector{Float64}
     dF_0::Vector{Float64}
 
     # Variables that are created based on the above:
-    Δh::Vector{Float64}
+    H::Float64
+
     Δh̄::Vector{Float64}
     S::Vector{Float64}
     c_i::Vector{Float64}
@@ -88,27 +88,21 @@ mutable struct JCModel
 end
 
 # Constructs a JCModel object given the initial parameters
-function initialize_JCModel(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function initialize_JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, Δh, T_0, F_0, dF_0)
 
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(H, N_i)
+    Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
 
-    model = JCModel(N_i, nt, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
-                   Δh, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array)
+    # Sum up Δh to get h
+    H = sum(Δh)
+
+    model = JCModel(N_i, N_t, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, Δh, T_0, F_0, dF_0,
+                   H, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array)
 
     return model
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(H, N_i)
-
-    # Get the initial thicknesses of each layer
-    h_star  = min(0.5, 0.25*H)
-    Δh_1    = min(h_star, (H - h_star)/(N_i-1))
-    Δh_k    = (H - Δh_1) / (N_i-1)
-
-    Δh    = Δh_k .+ zeros(Float64, N_i+1)
-    Δh[1] = 0.0
-    Δh[2] = Δh_1
+function allocate_memory(N_i, N_t)
 
     # Getting Δz̄ (averages of adjacent thicknesses, length K)
     Δh̄ = zeros(Float64, N_i)
@@ -123,9 +117,9 @@ function allocate_memory(H, N_i)
     maindiag = zeros(Float64, N_i+1)
     subdiag  = zeros(Float64, N_i)
     supdiag  = zeros(Float64, N_i)
-    T_array  = zeros(Float64, N_i+1, nt+1)
-    Δh_array = zeros(Float64, N_i+1, nt+1)
+    T_array  = zeros(Float64, N_i+1, N_t+1)
+    Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return Δh, Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array
+    return Δh̄, S, c_i, K, K̄, I_pen, maindiag, subdiag, supdiag, T_array, Δh_array
 
 end

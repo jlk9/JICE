@@ -15,7 +15,7 @@ const z_deg      = 1.0              # Assumed level height
 
 #=
 Properties:
-    nt          Number of time steps
+    N_t          Number of time steps
     F_s         Sensible heat flux
     F_l         Latent heat flux
     F_Ld        Downward longwave flux
@@ -41,7 +41,7 @@ Properties:
 =#
 mutable struct ATModel
 
-    nt::Int64
+    N_t::Int64
 
     F_s::Float64
     F_l::Float64
@@ -82,9 +82,9 @@ mutable struct ATModel
 end
 
 # Creates an atmodel object and initial parameters
-function initialize_ATModel(nt, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
+function initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
-    model = ATModel(nt, 0.0, 0.0, F_Ld, 0.0, F_sw, 0.0, 0.0, 0.0, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice,
+    model = ATModel(N_t, 0.0, 0.0, F_Ld, 0.0, F_sw, 0.0, 0.0, 0.0, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice,
                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, U_a)
     return model
 end

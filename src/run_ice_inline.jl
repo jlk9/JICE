@@ -22,22 +22,14 @@ function run_ice(jcmodel, atmodel)
     T_nplus = deepcopy(jcmodel.T_0)
 
     generate_S(jcmodel.S, jcmodel.N_i)
-
     compute_surface_flux(jcmodel, atmodel)
-
     generate_I_pen(jcmodel.I_pen, jcmodel.i_0*(1-jcmodel.α)*atmodel.F_sw, jcmodel.κ_i, jcmodel.H, jcmodel.N_i)
-
-    #println(jcmodel.F_0)
-    #println(jcmodel.dF_0)
-    #println(jcmodel.I_pen)
-
-    T_mltS = 0 #t_mlt(jcmodel.S)
 
     jcmodel.T_array[:, 1] = T_n
     jcmodel.Δh_array[:,1] = jcmodel.Δh
 
     # Main loop of temperature modifications:
-    for step in 1:jcmodel.nt
+    for step in 1:jcmodel.N_t
 
         run_ice_step(jcmodel.N_i, jcmodel.S, jcmodel.L, jcmodel.T_frz, jcmodel.κ_i, jcmodel.Δh, jcmodel.Δh̄,
                     T_n, T_nplus, jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.F_0[step], jcmodel.dF_0[step], 
@@ -258,7 +250,7 @@ function compute_surface_flux(jcmodel, atmodel)
     jcmodel.dF_0[1] = atmodel.dF_Lu + atmodel.dF_s + atmodel.dF_l
 
     # Apply to all time values since we (for now) assume constant flux:
-    for k in 2:nt
+    for k in 2:jcmodel.N_t
 
         jcmodel.F_0[k]  = jcmodel.F_0[1]
         jcmodel.dF_0[k] = jcmodel.dF_0[1]

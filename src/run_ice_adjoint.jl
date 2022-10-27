@@ -10,10 +10,10 @@ using Enzyme
 function run_ice_adjoint_hT(jcmodel, ad_h, ad_T)
 
     # run one step of the adjoint function:
-    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, jcmodel.nt, ad_h, ad_T)
+    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, jcmodel.N_t, ad_h, ad_T)
 
     # then the rest back to the original time step:
-    for j in (jcmodel.nt-1):-1:1
+    for j in (jcmodel.N_t-1):-1:1
 
         ad_h[:] = ∂h
         ad_T[:] = ∂T_old
@@ -32,11 +32,11 @@ end
 function run_ice_adjoint_Tw(jcmodel, ad_h, ad_T)
 
     # run one step of the adjoint function, for both T_w and h, T_old:
-    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, jcmodel.nt, ad_h, ad_T)
-    ∂T_w = run_ice_adjoint_Tw_step(jcmodel, jcmodel.nt, ad_h, ad_T)
+    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, jcmodel.N_t, ad_h, ad_T)
+    ∂T_w = run_ice_adjoint_Tw_step(jcmodel, jcmodel.N_t, ad_h, ad_T)
 
     # then the rest back to the original time step:
-    for j in (jcmodel.nt-1):-1:1
+    for j in (jcmodel.N_t-1):-1:1
 
         ad_h[:] = ∂h
         ad_T[:] = ∂T_old
