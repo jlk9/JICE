@@ -29,7 +29,6 @@ function test_temp_thickness(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w,
                              F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
-
     jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
@@ -43,7 +42,9 @@ function test_temp_thickness(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w,
     println("Thicknesses over time are: (should be close to initial in bottom)")
     println(jcmodel.Δh_array[:,N_t+1])
 
-    @time run_ice(jcmodel, atmodel)
+    atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
+    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    #@time run_ice(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
 end
@@ -101,7 +102,7 @@ function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_
     println("5. Now let's try sensitivity analysis on run_ice_step itself. In particular, the ice thickness to the water temperature:")
 
     # First we need to get our intermediate variables:
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
     for k in 1:N_i
         Δh[k+1] = H / N_i
     end
@@ -111,14 +112,14 @@ function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_
     generate_I_pen(I_pen, i_0, κ_i, H, N_i)
 
     println("Let's begin by seeing what one step of the ice model yields. New thicknesses and temps:")
-    run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_n, T_nplus, c_i, K, K̄,
-                 I_pen, q_i, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
+    run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_n, T_nplus, c_i, K, K̄, I_pen, q_i, q_inew,
+                 z_old, z_new, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
 
     println(Δh)
     println(T_nplus)
 
     # Now we'll reset for autodiff test:
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
     for k in 1:N_i
         Δh[k+1] = H / N_i
     end
@@ -137,6 +138,9 @@ function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_
     ∂f_∂K̄        = ones(Float64, N_i)
     ∂f_∂I_pen    = ones(Float64, N_i+1)
     ∂f_∂q_i      = ones(Float64, N_i+1)
+    ∂f_∂q_inew   = ones(Float64, N_i+1)
+    ∂f_∂z_old    = ones(Float64, N_i+1)
+    ∂f_∂z_new    = ones(Float64, N_i+1)
     ∂f_∂maindiag = ones(Float64, N_i+1)
     ∂f_∂subdiag  = ones(Float64, N_i)
     ∂f_∂supdiag  = ones(Float64, N_i)
@@ -145,7 +149,8 @@ function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_
     ∂f_∂T_w = autodiff(run_ice_step, Const, Const(N_i), Duplicated(S, ∂f_∂S), Const(L), Const(T_frz),
     Const(κ_i), Duplicated(Δh, ∂f_∂h), Duplicated(Δh̄, ∂f_∂h̄), Duplicated(T_n, ∂f_∂T_n),
     Duplicated(T_nplus, ∂f_∂T_nplus), Duplicated(c_i, ∂f_∂c_i), Duplicated(K, ∂f_∂K), Duplicated(K̄, ∂f_∂K̄),
-    Duplicated(I_pen, ∂f_∂I_pen), Duplicated(q_i, ∂f_∂q_i), Const(F_0[1]), Const(dF_0[1]), Duplicated(maindiag, ∂f_∂maindiag),
+    Duplicated(I_pen, ∂f_∂I_pen), Duplicated(q_i, ∂f_∂q_i), Duplicated(q_inew, ∂f_∂q_inew), Duplicated(z_old, ∂f_∂z_old),
+    Duplicated(z_new, ∂f_∂z_new), Const(F_0[1]), Const(dF_0[1]), Duplicated(maindiag, ∂f_∂maindiag),
     Duplicated(subdiag, ∂f_∂subdiag), Duplicated(supdiag, ∂f_∂supdiag), Const(Δt), Const(u_star), Active(T_w))
 
     println("Now the autodiff test. Thicknesses and temps should be the same:")
@@ -306,11 +311,11 @@ U_a   = zeros(Float64, 3)
 test_temp_thickness(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
 println("")
-test_tridiagonal_solve(T_0, N_i)
+#test_tridiagonal_solve(T_0, N_i)
 println("")
 test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0[1], dF_0[1])
 println("")
- 
+
 T_0  = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
 N_t  = 100 # other variables are same as before, except external fluxes
 F_0  = zeros(Float64, N_t)

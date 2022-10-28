@@ -32,8 +32,9 @@ function run_ice(jcmodel, atmodel)
     for step in 1:jcmodel.N_t
 
         run_ice_step(jcmodel.N_i, jcmodel.S, jcmodel.L, jcmodel.T_frz, jcmodel.κ_i, jcmodel.Δh, jcmodel.Δh̄, T_n, T_nplus,
-                    jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.q_i, jcmodel.F_0[step], jcmodel.dF_0[step], 
-                    jcmodel.maindiag, jcmodel.subdiag, jcmodel.supdiag, jcmodel.Δt, jcmodel.u_star, jcmodel.T_w)
+                    jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.q_i, jcmodel.q_inew, jcmodel.z_old, jcmodel.z_new,
+                    jcmodel.F_0[step], jcmodel.dF_0[step], jcmodel.maindiag, jcmodel.subdiag, jcmodel.supdiag, jcmodel.Δt,
+                    jcmodel.u_star, jcmodel.T_w)
 
         # Update T_n
         T_n[:] = T_nplus
@@ -47,8 +48,8 @@ function run_ice(jcmodel, atmodel)
 end
 
 # Runs a single time step of the thermodynamic model for easier AD implementation
-@inline function run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_old, T_new, c_i, K, K̄,
-                              I_pen, q_i, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
+@inline function run_ice_step(N_i, S, L, T_frz, κ_i, Δh, Δh̄, T_old, T_new, c_i, K, K̄, I_pen, q_i, q_inew,
+                              z_old, z_new, F_0, dF_0, maindiag, subdiag, supdiag, Δt, u_star, T_w)
 
     # Getting the average thicknesses of each layer:
     for i in 1:N_i
@@ -81,12 +82,10 @@ end
     # Restore the sea ice thicknesses so that they are uniform again, and calculate new
     # enthalpies to preserve conservation of energy:
     #(Since K is no longer needed at this time step, we use it for intermediate steps)
-    #rebalance_ice_layers(Δh, q_i, N_i, K, z_old, z_new)
+    rebalance_ice_layers(Δh, q_i, N_i, q_inew, z_old, z_new)
 
     # Finally, recompute layer tempreatures to match new enthalpies:
-    #generate_T_from_q_i(T_nplus, N_i, q_i, S)
-
-    # TODO: add z thickness fields to jcmodel and compute them for thickness rebalancing
+    generate_T_from_q_i(T_new, N_i, q_i, S)
 
     return nothing
 
@@ -303,7 +302,7 @@ end
 @inline function generate_q_i_from_T(q_i, N_i, T, S)
 
     for k in 1:N_i+1
-        T_m  = μ*S[k]
+        T_m  = -μ*S[k]
         q_i[k] = -ρ_i*(c_0*(T_m - T[k]) + L_0*(1 - T_m/T[k]) - c_w*T_m)
     end
 
@@ -313,9 +312,10 @@ end
 # Computes the temperature T from the enthalpy q
 @inline function generate_T_from_q_i(T, N_i, q_i, S)
 
-    for k in 1:N_i+1
-        T_m  = μ*S[k]
-        b    = (c_w-c_0)*T_m - q_i[k]/ρ_i - L_0
+    # Surface temperature is not changed
+    for k in 1:(N_i+1)
+        T_m  = -μ*S[k]
+        b    = (c_w-c_0)*T_m - (q_i[k]/ρ_i) - L_0
         T[k] = (-b - sqrt(b^2 - 4c_0*L_0*T_m))/(2c_0)
     end
 
@@ -353,12 +353,21 @@ end
     # Split evenly
     Δh_new = H_new / N_i
 
+    # Update the ice thicknesses
+    z_old[1] = Δh[1]
+    z_new[1] = 0.0
+    for k in 2:(N_i+1)
+        z_old[k] = Δh[k] + z_old[k-1]
+        z_new[k] = Δh_new * (k-1)
+    end
+
     # Update enthalpies for each layer:
     for k in 2:(N_i+1)
         q_new[k] = 0.0
         for m in 2:(N_i+1)
         
             η_km      = min(z_old[m], z_new[k]) - max(z_old[m-1], z_new[k-1])
+            η_km      = max(η_km, 0.0)
             q_new[k] += η_km*q_i[m]
         end
         q_new[k] /= Δh_new

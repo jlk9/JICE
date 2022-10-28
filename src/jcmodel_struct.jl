@@ -79,6 +79,9 @@ mutable struct JCModel
     K̄::Vector{Float64}
     I_pen::Vector{Float64}
     q_i::Vector{Float64}
+    q_inew::Vector{Float64}
+    z_old::Vector{Float64}
+    z_new::Vector{Float64}
     maindiag::Vector{Float64}
     subdiag::Vector{Float64}
     supdiag::Vector{Float64}
@@ -91,7 +94,7 @@ end
 # Constructs a JCModel object given the initial parameters
 function initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
 
     # Get initial thicknesses of each layer:
     for k in 1:N_i
@@ -99,7 +102,8 @@ function initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 
     end
 
     model = JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
-                   Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array)
+                   Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                   subdiag, supdiag, T_array, Δh_array)
 
     return model
 end
@@ -112,12 +116,15 @@ function allocate_memory(N_i, N_t)
     Δh̄ = zeros(Float64, N_i)
 
     # Other intermediate data to keep:
-    S     = zeros(Float64, N_i+1)
-    c_i   = zeros(Float64, N_i+1)
-    K     = zeros(Float64, N_i+1)
-    K̄     = zeros(Float64, N_i)
-    I_pen = zeros(Float64, N_i+1)
-    q_i   = zeros(Float64, N_i+1)
+    S      = zeros(Float64, N_i+1)
+    c_i    = zeros(Float64, N_i+1)
+    K      = zeros(Float64, N_i+1)
+    K̄      = zeros(Float64, N_i)
+    I_pen  = zeros(Float64, N_i+1)
+    q_i    = zeros(Float64, N_i+1)
+    q_inew = zeros(Float64, N_i+1)
+    z_old  = zeros(Float64, N_i+1)
+    z_new  = zeros(Float64, N_i+1)
 
     maindiag = zeros(Float64, N_i+1)
     subdiag  = zeros(Float64, N_i)
@@ -125,6 +132,6 @@ function allocate_memory(N_i, N_t)
     T_array  = zeros(Float64, N_i+1, N_t+1)
     Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, maindiag, subdiag, supdiag, T_array, Δh_array
+    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array
 
 end
