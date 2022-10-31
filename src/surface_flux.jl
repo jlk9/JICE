@@ -4,83 +4,91 @@
 
 include("./atmodel_struct.jl")
 
-#= Sets initial flux values for model run. This is only done once
-    at the start of the model run, to provide (constant) flux terms
-=#
-function set_atm_helper_values(atmodel, T_sfc, z_ice, natmiter)
-
-    λ = log(z_deg / z_ref)
+# Sets helper values needed to compute flux
+function set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p, T_sfc, z_ice, natmiter)
 
     # Compute initial exchange coefficients:
-    atmodel.c_u = κ / log(z_ref / z_ice)
-    atmodel.c_Θ = atmodel.c_u
-    atmodel.c_q = atmodel.c_u
+    c_u[1] = κ / log(z_ref / z_ice)
+    c_Θ[1] = c_u[1]
+    c_q[1] = c_u[1]
 
-    Q_sfc = (q_1/atmodel.ρ_a)*exp(-q_2 / (T_sfc + 273.15))
+    Q_sfc = (q_1/ρ_a)*exp(-q_2 / (T_sfc + C_to_K))
 
     # Iterate and update exchange coefficients:
-    for k = 1:natmiter
+    for k in 1:natmiter
+        set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    end
+    # Compute heatflux coefficients. TODO: wind stress?
+    C_l = ρ_a * (L_vap + L_ice) * atm_u_star[1] * c_q[1]
+    C_s = ρ_a * c_p * atm_u_star[1] * c_Θ[1] + 1
 
-        # Update turbulent scales
-        atmodel.u_star = atmodel.c_u * max(U_dmin, (atmodel.U_a[1]^2+atmodel.U_a[2]^2+atmodel.U_a[3]^2)^.5)
-        atmodel.Θ_star = atmodel.c_Θ * (atmodel.Θ_a - T_sfc)
-        atmodel.Q_star = atmodel.c_q * (atmodel.Q_a - Q_sfc)
+    # Outgoing longwave flux:
+    F_Lu[1]  = emissivity * sbc * (T_sfc + C_to_K)^4
+    dF_Lu[1] = 4.0 * emissivity * sbc * (T_sfc + C_to_K)^3
 
-        # Update Y and compute χ
-        atmodel.Y = (κ*g*z_deg)*(atmodel.Θ_star / (atmodel.Θ_a*(1+0.606atmodel.Q_a)) + atmodel.Q_star / (1.0/0.606 + atmodel.Q_a))/(atmodel.u_star^2)
+    # Sensible heat flux:
+    F_s[1]  = C_s * (Θ_a[1] - (T_sfc + C_to_K))
+    dF_s[1] = -C_s
 
-        # Compute ψ_m and ψ_s TODO: add alternative if Y is unstable? (< 0)
-        atmodel.ψ_m = -(0.7atmodel.Y + 0.75*(atmodel.Y-14.3)*exp(-0.35atmodel.Y) + 10.7)
-        atmodel.ψ_s = atmodel.ψ_m
+    # Latent heat flux:
+    Q_sf    = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K))
+    dQ_sf   = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K)) * (-q_2 / (T_sfc + C_to_K)^2)
+    F_l[1]  = C_l * (Q_a[1] - Q_sf)
+    dF_l[1] = -C_l * dQ_sf
 
-        if atmodel.Y < 0
-            atmodel.χ   = (1 - 16atmodel.Y)^0.25
-            atmodel.ψ_m = 2*log(0.5*(1+atmodel.χ)) + log(0.5*(1+atmodel.χ^2)) - 2*atan(atmodel.χ) + π/2
-            atmodel.ψ_s = 2*log(0.5*(1+atmodel.χ^2))
-        end
+    return nothing
+end
 
-        # Update exchange coefficients
-        atmodel.c_u = atmodel.c_u / (1 + atmodel.c_u*(λ-atmodel.ψ_m)/κ)
-        atmodel.c_Θ = atmodel.c_Θ / (1 + atmodel.c_Θ*(λ-atmodel.ψ_s)/κ)
-        atmodel.c_q = atmodel.c_Θ
+# Performs one step in the iteration for set_atm_helper_values
+function set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
 
+    # Update turbulent scales
+    atm_u_star[1] = c_u[1] * max(U_dmin, (U_a[1]^2+U_a[2]^2+U_a[3]^2)^.5)
+    Θ_star        = c_Θ[1] * (Θ_a[1] - T_sfc)
+    Q_star        = c_q[1] * (Q_a[1] - Q_sfc)
+
+    # Update Y and compute χ
+    Y = (κ*g*z_deg)*(Θ_star / (Θ_a[1]*(1+0.606Q_a[1])) + Q_star / (1.0/0.606 + Q_a[1]))/(atm_u_star[1]^2)
+
+    # Compute ψ_m and ψ_s TODO: add alternative if Y is unstable? (< 0)
+    ψ_m = -(0.7Y + 0.75*(Y-14.3)*exp(-0.35Y) + 10.7)
+    ψ_s = ψ_m
+
+    if Y < 0.0
+        χ   = (1 - 16Y)^0.25
+        ψ_m = 2*log(0.5*(1+χ)) + log(0.5*(1+χ^2)) - 2*atan(χ) + π/2
+        ψ_s = 2*log(0.5*(1+χ^2))
     end
 
-    # Compute heatflux coefficients. TODO: wind stress?
-    atmodel.C_l = atmodel.ρ_a*(atmodel.L_vap + atmodel.L_ice)*atmodel.u_star*atmodel.c_q
-    atmodel.C_s = atmodel.ρ_a*atmodel.c_p*atmodel.u_star*atmodel.c_Θ + 1
+    # Update exchange coefficients
+    c_u[1] = c_u[1] / (1 + c_u[1]*(λ - ψ_m)/κ)
+    c_Θ[1] = c_Θ[1] / (1 + c_Θ[1]*(λ - ψ_s)/κ)
+    c_q[1] = c_Θ[1]
 
     return nothing
 end
 
-# Computes values of fluxes affected by T_sf
-function set_atm_flux_values(atmodel, T_sf)
+# Computes the (constant) atmospheric flux affecting the model
+function compute_surface_flux(α, i_0, N_t, F_0, dF_0, T_sfc, H, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p)
 
-    # Outgoing longwave flux:
-    atmodel.F_Lu = emissivity*sbc*(T_sf + 273.15)^4
+    # Compute atmospheric fluxes dependent on ice:
+    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p, T_sfc, H, 5)
+    
 
-    # Sensible heat flux:
-    atmodel.F_s = atmodel.C_s*(atmodel.Θ_a - (T_sf + 273.15))
+    # Reduce shortwave flux with albedo
+    α = 0.7 # CHANGE TO NOT PRESET later
 
-    # Latent heat flux:
-    Q_sf        = (q_1/atmodel.ρ_a)*exp(-q_2 / (T_sf + 273.15))
-    atmodel.F_l = atmodel.C_l*(atmodel.Q_a - Q_sf)
+    # Now compute total surface flux:
+    F_0[1] = (1-α)*i_0*F_sw + F_Ld + F_Lu[1] + F_l[1] + F_s[1]
+    # And now compute derivative of flux:
+    dF_0[1] = dF_Lu[1] + dF_s[1] + dF_l[1]
 
-end
+    # Apply to all time values since we (for now) assume constant flux:
+    for k in 2:N_t
 
-# Computes derivatives of fluxes affected by T_sf, based on analytical formula for above
-function set_atm_dflux_values(atmodel, T_sf)
-
-    # Outgoing longwave flux:
-    atmodel.dF_Lu = 4.0*emissivity*sbc*(T_sf + 273.15)^3
-
-    # Sensible heat flux:
-    atmodel.dF_s  = -atmodel.C_s
-
-    # Latent heat flux:
-    dQ_sf = (q_1/atmodel.ρ_a)*exp(-q_2 / (T_sf + 273.15))*(-q_2 / (T_sf + 273.15)^2)
-    atmodel.dF_l = -atmodel.C_l*dQ_sf
+        F_0[k]  = F_0[1]
+        dF_0[k] = dF_0[1]
+    end
 
     return nothing
-
 end
