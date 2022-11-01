@@ -4,6 +4,24 @@
 
 include("./atmodel_struct.jl")
 
+# Computes the (constant) atmospheric flux affecting the model
+@inline function step_surface_flux(α, i_0, T_sfc, H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
+
+    # Compute atmospheric fluxes dependent on ice:
+    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H, step)
+    
+
+    # Reduce shortwave flux with albedo
+    #α = 0.7 # CHANGE TO NOT PRESET later
+
+    # Now compute total surface flux:
+    F_0[step] = (1-α)*i_0*F_sw + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
+    # And now compute derivative of flux:
+    dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
+
+    return nothing
+end
+
 # Sets helper values needed to compute flux
 @inline function set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, z_ice, step)
 
@@ -73,24 +91,6 @@ end
     c_u[1] = c_u[1] / (1 + c_u[1]*(λ - ψ_m)/κ)
     c_Θ[1] = c_Θ[1] / (1 + c_Θ[1]*(λ - ψ_s)/κ)
     c_q[1] = c_Θ[1]
-
-    return nothing
-end
-
-# Computes the (constant) atmospheric flux affecting the model
-@inline function step_surface_flux(α, i_0, T_sfc, H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
-
-    # Compute atmospheric fluxes dependent on ice:
-    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H, step)
-    
-
-    # Reduce shortwave flux with albedo
-    #α = 0.7 # CHANGE TO NOT PRESET later
-
-    # Now compute total surface flux:
-    F_0[step] = (1-α)*i_0*F_sw + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
-    # And now compute derivative of flux:
-    dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
 
     return nothing
 end
