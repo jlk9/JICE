@@ -72,7 +72,7 @@ function run_ice_adjoint_hT_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
 
 
-    autodiff(run_ice_step, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
+    autodiff(step_temp_change, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
     Const(jcmodel.κ_i), Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄), Duplicated(jcmodel.T_array[:,step], ∂f_∂T_old),
     Duplicated(jcmodel.T_array[:,step+1], ∂f_∂T_new), Duplicated(jcmodel.c_i, ∂f_∂c_i), Duplicated(jcmodel.K, ∂f_∂K), Duplicated(jcmodel.K̄, ∂f_∂K̄),
     Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Duplicated(jcmodel.q_i, ∂f_∂q_i), Duplicated(jcmodel.q_inew, ∂f_∂q_inew), Duplicated(jcmodel.z_old, ∂f_∂z_old),
@@ -106,7 +106,7 @@ function run_ice_adjoint_Tw_step(jcmodel, step, ∂f_∂h, ∂f_∂T_new)
     ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
 
 
-    ∂f_∂T_w = autodiff(run_ice_step, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
+    ∂f_∂T_w = autodiff(step_temp_change, Const, Const(jcmodel.N_i), Duplicated(jcmodel.S, ∂f_∂S), Const(jcmodel.L), Const(jcmodel.T_frz),
     Const(jcmodel.κ_i), Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄), Duplicated(jcmodel.T_array[:,step], ∂f_∂T_old),
     Duplicated(jcmodel.T_array[:,step+1], ∂f_∂T_new), Duplicated(jcmodel.c_i, ∂f_∂c_i), Duplicated(jcmodel.K, ∂f_∂K), Duplicated(jcmodel.K̄, ∂f_∂K̄),
     Duplicated(jcmodel.I_pen, ∂f_∂I_pen), Duplicated(jcmodel.q_i, ∂f_∂q_i), Duplicated(jcmodel.q_inew, ∂f_∂q_inew), Duplicated(jcmodel.z_old, ∂f_∂z_old),

@@ -5,7 +5,7 @@
 include("./atmodel_struct.jl")
 
 # Sets helper values needed to compute flux
-function set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p, T_sfc, z_ice, natmiter)
+@inline function set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, z_ice, step)
 
     # Compute initial exchange coefficients:
     c_u[1] = κ / log(z_ref / z_ice)
@@ -15,32 +15,41 @@ function set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, 
     Q_sfc = (q_1/ρ_a)*exp(-q_2 / (T_sfc + C_to_K))
 
     # Iterate and update exchange coefficients:
+    #=
     for k in 1:natmiter
         set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
     end
+    =#
+    # Approach for work with AD
+    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+
     # Compute heatflux coefficients. TODO: wind stress?
     C_l = ρ_a * (L_vap + L_ice) * atm_u_star[1] * c_q[1]
     C_s = ρ_a * c_p * atm_u_star[1] * c_Θ[1] + 1
 
     # Outgoing longwave flux:
-    F_Lu[1]  = emissivity * sbc * (T_sfc + C_to_K)^4
-    dF_Lu[1] = 4.0 * emissivity * sbc * (T_sfc + C_to_K)^3
+    F_Lu[step]  = emissivity * sbc * (T_sfc + C_to_K)^4
+    dF_Lu[step] = 4.0 * emissivity * sbc * (T_sfc + C_to_K)^3
 
     # Sensible heat flux:
-    F_s[1]  = C_s * (Θ_a[1] - (T_sfc + C_to_K))
-    dF_s[1] = -C_s
+    F_s[step]  = C_s * (Θ_a[1] - (T_sfc + C_to_K))
+    dF_s[step] = -C_s
 
     # Latent heat flux:
     Q_sf    = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K))
     dQ_sf   = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K)) * (-q_2 / (T_sfc + C_to_K)^2)
-    F_l[1]  = C_l * (Q_a[1] - Q_sf)
-    dF_l[1] = -C_l * dQ_sf
+    F_l[step]  = C_l * (Q_a[1] - Q_sf)
+    dF_l[step] = -C_l * dQ_sf
 
     return nothing
 end
 
 # Performs one step in the iteration for set_atm_helper_values
-function set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+@inline function set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
 
     # Update turbulent scales
     atm_u_star[1] = c_u[1] * max(U_dmin, (U_a[1]^2+U_a[2]^2+U_a[3]^2)^.5)
@@ -69,26 +78,19 @@ function set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, 
 end
 
 # Computes the (constant) atmospheric flux affecting the model
-function compute_surface_flux(α, i_0, N_t, F_0, dF_0, T_sfc, H, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p)
+@inline function step_surface_flux(α, i_0, T_sfc, H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
 
     # Compute atmospheric fluxes dependent on ice:
-    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, L_vap, L_ice, c_p, T_sfc, H, 5)
+    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H, step)
     
 
     # Reduce shortwave flux with albedo
-    α = 0.7 # CHANGE TO NOT PRESET later
+    #α = 0.7 # CHANGE TO NOT PRESET later
 
     # Now compute total surface flux:
-    F_0[1] = (1-α)*i_0*F_sw + F_Ld + F_Lu[1] + F_l[1] + F_s[1]
+    F_0[step] = (1-α)*i_0*F_sw + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
     # And now compute derivative of flux:
-    dF_0[1] = dF_Lu[1] + dF_s[1] + dF_l[1]
-
-    # Apply to all time values since we (for now) assume constant flux:
-    for k in 2:N_t
-
-        F_0[k]  = F_0[1]
-        dF_0[k] = dF_0[1]
-    end
+    dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
 
     return nothing
 end

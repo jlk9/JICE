@@ -14,30 +14,20 @@ const U_dmin     = 1.0                  # minimum allowable value for |U_a| (sin
 const z_deg      = 1.0                  # Assumed level height
 const C_to_K     = 273.15               # converts Celcius to Kelvin
 const λ          = -2.3025850929940455  # log(z_deg / z_ref)
+const L_vap      = 2260.0               # Latent heat of vaporization
+const L_ice      = 334.0                # Latent heat of fusion
 #=
 Properties:
-    N_t          Number of time steps
-    F_s         Sensible heat flux
-    F_l         Latent heat flux
-    F_Ld        Downward longwave flux
-    F_Lu        Upward longwave flux
-    F_Lu        Derivative of upward longwave flux relative to T_sf
-    F_s         Derivative of sensible heat flux relative to T_sf
-    F_l         Derivative of latent heat flux relative to T_sf
+    N_t         Number of time steps
     F_sw        Shortwave flux    (Common is 120 W/m^2)
     T_a         Atmosphere temperature
     θ_a         Air potential temperature
     ρ_a         Surface air density
     Q_a         Air specific humidity
     c_p         Specific heat of air
-    L_vap       Latent heat of vaporization
-    L_ice       Latent heat of fusion
     c_u         exchange coefficient
     c_θ         exchange coefficient
     c_q         exchange coefficient
-    Υ           "stability"
-    C_l         nonlinear turbulent heat transfer coefficient
-    C_s         nonlinear turbulent heat transfer coefficient
     U_a         Wind velocity
 =#
 mutable struct ATModel
@@ -47,22 +37,11 @@ mutable struct ATModel
     F_sw::Float64
     F_Ld::Float64
 
-    F_s::Vector{Float64}
-    F_l::Vector{Float64}
-    F_Lu::Vector{Float64}
-
-    dF_Lu::Vector{Float64}
-    dF_s::Vector{Float64}
-    dF_l::Vector{Float64}
-
     T_a::Float64
     Θ_a::Float64
     ρ_a::Float64
     Q_a::Float64
     c_p::Float64
-
-    L_vap::Float64
-    L_ice::Float64
 
     c_u::Vector{Float64}
     c_Θ::Vector{Float64}
@@ -75,11 +54,9 @@ mutable struct ATModel
 end
 
 # Creates an atmodel object and initial parameters
-function initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice, U_a)
+function initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     
-    model = ATModel(N_t, F_sw, F_Ld, zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1),
-                    zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1),
-                    T_a, Θ_a, ρ_a, Q_a, c_p, L_vap, L_ice,
+    model = ATModel(N_t, F_sw, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p,
                     zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1), U_a)
     
     return model

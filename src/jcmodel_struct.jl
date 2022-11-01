@@ -46,6 +46,14 @@ Properties:
     subdiag     ()      sub diagonal of tridiagonal system to solve, Vector{Float64}
     supdiag     ()      super diagonal of tridiagonal system to solve, Vector{Float64}
 
+    F_Lu        (W/m^2) Upward longwave flux
+    F_s         (W/m^2) Sensible heat flux
+    F_l         (W/m^2) Latent heat flux
+    F_Ld        (W/m^2) Downward longwave flux
+    dF_Lu       ()      Derivative of upward longwave flux relative to T_sf
+    dF_s        ()      Derivative of sensible heat flux relative to T_sf
+    dF_l        ()      Derivative of latent heat flux relative to T_sf
+
     T_array     ()      array of temperatures stored at each timestep, Matrix{Float64}
     Δh_array    ()      array of layer thicknesses stored at each timestep, Matrix{Float64}
 =#
@@ -56,7 +64,6 @@ mutable struct JCModel
     N_t::Int64
 
     H::Float64
-    L::Float64
     T_frz::Float64
     i_0::Float64
     κ_i::Float64
@@ -86,24 +93,32 @@ mutable struct JCModel
     subdiag::Vector{Float64}
     supdiag::Vector{Float64}
 
+    F_Lu::Vector{Float64}
+    F_s::Vector{Float64}
+    F_l::Vector{Float64}
+
+    dF_Lu::Vector{Float64}
+    dF_s::Vector{Float64}
+    dF_l::Vector{Float64}
+
     T_array::Matrix{Float64}
     Δh_array::Matrix{Float64}
 
 end
 
 # Constructs a JCModel object given the initial parameters
-function initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array = allocate_memory(N_i, N_t)
+    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
     # Get initial thicknesses of each layer:
     for k in 1:N_i
         Δh[k+1] = H / N_i
     end
 
-    model = JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
-                   Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
-                   subdiag, supdiag, T_array, Δh_array)
+    model = JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
+                Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
     return model
 end
@@ -129,9 +144,18 @@ function allocate_memory(N_i, N_t)
     maindiag = zeros(Float64, N_i+1)
     subdiag  = zeros(Float64, N_i)
     supdiag  = zeros(Float64, N_i)
+
+    F_Lu = zeros(Float64, N_t)
+    F_s  = zeros(Float64, N_t)
+    F_l  = zeros(Float64, N_t)
+
+    dF_Lu = zeros(Float64, N_t)
+    dF_s  = zeros(Float64, N_t)
+    dF_l  = zeros(Float64, N_t)
+
     T_array  = zeros(Float64, N_i+1, N_t+1)
     Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, T_array, Δh_array
+    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
 end
