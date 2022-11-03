@@ -33,7 +33,14 @@ function run_ice(jcmodel, atmodel)
     # Main loop of temperature modifications:
     for step in 1:jcmodel.N_t
         
-        run_ice_step(jcmodel, atmodel, T_n, T_nplus, step)
+        run_ice_step(jcmodel.N_i, jcmodel.N_t, jcmodel.H, jcmodel.T_frz, jcmodel.i_0, jcmodel.κ_i, jcmodel.Δt,
+                    jcmodel.u_star, jcmodel.T_w, jcmodel.α, jcmodel.F_0, jcmodel.dF_0,
+                    jcmodel.Δh, jcmodel.Δh̄, jcmodel.S, jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.q_i,
+                    jcmodel.q_inew, jcmodel.z_old, jcmodel.z_new, jcmodel.maindiag,
+                    jcmodel.subdiag, jcmodel.supdiag, jcmodel.F_Lu, jcmodel.F_s, jcmodel.F_l, jcmodel.dF_Lu, jcmodel.dF_s, jcmodel.dF_l,
+                    atmodel.F_sw, atmodel.F_Ld, atmodel.T_a, atmodel.Θ_a, atmodel.ρ_a, atmodel.Q_a, atmodel.c_p,
+                    atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.atm_u_star, atmodel.U_a,
+                    T_n, T_nplus, step)
         
         # Update T_n
         T_n[:] = T_nplus
@@ -47,25 +54,28 @@ function run_ice(jcmodel, atmodel)
 end
 
 # Runs one step of ice process:
-function run_ice_step(jcmodel, atmodel, T_n, T_nplus, step)
+@inline function run_ice_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, α, F_0, dF_0,
+                                Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                                subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+                                F_sw, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p,
+                                c_u, c_Θ, c_q, atm_u_star, U_a,
+                                T_n, T_nplus, step)
 
     # Computes the surface fluxes at this time step
-    step_surface_flux(jcmodel.α, jcmodel.i_0, T_n[1], jcmodel.H, jcmodel.F_0, jcmodel.dF_0,
-                        jcmodel.F_Lu, jcmodel.F_s, jcmodel.F_l, jcmodel.dF_Lu, jcmodel.dF_s, jcmodel.dF_l,
-                        atmodel.F_sw, atmodel.F_Ld, atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.U_a,
-                        atmodel.Θ_a, atmodel.Q_a, atmodel.atm_u_star, atmodel.ρ_a, atmodel.c_p, step)
+    step_surface_flux(α, i_0, T_n[1], H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+                        F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
         
     # Gets the penetrating shortwave radiation
-    generate_I_pen(jcmodel.I_pen, jcmodel.i_0*(1-jcmodel.α)*atmodel.F_sw, jcmodel.κ_i, jcmodel.H, jcmodel.N_i)
+    generate_I_pen(I_pen, i_0*(1-α)*F_sw, κ_i, H, N_i)
         
     # Computes the temperature changes at this step
-    step_temp_change(jcmodel.N_i, jcmodel.S, jcmodel.T_frz, jcmodel.Δh, jcmodel.Δh̄, T_n, T_nplus, jcmodel.c_i,
-                    jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.F_0[step], jcmodel.dF_0[step], jcmodel.maindiag,
-                    jcmodel.subdiag, jcmodel.supdiag, jcmodel.Δt)
+    step_temp_change(N_i, S, T_frz, Δh, Δh̄, T_n, T_nplus, c_i,
+                    K, K̄, I_pen, F_0[step], dF_0[step], maindiag,
+                    subdiag, supdiag, Δt)
 
     # Gets the growth/melt and rebalances
-    step_growth_melt(jcmodel.N_i, jcmodel.S, jcmodel.T_frz, jcmodel.Δh, T_n, T_nplus, jcmodel.K, jcmodel.q_i, jcmodel.q_inew,
-                    jcmodel.z_old, jcmodel.z_new, jcmodel.Δt, jcmodel.u_star, jcmodel.T_w)
+    step_growth_melt(N_i, S, T_frz, Δh, T_n, T_nplus, K, q_i, q_inew,
+                    z_old, z_new, Δt, u_star, T_w)
 
 end
 

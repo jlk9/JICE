@@ -98,7 +98,7 @@ function test_tridiagonal_solve(T_0, N_i)
     #println(∂z_∂sp)
 end
 
-function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function test_run_ice_one_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     println("5. Now let's try sensitivity analysis on step_temp_change itself. In particular, the ice thickness to the water temperature:")
 
     # First we need to get our intermediate variables:
@@ -161,13 +161,13 @@ function test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_
     println(∂f_∂T_w)
 end
 
-function test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                             F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
     println("6. A test of the adjoint method implementation as shown in tutorial by Sarah Williamson. First we'll run a forward loop:")
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    jcmodel = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
     println("Now we'll go backwards.")
@@ -175,7 +175,7 @@ function test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T
     ad_h = [0.0;0.0;0.0;0.0;0.0;0.0]
     ad_T = [0.0;0.0;0.0;0.0;0.0;1.0]
 
-    ∂h, ∂T_old = run_ice_adjoint_hT(jcmodel, ad_h, ad_T)
+    ∂h, ∂T_old = run_ice_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂h:")
     println(∂h)
@@ -196,7 +196,7 @@ function test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T
         # Needs to be the same as our original T_0
         T_ϵp              = deepcopy(T_0)
         T_ϵp[init_layer] += ϵ
-        jcmodelp          = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp, F_0, dF_0)
+        jcmodelp          = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp, F_0, dF_0)
         run_ice(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
@@ -204,7 +204,7 @@ function test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T
 
         T_ϵn              = deepcopy(T_0)
         T_ϵn[init_layer] -= ϵ
-        jcmodeln          = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn, F_0, dF_0)
+        jcmodeln          = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn, F_0, dF_0)
         run_ice(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
@@ -308,10 +308,10 @@ U_a   = zeros(Float64, 3)
 
 test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-println("")#=
+println("")
 #test_tridiagonal_solve(T_0, N_i)
 println("")
-test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0[1], dF_0[1])
+#test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0[1], dF_0[1])
 println("")
 
 T_0  = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
@@ -319,9 +319,8 @@ N_t  = 100 # other variables are same as before, except external fluxes
 F_0  = zeros(Float64, N_t)
 dF_0 = zeros(Float64, N_t)
 
-test_adjoint_temp(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
-test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
-                    F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-=#
+#test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+#                    F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
