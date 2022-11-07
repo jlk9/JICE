@@ -1,5 +1,5 @@
 # Written by Joseph Kump (josek97@utexas.edu)
-# Outlines JCModel, a Julia structure for single-column ice thermodynamics
+# Outlines JICEColumn, a Julia structure for single-column ice thermodynamics
 
 const V_a    = 0.025
 const K_a    = 0.03
@@ -57,7 +57,7 @@ Properties:
     T_array     ()      array of temperatures stored at each timestep, Matrix{Float64}
     Δh_array    ()      array of layer thicknesses stored at each timestep, Matrix{Float64}
 =#
-mutable struct JCModel
+mutable struct JICEColumn
 
     # Variables that must be provided to initialize the model
     N_i::Int64
@@ -106,8 +106,8 @@ mutable struct JCModel
 
 end
 
-# Constructs a JCModel object given the initial parameters
-function initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+# Constructs a JICEColumn object given the initial parameters
+function initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
 
     Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
@@ -116,9 +116,9 @@ function initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0
         Δh[k+1] = H / N_i
     end
 
-    model = JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
-                Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
-                subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
+    model = JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
+                    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                    subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
     return model
 end

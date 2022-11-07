@@ -29,7 +29,7 @@ function test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
                              F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
     println("1. Basic temp test. Initial temps are:")
@@ -43,7 +43,7 @@ function test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
     println(jcmodel.Δh_array[:,N_t+1])
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     @time run_ice(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
@@ -167,7 +167,7 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
     println("6. A test of the adjoint method implementation as shown in tutorial by Sarah Williamson. First we'll run a forward loop:")
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
 
     println("Now we'll go backwards.")
@@ -196,7 +196,7 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
         # Needs to be the same as our original T_0
         T_ϵp              = deepcopy(T_0)
         T_ϵp[init_layer] += ϵ
-        jcmodelp          = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp, F_0, dF_0)
+        jcmodelp          = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp, F_0, dF_0)
         run_ice(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
@@ -204,7 +204,7 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
 
         T_ϵn              = deepcopy(T_0)
         T_ϵn[init_layer] -= ϵ
-        jcmodeln          = initialize_JCModel(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn, F_0, dF_0)
+        jcmodeln          = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn, F_0, dF_0)
         run_ice(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
@@ -226,13 +226,13 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
     println(rel_errors)
 end
 
-function test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
-                          F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+function test_adjoint_T_w(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+                            F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
     println("7. A test of the adjoint method on the adjacent water temperature and its effect on thickness:")
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-    jcmodel = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+    jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     run_ice(jcmodel, atmodel)
     
     println("Now we'll go backwards.")
@@ -240,7 +240,7 @@ function test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
     ad_h = [0.0;0.0;0.0;0.0;0.0;1.0]
     ad_T = [0.0;0.0;0.0;0.0;0.0;0.0]
 
-    ∂T_w = run_ice_adjoint_Tw(jcmodel, ad_h, ad_T)
+    ∂T_w = run_ice_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂T_w:")
     println(∂T_w)
@@ -254,13 +254,13 @@ function test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
     for ϵ in step_sizes
 
         # Needs to be the same as our original T_0
-        jcmodelp = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w + ϵ, T_0, F_0, dF_0)
+        jcmodelp = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w + ϵ, T_0, F_0, dF_0)
         run_ice(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
         Δh_ϵp_value = jcmodelp.Δh_array[N_i+1, N_t+1]
 
-        jcmodeln = initialize_JCModel(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w - ϵ, T_0, F_0, dF_0)
+        jcmodeln = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w - ϵ, T_0, F_0, dF_0)
         run_ice(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
@@ -315,12 +315,12 @@ println("")
 println("")
 
 T_0  = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
-N_t  = 100 # other variables are same as before, except external fluxes
+N_t  = 1 # other variables are same as before, except external fluxes
 F_0  = zeros(Float64, N_t)
 dF_0 = zeros(Float64, N_t)
 
 test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
                     F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
-#test_adjoint_T_w(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
-#                    F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+test_adjoint_T_w(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0,
+                    F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
