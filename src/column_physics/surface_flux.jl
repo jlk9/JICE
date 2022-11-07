@@ -2,8 +2,6 @@
 # Contains surface heat flux functions for running the sea ice model, featuring
 # the ATModel struct
 
-include("./atmodel_struct.jl")
-
 # Computes the (constant) atmospheric flux affecting the model
 @inline function step_surface_flux(α, i_0, T_sfc, H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
 
