@@ -18,7 +18,7 @@ const ahmax  = 0.3      # m         thickness above which albedo is constant
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
 
-#= JCModel struct
+#= JICEColumn struct
 Properties:
     N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
     N_t     (dim'less)   number of time steps, int

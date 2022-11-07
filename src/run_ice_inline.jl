@@ -4,7 +4,7 @@
 # It also reduces the number of memory allocations substantially, increasing runtime
 # and lowering memory footprint.
 
-include("./jcmodel_struct.jl")
+include("./jicecolumn_struct.jl")
 include("./surface_flux.jl")
 include("./temp_change.jl")
 include("./growth_melt.jl")
