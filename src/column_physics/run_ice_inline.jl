@@ -12,42 +12,42 @@ include("./growth_melt.jl")
 
 #= Model Function
 Input:
-    jcmodel         an initialized JCModel object
+    jcolumn         an initialized JICEColumn object
     atmodel         an initialized ATModel object for surface flux computations
 
 Output:
-    Technically nothing, but the function updates jcmodel's T_array and Δh_arrays to have a log
+    Technically nothing, but the function updates jcolumn's T_array and Δh_arrays to have a log
     of updated ice temperatures and thicknesses
 =#
-function run_ice(jcmodel, atmodel)
+function run_ice_column(jcolumn, atmodel)
 
-    T_n     = deepcopy(jcmodel.T_0)
-    T_nplus = deepcopy(jcmodel.T_0)
+    T_n     = deepcopy(jcolumn.T_0)
+    T_nplus = deepcopy(jcolumn.T_0)
 
-    generate_S(jcmodel.S, jcmodel.N_i)
+    generate_S(jcolumn.S, jcolumn.N_i)
 
-    jcmodel.α = 0.7
+    jcolumn.α = 0.7
 
-    jcmodel.T_array[:, 1] = T_n
-    jcmodel.Δh_array[:,1] = jcmodel.Δh
+    jcolumn.T_array[:, 1] = T_n
+    jcolumn.Δh_array[:,1] = jcolumn.Δh
 
     # Main loop of temperature modifications:
-    for step in 1:jcmodel.N_t
+    for step in 1:jcolumn.N_t
         
-        run_ice_step(jcmodel.N_i, jcmodel.N_t, jcmodel.H, jcmodel.T_frz, jcmodel.i_0, jcmodel.κ_i, jcmodel.Δt,
-                    jcmodel.u_star, jcmodel.T_w, jcmodel.α, jcmodel.F_0, jcmodel.dF_0,
-                    jcmodel.Δh, jcmodel.Δh̄, jcmodel.S, jcmodel.c_i, jcmodel.K, jcmodel.K̄, jcmodel.I_pen, jcmodel.q_i,
-                    jcmodel.q_inew, jcmodel.z_old, jcmodel.z_new, jcmodel.maindiag,
-                    jcmodel.subdiag, jcmodel.supdiag, jcmodel.F_Lu, jcmodel.F_s, jcmodel.F_l, jcmodel.dF_Lu, jcmodel.dF_s, jcmodel.dF_l,
-                    atmodel.F_sw, atmodel.F_Ld, atmodel.T_a, atmodel.Θ_a, atmodel.ρ_a, atmodel.Q_a, atmodel.c_p,
-                    atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.atm_u_star, atmodel.U_a,
-                    T_n, T_nplus, step)
+        run_column_step(jcolumn.N_i, jcolumn.N_t, jcolumn.H, jcolumn.T_frz, jcolumn.i_0, jcolumn.κ_i, jcolumn.Δt,
+                        jcolumn.u_star, jcolumn.T_w, jcolumn.α, jcolumn.F_0, jcolumn.dF_0,
+                        jcolumn.Δh, jcolumn.Δh̄, jcolumn.S, jcolumn.c_i, jcolumn.K, jcolumn.K̄, jcolumn.I_pen, jcolumn.q_i,
+                        jcolumn.q_inew, jcolumn.z_old, jcolumn.z_new, jcolumn.maindiag,
+                        jcolumn.subdiag, jcolumn.supdiag, jcolumn.F_Lu, jcolumn.F_s, jcolumn.F_l, jcolumn.dF_Lu, jcolumn.dF_s, jcolumn.dF_l,
+                        atmodel.F_sw, atmodel.F_Ld, atmodel.T_a, atmodel.Θ_a, atmodel.ρ_a, atmodel.Q_a, atmodel.c_p,
+                        atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.atm_u_star, atmodel.U_a,
+                        T_n, T_nplus, step)
         
         # Update T_n
         T_n[:] = T_nplus
 
-        jcmodel.T_array[:, step+1] = T_n
-        jcmodel.Δh_array[:,step+1] = jcmodel.Δh
+        jcolumn.T_array[:, step+1] = T_n
+        jcolumn.Δh_array[:,step+1] = jcolumn.Δh
 
     end
 
@@ -55,7 +55,7 @@ function run_ice(jcmodel, atmodel)
 end
 
 # Runs one step of ice process:
-@inline function run_ice_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, α, F_0, dF_0,
+@inline function run_column_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, α, F_0, dF_0,
                                 Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                                 subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                                 F_sw, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p,

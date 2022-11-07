@@ -7,7 +7,7 @@ include("run_ice_inline.jl")
 using Enzyme
 
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
-function run_ice_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
+function run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
 
     # run one step of the adjoint function:
     ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, atmodel, jcmodel.N_t, ad_h, ad_T)
@@ -29,7 +29,7 @@ end
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
 # This one gets the adjoint for T_w, which is tricky because T_w is applied
 # separately at each step
-function run_ice_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
+function run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
 
     # run one step of the adjoint function, for both T_w and h, T_old:
     ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, atmodel, jcmodel.N_t, ad_h, ad_T)
@@ -86,7 +86,7 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂U_a        = zeros(Float64, 3)
 
 
-    autodiff(run_ice_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
+    autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
             Const(jcmodel.H), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
             Const(jcmodel.κ_i), Const(jcmodel.Δt), Const(jcmodel.u_star),
             Const(jcmodel.T_w), Const(jcmodel.α),
@@ -144,7 +144,7 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂U_a        = zeros(Float64, 3)
 
 
-    ∂f_∂T_w = autodiff(run_ice_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
+    ∂f_∂T_w = autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
                 Const(jcmodel.H), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
                 Const(jcmodel.κ_i), Const(jcmodel.Δt), Const(jcmodel.u_star),
                 Active(jcmodel.T_w), Const(jcmodel.α),

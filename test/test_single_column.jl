@@ -5,7 +5,7 @@ include("../src/column_physics/run_ice_adjoint.jl")
 
 using Enzyme, Test, Printf, LinearAlgebra
 
-# Recall the run_ice function:
+# Recall the run_ice_column function:
 # Inputs:
 #   H      (m)            total ice thickness, float
 #   N_i      (dim'less)   number of layers, int (we consider the surface "skin layer")
@@ -29,7 +29,7 @@ function test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
-    run_ice(jcmodel, atmodel)
+    run_ice_column(jcmodel, atmodel)
 
     println("1. Basic temp test. Initial temps are:")
     println(T_0)
@@ -43,7 +43,7 @@ function test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
-    @time run_ice(jcmodel, atmodel)
+    @time run_ice_column(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
 end
@@ -97,7 +97,7 @@ function test_tridiagonal_solve(T_0, N_i)
     #println(∂z_∂sp)
 end
 
-function test_run_ice_one_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function test_run_ice_column_one_step(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
     println("5. Now let's try sensitivity analysis on step_temp_change itself. In particular, the ice thickness to the water temperature:")
 
     # First we need to get our intermediate variables:
@@ -167,14 +167,14 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
-    run_ice(jcmodel, atmodel)
+    run_ice_column(jcmodel, atmodel)
 
     println("Now we'll go backwards.")
     # run one step of the adjoint function, Enzyme preferred that I did this one and then all of the others, I'm not sure why.......
     ad_h = [0.0;0.0;0.0;0.0;0.0;0.0]
     ad_T = [0.0;0.0;0.0;0.0;0.0;1.0]
 
-    ∂h, ∂T_old = run_ice_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
+    ∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂h:")
     println(∂h)
@@ -196,7 +196,7 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
         T_ϵp              = deepcopy(T_0)
         T_ϵp[init_layer] += ϵ
         jcmodelp          = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵp)
-        run_ice(jcmodelp, atmodel)
+        run_ice_column(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
         Δz_ϵp_value = jcmodelp.Δh_array[N_i+1, N_t+1]
@@ -204,7 +204,7 @@ function test_adjoint_temp(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
         T_ϵn              = deepcopy(T_0)
         T_ϵn[init_layer] -= ϵ
         jcmodeln          = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_ϵn)
-        run_ice(jcmodeln, atmodel)
+        run_ice_column(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
         Δz_ϵn_value = jcmodeln.Δh_array[N_i+1, N_t+1]
@@ -232,14 +232,14 @@ function test_adjoint_T_w(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
 
     atmodel = initialize_ATModel(N_t, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
-    run_ice(jcmodel, atmodel)
+    run_ice_column(jcmodel, atmodel)
     
     println("Now we'll go backwards.")
     # run one step of the adjoint function, Enzyme preferred that I did this one and then all of the others, I'm not sure why.......
     ad_h = [0.0;0.0;0.0;0.0;0.0;1.0]
     ad_T = [0.0;0.0;0.0;0.0;0.0;0.0]
 
-    ∂T_w = run_ice_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
+    ∂T_w = run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂T_w:")
     println(∂T_w)
@@ -254,13 +254,13 @@ function test_adjoint_T_w(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
 
         # Needs to be the same as our original T_0
         jcmodelp = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w + ϵ, T_0)
-        run_ice(jcmodelp, atmodel)
+        run_ice_column(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+1, N_t+1]
         Δh_ϵp_value = jcmodelp.Δh_array[N_i+1, N_t+1]
 
         jcmodeln = initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w - ϵ, T_0)
-        run_ice(jcmodeln, atmodel)
+        run_ice_column(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+1, N_t+1]
         Δh_ϵn_value = jcmodeln.Δh_array[N_i+1, N_t+1]
@@ -308,7 +308,7 @@ test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
 println("")
 #test_tridiagonal_solve(T_0, N_i)
 println("")
-#test_run_ice_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, 0.0, 0.0)
+#test_run_ice_column_one_step(N_i, N_t, H, L, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, 0.0, 0.0)
 println("")
 
 T_0  = 0 .- [20.0, 16.5, 13.0, 9.5, 6.0, 2.5]
