@@ -21,9 +21,8 @@ const Tsf_errmax = 0.01     # For numerical test of convergence
 #= JICEColumn struct
 Properties:
     N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
-    N_t     (dim'less)   number of time steps, int
+    N_t    (dim'less)   number of time steps, int
     H      (m)          total ice thickness, float
-    L      (J kg^-1)    latent heat of sublimation, float
     T_frz  (K)          freezing point of water at salinity S, float
     i_0    (W m^-2)     the penetrating solar flux reduction at the top surface, float
     κ_i    ()           extinction coefficient, float
@@ -46,16 +45,16 @@ Properties:
     subdiag     ()      sub diagonal of tridiagonal system to solve, Vector{Float64}
     supdiag     ()      super diagonal of tridiagonal system to solve, Vector{Float64}
 
-    F_Lu        (W/m^2) Upward longwave flux
-    F_s         (W/m^2) Sensible heat flux
-    F_l         (W/m^2) Latent heat flux
-    F_Ld        (W/m^2) Downward longwave flux
-    dF_Lu       ()      Derivative of upward longwave flux relative to T_sf
-    dF_s        ()      Derivative of sensible heat flux relative to T_sf
-    dF_l        ()      Derivative of latent heat flux relative to T_sf
+    F_Lu        (W/m^2)     Upward longwave flux
+    F_s         (W/m^2)     Sensible heat flux
+    F_l         (W/m^2)     Latent heat flux
+    F_Ld        (W/m^2)     Downward longwave flux
+    dF_Lu       (W/m^2 C)   Derivative of upward longwave flux relative to T_sf
+    dF_s        (W/m^2 C)   Derivative of sensible heat flux relative to T_sf
+    dF_l        (W/m^2 C)   Derivative of latent heat flux relative to T_sf
 
-    T_array     ()      array of temperatures stored at each timestep, Matrix{Float64}
-    Δh_array    ()      array of layer thicknesses stored at each timestep, Matrix{Float64}
+    T_array     (C)         array of temperatures stored at each timestep, Matrix{Float64}
+    Δh_array    (M)         array of layer thicknesses stored at each timestep, Matrix{Float64}
 =#
 mutable struct JICEColumn
 
@@ -107,9 +106,9 @@ mutable struct JICEColumn
 end
 
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0, F_0, dF_0)
+function initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
 
-    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
+    F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
     # Get initial thicknesses of each layer:
     for k in 1:N_i
@@ -126,7 +125,10 @@ end
 # Allocates all necessary memory for intermediate variables in the model
 function allocate_memory(N_i, N_t)
 
-    # Getting Δz̄ (averages of adjacent thicknesses, length K)
+    F_0 = zeros(Float64, N_t)
+    dF_0 = zeros(Float64, N_t)
+
+    # Getting Δh̄ (averages of adjacent thicknesses, length K)
     Δh = zeros(Float64, N_i+1)
     Δh̄ = zeros(Float64, N_i)
 
@@ -156,6 +158,6 @@ function allocate_memory(N_i, N_t)
     T_array  = zeros(Float64, N_i+1, N_t+1)
     Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
 end
