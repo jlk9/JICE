@@ -32,7 +32,7 @@ function test_temp_thickness(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_
     run_ice_column(jcmodel, atmodel)
 
     println("1. Basic temp test. Initial temps are:")
-    println(T_0)
+    println(jcmodel.T_array[:,1])
     println("Temps over time are: (should be close to initial)")
     println(jcmodel.T_array[:,N_t+1])
 

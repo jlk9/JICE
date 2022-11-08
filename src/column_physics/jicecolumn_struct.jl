@@ -71,12 +71,14 @@ mutable struct JICEColumn
     T_w::Float64
     α::Float64
 
-    T_0::Vector{Float64}
+    T_n::Vector{Float64}
+
+    # Variables that are created based on the above:
     # Top layer fluxes
+    T_nplus::Vector{Float64}
     F_0::Vector{Float64}
     dF_0::Vector{Float64}
 
-    # Variables that are created based on the above:
     Δh::Vector{Float64}
     Δh̄::Vector{Float64}
     S::Vector{Float64}
@@ -108,24 +110,37 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
 
-    F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
+    T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
     # Get initial thicknesses of each layer:
     for k in 1:N_i
         Δh[k+1] = H / N_i
     end
 
-    model = JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, F_0, dF_0,
-                    Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
-                    subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
+    jcolumn = JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, T_nplus, F_0, dF_0,
+                        Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                        subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
-    return model
+    # Some preliminary work before running the model:
+    jcolumn.T_nplus[:] = jcolumn.T_n
+
+    generate_S(jcolumn.S, jcolumn.N_i)
+    
+    # TODO: more detailed implementation of α
+    jcolumn.α = 0.7
+                
+    jcolumn.T_array[:, 1] = jcolumn.T_n
+    jcolumn.Δh_array[:,1] = jcolumn.Δh
+
+    return jcolumn
 end
 
 # Allocates all necessary memory for intermediate variables in the model
 function allocate_memory(N_i, N_t)
 
-    F_0 = zeros(Float64, N_t)
+    T_nplus = zeros(Float64, N_i+1)
+
+    F_0  = zeros(Float64, N_t)
     dF_0 = zeros(Float64, N_t)
 
     # Getting Δh̄ (averages of adjacent thicknesses, length K)
@@ -158,6 +173,18 @@ function allocate_memory(N_i, N_t)
     T_array  = zeros(Float64, N_i+1, N_t+1)
     Δh_array = zeros(Float64, N_i+1, N_t+1)
 
-    return F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
+end
+
+# Gets the salinity profile for this column of sea ice. Since this obeys the BL99 model the salinity
+# is constant
+@inline function generate_S(S, N_i)
+
+    for k in 0:N_i
+        z      = k / N_i
+        S[k+1] = 0.5 * S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+    end
+
+    return nothing
 end

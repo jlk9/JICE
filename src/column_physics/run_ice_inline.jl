@@ -21,16 +21,6 @@ Output:
 =#
 function run_ice_column(jcolumn, atmodel)
 
-    T_n     = deepcopy(jcolumn.T_0)
-    T_nplus = deepcopy(jcolumn.T_0)
-
-    generate_S(jcolumn.S, jcolumn.N_i)
-
-    jcolumn.α = 0.7
-
-    jcolumn.T_array[:, 1] = T_n
-    jcolumn.Δh_array[:,1] = jcolumn.Δh
-
     # Main loop of temperature modifications:
     for step in 1:jcolumn.N_t
         
@@ -41,14 +31,14 @@ function run_ice_column(jcolumn, atmodel)
                         jcolumn.subdiag, jcolumn.supdiag, jcolumn.F_Lu, jcolumn.F_s, jcolumn.F_l, jcolumn.dF_Lu, jcolumn.dF_s, jcolumn.dF_l,
                         atmodel.F_sw, atmodel.F_Ld, atmodel.T_a, atmodel.Θ_a, atmodel.ρ_a, atmodel.Q_a, atmodel.c_p,
                         atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.atm_u_star, atmodel.U_a,
-                        T_n, T_nplus, step)
+                        jcolumn.T_n, jcolumn.T_nplus, step)
         
-        # Update T_n
-        T_n[:] = T_nplus
+        # Update T_n and store current temps and thicknesses:
+        jcolumn.T_n[:] = jcolumn.T_nplus
+        jcolumn.H      = sum(jcolumn.Δh)
 
-        jcolumn.T_array[:, step+1] = T_n
+        jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
-
     end
 
     return nothing
@@ -75,7 +65,7 @@ end
                     subdiag, supdiag, Δt)
 
     # Gets the growth/melt and rebalances
-    step_growth_melt(N_i, S, T_frz, Δh, T_n, T_nplus, K, q_i, q_inew,
+    step_growth_melt(N_i, S, T_frz, Δh, T_nplus, K, q_i, q_inew,
                     z_old, z_new, Δt, u_star, T_w)
 
 end

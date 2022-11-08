@@ -29,13 +29,13 @@ end
 # of the tridiagonal system
 @inline function generate_coeffs(coeffs, old, N_i, dF_0)
 
-    coeffs[1] *= dF_0
-
-    for i in 2:(N_i+1)
+    for i in 1:(N_i+1)
 
         coeffs[i] = old[i]
 
     end
+
+    coeffs[1] *= dF_0
 
     return nothing
 
@@ -166,17 +166,6 @@ end
         K[i]  *= (2*K[i] + K_a - (2*V_a)*(K[i]-K_a)) / (2*K[i] + K_a - (2*V_a)*(K[i]-K_a))
         K[i]  -= (K[i]-K_b[i])*((T_mltS-T_mlt0)/θ[i])
 
-    end
-
-    return nothing
-end
-
-# Gets the salinity profile for this column of sea ice
-@inline function generate_S(S, N_i)
-
-    for k in 0:N_i
-        z      = k / N_i
-        S[k+1] = 0.5 * S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
     end
 
     return nothing
