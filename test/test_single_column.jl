@@ -1,7 +1,7 @@
 # Written by Joseph Kump (josek97@utexas.edu)
 # Basic code that is just ice temperature in column, with no formulation or melting
 
-include("../src/column_physics/run_ice_adjoint.jl")
+include("../src/column_physics/run_ice_column_adjoint.jl")
 
 using Enzyme, Test, Printf, LinearAlgebra
 
