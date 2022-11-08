@@ -2,7 +2,7 @@
 # Adjoint method code for run_ice_inline.jl
 
 
-include("run_ice_inline.jl")
+include("run_ice_column.jl")
 
 using Enzyme
 
