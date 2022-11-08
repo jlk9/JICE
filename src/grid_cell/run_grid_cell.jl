@@ -6,7 +6,15 @@
 include("../column_physics/run_ice_inline.jl")
 include("./jicecell_struct.jl")
 
-#= Runs the model for a JICE Cell object
+#= Runs the model of a JICE Cell object
+
+=#
+function run_ice_cell(jice_cell)
+
+
+end
+
+#= Runs one step of the model for a JICE Cell object
 
 =#
 function run_cell_step(jice_cell, step)
@@ -25,6 +33,12 @@ function run_cell_step(jice_cell, step)
                         jice_cell.atm.c_u, jice_cell.atm.c_Θ, jice_cell.atm.c_q, jice_cell.atm.atm_u_star, jice_cell.atm.U_a,
                         jcolumn.T_n, jcolumn.T_nplus, step)
 
+        # Update T_n and store current temps and thicknesses:
+        jcolumn.T_n[:] = jcolumn.T_nplus
+        jcolumn.H      = sum(jcolumn.Δh)
+
+        jcolumn.T_array[:, step+1] = jcolumn.T_n
+        jcolumn.Δh_array[:,step+1] = jcolumn.Δh
 
     end
 
