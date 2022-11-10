@@ -14,6 +14,16 @@ const L_0    = 334000.0 # J / kg    latent heat of fusion of fresh ice
 const μ      = 0.054    # deg/ppt   liquidus ratio between the freezing temperature and salinity of brine
 const S_max  = 3.2      # ppt       maximum salinity of sea ice
 const ahmax  = 0.3      # m         thickness above which albedo is constant
+const α_o    = 0.06     #           ocean albedo
+
+const α_icev    = 0.78  # visible ice albedo for h > ahmax
+const α_icei    = 0.36  # near-ir ice albedo for h > ahmax
+const α_snowv   = 0.98  # cold snow albedo, visible
+const α_snowi   = 0.70  # cold snow albedo, near IR
+
+const dα_mlt    = -0.075 # albedo change for temp change of 1 degree for ice
+const dα_mltv   = -0.1 # albedo change for temp change of 1 degree for snow, visible
+const dα_mlti   = -0.15 # albedo change for temp change of 1 degree for snow, infrared
 
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
@@ -73,12 +83,15 @@ mutable struct JICEColumn
     Δt::Float64
     u_star::Float64
     T_w::Float64
-    α::Float64
 
     T_n::Vector{Float64}
 
     # Variables that are created based on the above:
-    # Top layer fluxes
+    α_vdr::Float64
+    α_idr::Float64
+    α_vdf::Float64
+    α_idf::Float64
+
     T_nplus::Vector{Float64}
     F_0::Vector{Float64}
     dF_0::Vector{Float64}
@@ -121,7 +134,8 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u
         Δh[k+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, T_nplus, F_0, dF_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w,
+                        T_0, 0.0, 0.0, 0.0, 0.0, T_nplus, F_0, dF_0,
                         Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
@@ -131,7 +145,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u
     generate_S(jcolumn.S, jcolumn.N_i)
     
     # TODO: more detailed implementation of α
-    jcolumn.α = 0.7
+    generate_α(jcolumn)
                 
     jcolumn.T_array[:, 1] = jcolumn.T_n
     jcolumn.Δh_array[:,1] = jcolumn.Δh
@@ -191,4 +205,47 @@ end
     end
 
     return nothing
+end
+
+# Computes the albedo for this column based on its ice and snow layers, assumed to be constant throughout
+# model run (at least for now)
+function generate_α(jcolumn)
+
+    # Get the albedo values for bare ice:
+    fh      = min(atan(4.0jcolumn.H_i)/atan(4.0ahmax), 1.0)
+    albo    = α_o*(1.0-fh)
+    alvdfni = α_icev*fh + albo
+    alidfni = α_icei*fh + albo
+
+    # Temperature dependence component:
+    dTs      = -jcolumn.T_n[1]
+    fT       = min(dTs - 1.0, 0.0)
+    alvdfni -= dα_mlt*fT
+    alidfni -= dα_mlt*fT
+
+    # Prevent negative albedos:
+    alvdfni = max(alvdfni, α_o)
+    alidfni = max(alidfni, α_o)
+
+    # Snow albedo:
+    alvdfns = α_snowv - dα_mltv*fT
+    alidfns = α_snowi - dα_mlti*fT
+
+    # Direct albedos (same as diffuse albedos for now)
+    alvdrni = alvdfni
+    alidrni = alidfni
+    alvdrns = alvdfns
+    alidrns = alidfns
+
+    # Compute area of ice covered by snow:
+    area_snow = 0.0
+    if jcolumn.H_s > puny
+        area_snow = jcolumn.H_s / (jcolumn.H_s + 0.02)
+    end
+
+    # Now computing the visible and infrared diffuse and direct albedos, weighted by area of snow cover
+    jcolumn.α_vdr = alvdrni*(1.0-area_snow) + alvdrns*area_snow
+    jcolumn.α_idr = alidrni*(1.0-area_snow) + alidrns*area_snow
+    jcolumn.α_vdf = alvdfni*(1.0-area_snow) + alvdfns*area_snow
+    jcolumn.α_idf = alidfni*(1.0-area_snow) + alidfns*area_snow
 end

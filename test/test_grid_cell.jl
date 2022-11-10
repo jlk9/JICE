@@ -3,9 +3,9 @@
 
 include("../src/grid_cell/run_grid_cell.jl")
 
-function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
-    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
     run_ice_cell(jcell)
 
@@ -31,14 +31,18 @@ T_w         = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 areas       = [0.2, 0.8]
 
 # "Educated" guess for some normal atmospheric values
-F_Ld  = 10.0
-F_sw  = 120.0 
-T_a   = -34.0
-Θ_a   = T_a*(1000.0/1045.6)^0.286
-ρ_a   = 1.4224
-Q_a   = 0.005 #?
-c_p   = 0.7171
-U_a   = zeros(Float64, 3)
+F_Ld    = 10.0
+F_SWvdr = 120.0
+F_SWidr = 0.0
+F_SWvdf = 0.0
+F_SWidf = 0.0
+T_a     = -34.0
+Θ_a     = T_a*(1000.0/1045.6)^0.286
+ρ_a     = 1.4224
+Q_a     = 0.005 #?
+c_p     = 0.7171
+U_a     = zeros(Float64, 3)
 
 println("Testing cell run...")
-test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols,
+              F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
