@@ -27,7 +27,7 @@ function run_cell_step(jcell, step)
 
         jcolumn = jcell.columns[k]
 
-        run_column_step(jcolumn.N_i, jcolumn.N_t, jcolumn.H, jcolumn.T_frz, jcolumn.i_0, jcolumn.κ_i, jcolumn.Δt,
+        run_column_step(jcolumn.N_i, jcolumn.N_t, jcolumn.H_i, jcolumn.T_frz, jcolumn.i_0, jcolumn.κ_i, jcolumn.Δt,
                         jcolumn.u_star, jcolumn.T_w, jcolumn.α, jcolumn.F_0, jcolumn.dF_0,
                         jcolumn.Δh, jcolumn.Δh̄, jcolumn.S, jcolumn.c_i, jcolumn.K, jcolumn.K̄, jcolumn.I_pen, jcolumn.q_i,
                         jcolumn.q_inew, jcolumn.z_old, jcolumn.z_new, jcolumn.maindiag,
@@ -38,7 +38,7 @@ function run_cell_step(jcell, step)
 
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
-        jcolumn.H      = sum(jcolumn.Δh)
+        jcolumn.H_i    = sum(jcolumn.Δh)
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh

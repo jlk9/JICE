@@ -3,9 +3,9 @@
 
 include("../src/grid_cell/run_grid_cell.jl")
 
-function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, H_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
-    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, H_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
     run_ice_cell(jcell)
 
@@ -16,9 +16,11 @@ function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, H_cols, i_0_cols, κ_i_co
 
 end
 
-N_i_cols    = [3, 5]
 N_t         = 4
-H_cols      = [1.1, 2.0]
+N_i_cols    = [3, 5]
+N_s_cols    = [0, 0]
+H_i_cols    = [1.1, 2.0]
+H_s_cols    = [0.0, 0.0]
 T_frz       = 271.35 - 273.15
 i_0_cols    = [0.7, 0.7]
 κ_i_cols    = [1.4, 1.4]
@@ -39,4 +41,4 @@ c_p   = 0.7171
 U_a   = zeros(Float64, 3)
 
 println("Testing cell run...")
-test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, H_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_Ld, F_sw, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)

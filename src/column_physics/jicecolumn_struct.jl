@@ -20,9 +20,11 @@ const Tsf_errmax = 0.01     # For numerical test of convergence
 
 #= JICEColumn struct
 Properties:
-    N_i    (dim'less)   number of ice layers, int (we consider the surface "skin layer")
     N_t    (dim'less)   number of time steps, int
-    H      (m)          total ice thickness, float
+    N_i    (dim'less)   number of ice layers, int
+    N_s    (dim'less)   number of snow layers, int
+    H_i    (m)          total ice thickness, float
+    H_s    (m)          total snow thickness, float
     T_frz  (K)          freezing point of water at salinity S, float
     i_0    (W m^-2)     the penetrating solar flux reduction at the top surface, float
     κ_i    ()           extinction coefficient, float
@@ -59,10 +61,12 @@ Properties:
 mutable struct JICEColumn
 
     # Variables that must be provided to initialize the model
-    N_i::Int64
     N_t::Int64
+    N_i::Int64
+    N_s::Int64
 
-    H::Float64
+    H_i::Float64
+    H_s::Float64
     T_frz::Float64
     i_0::Float64
     κ_i::Float64
@@ -108,16 +112,16 @@ mutable struct JICEColumn
 end
 
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
+function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
 
     T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
     # Get initial thicknesses of each layer:
     for k in 1:N_i
-        Δh[k+1] = H / N_i
+        Δh[k+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_i, N_t, H, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, T_nplus, F_0, dF_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, 0.0, T_0, T_nplus, F_0, dF_0,
                         Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
