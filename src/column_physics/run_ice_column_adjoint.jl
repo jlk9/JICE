@@ -79,6 +79,11 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂dF_s     = zeros(Float64, jcmodel.N_t)
     ∂f_∂dF_l     = zeros(Float64, jcmodel.N_t)
 
+    ∂f_∂α_vdr = zeros(Float64, 2)
+    ∂f_∂α_idr = zeros(Float64, 2)
+    ∂f_∂α_vdf = zeros(Float64, 2)
+    ∂f_∂α_idf = zeros(Float64, 2)
+
     ∂f_∂c_u        = zeros(Float64, 1)
     ∂f_∂c_Θ        = zeros(Float64, 1)
     ∂f_∂c_q        = zeros(Float64, 1)
@@ -87,10 +92,11 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
 
 
     autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
-            Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
+            Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.H_s), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
             Const(jcmodel.κ_i), Const(jcmodel.Δt), Const(jcmodel.u_star),
             Const(jcmodel.T_w),
-            Const(jcmodel.α_vdr), Const(jcmodel.α_idr), Const(jcmodel.α_vdf), Const(jcmodel.α_idf),
+            Duplicated(jcmodel.α_vdr, ∂f_∂α_vdr), Duplicated(jcmodel.α_idr, ∂f_∂α_idr),
+            Duplicated(jcmodel.α_vdf, ∂f_∂α_vdf), Duplicated(jcmodel.α_idf, ∂f_∂α_idf),
             Duplicated(jcmodel.F_0, ∂f_∂F_0), Duplicated(jcmodel.dF_0, ∂f_∂dF_0),
             Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄),
             Duplicated(jcmodel.S, ∂f_∂S), Duplicated(jcmodel.c_i, ∂f_∂c_i),
@@ -139,6 +145,11 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂dF_s     = zeros(Float64, jcmodel.N_t)
     ∂f_∂dF_l     = zeros(Float64, jcmodel.N_t)
 
+    ∂f_∂α_vdr = zeros(Float64, 2)
+    ∂f_∂α_idr = zeros(Float64, 2)
+    ∂f_∂α_vdf = zeros(Float64, 2)
+    ∂f_∂α_idf = zeros(Float64, 2)
+
     ∂f_∂c_u        = zeros(Float64, 1)
     ∂f_∂c_Θ        = zeros(Float64, 1)
     ∂f_∂c_q        = zeros(Float64, 1)
@@ -147,10 +158,11 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
 
 
     ∂f_∂T_w = autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
-                Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
+                Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.H_s), Const(jcmodel.T_frz), Const(jcmodel.i_0), 
                 Const(jcmodel.κ_i), Const(jcmodel.Δt), Const(jcmodel.u_star),
                 Active(jcmodel.T_w),
-                Const(jcmodel.α_vdr), Const(jcmodel.α_idr), Const(jcmodel.α_vdf), Const(jcmodel.α_idf),
+                Duplicated(jcmodel.α_vdr, ∂f_∂α_vdr), Duplicated(jcmodel.α_idr, ∂f_∂α_idr),
+                Duplicated(jcmodel.α_vdf, ∂f_∂α_vdf), Duplicated(jcmodel.α_idf, ∂f_∂α_idf),
                 Duplicated(jcmodel.F_0, ∂f_∂F_0), Duplicated(jcmodel.dF_0, ∂f_∂dF_0),
                 Duplicated(jcmodel.Δh_array[:,step], ∂f_∂h), Duplicated(jcmodel.Δh̄, ∂f_∂h̄),
                 Duplicated(jcmodel.S, ∂f_∂S), Duplicated(jcmodel.c_i, ∂f_∂c_i),

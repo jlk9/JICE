@@ -3,17 +3,36 @@
 # the ATModel struct
 
 # Computes the (constant) atmospheric flux affecting the model
-@inline function step_surface_flux(α, i_0, T_sfc, H, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, F_sw, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
+@inline function step_surface_flux(α_vdr, α_idr, α_vdf, α_idf, i_0, T_sfc, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+                                   F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
 
     # Compute atmospheric fluxes dependent on ice:
-    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H, step)
-    
+    set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H_i, step)
 
-    # Reduce shortwave flux with albedo
-    #α = 0.7 # CHANGE TO NOT PRESET later
+    # Get the fractional snow cover:
+    area_snow = 0.0
+    if H_s > puny
+        area_snow = H_s / (H_s+0.02)
+    end
+    
+    # Reduce shortwave fluxes with albedo, getting absorbed shortwave fluxes.
+    # Note that the albedo terms include ice and snow components:
+    F_SWabsv = F_SWvdr * ((1.0-α_vdr[1])*(1.0-area_snow) + (1.0-α_vdr[2])*area_snow) + F_SWvdf * ((1.0-α_vdf[1])*(1.0-area_snow) + (1.0-α_vdf[2])*area_snow)
+    F_SWabsi = F_SWidr * ((1.0-α_idr[1])*(1.0-area_snow) + (1.0-α_idr[2])*area_snow) + F_SWidf * ((1.0-α_idf[1])*(1.0-area_snow) + (1.0-α_idf[2])*area_snow)
+    F_SWabs  = F_SWabsv + F_SWabsi
+
+    F_SWpenvdr = F_SWvdr * (1.0-α_vdr[1]) * (1.0-area_snow) * i0vis
+    F_SWpenvdf = F_SWvdf * (1.0-α_vdf[1]) * (1.0-area_snow) * i0vis
+
+    # The total penetrating SW radiation, only visible flux that enters the ice penetrates
+    F_SWpen = F_SWpenvdr + F_SWpenvdf
+    # This is the SW surface flux, which is added to F_0:
+    F_SWsfc = F_SWabs - F_SWpen
+    
+    # TODO: Break up F_SWpen here to determine what goes into I_pen
 
     # Now compute total surface flux:
-    F_0[step] = (1-α)*i_0*F_sw + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
+    F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
     # And now compute derivative of flux:
     dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
 

@@ -25,6 +25,8 @@ const dα_mlt    = -0.075 # albedo change for temp change of 1 degree for ice
 const dα_mltv   = -0.1 # albedo change for temp change of 1 degree for snow, visible
 const dα_mlti   = -0.15 # albedo change for temp change of 1 degree for snow, infrared
 
+const i0vis     = 0.7   # fraction of penetrating solar radiation
+
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
 
@@ -41,7 +43,10 @@ Properties:
     Δt     (sec)        size of time step, float
     u_star ()           friction velocity, float
     T_w    (K)          temperature of sea surface
-    α      ()           albedo, float
+    α_vdr  ()           visible direct albedo, ice and snow
+    α_idr  ()           infrared direct albedo, ice and snow
+    α_vdf  ()           visible diffuse albedo, ice and snow
+    α_idf  ()           infrared diffuse albedo, ice and snow
     T_0    (C)          initial temps, array of floats (length N_i+1, including skin layer)
     F_0    (W/m^2)      total heat flux at surface, array of floats
     dF_0   (W/m^2 C)    derivative total heat flux at surface, array of floats
@@ -87,10 +92,10 @@ mutable struct JICEColumn
     T_n::Vector{Float64}
 
     # Variables that are created based on the above:
-    α_vdr::Float64
-    α_idr::Float64
-    α_vdf::Float64
-    α_idf::Float64
+    α_vdr::Vector{Float64}
+    α_idr::Vector{Float64}
+    α_vdf::Vector{Float64}
+    α_idf::Vector{Float64}
 
     T_nplus::Vector{Float64}
     F_0::Vector{Float64}
@@ -134,8 +139,8 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u
         Δh[k+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w,
-                        T_0, 0.0, 0.0, 0.0, 0.0, T_nplus, F_0, dF_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
+                        zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
                         Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
@@ -207,45 +212,49 @@ end
     return nothing
 end
 
-# Computes the albedo for this column based on its ice and snow layers, assumed to be constant throughout
+# Computes the albedo for this column's ice and snow, assumed to be constant throughout
 # model run (at least for now)
 function generate_α(jcolumn)
 
     # Get the albedo values for bare ice:
     fh      = min(atan(4.0jcolumn.H_i)/atan(4.0ahmax), 1.0)
     albo    = α_o*(1.0-fh)
-    alvdfni = α_icev*fh + albo
-    alidfni = α_icei*fh + albo
+    jcolumn.α_vdf[1] = α_icev*fh + albo
+    jcolumn.α_idf[1] = α_icei*fh + albo
 
     # Temperature dependence component:
     dTs      = -jcolumn.T_n[1]
     fT       = min(dTs - 1.0, 0.0)
-    alvdfni -= dα_mlt*fT
-    alidfni -= dα_mlt*fT
+    jcolumn.α_vdf[1] -= dα_mlt*fT
+    jcolumn.α_idf[1] -= dα_mlt*fT
 
     # Prevent negative albedos:
-    alvdfni = max(alvdfni, α_o)
-    alidfni = max(alidfni, α_o)
+    jcolumn.α_vdf[1] = max(jcolumn.α_vdf[1], α_o)
+    jcolumn.α_idf[1] = max(jcolumn.α_idf[1], α_o)
 
     # Snow albedo:
-    alvdfns = α_snowv - dα_mltv*fT
-    alidfns = α_snowi - dα_mlti*fT
+    jcolumn.α_vdf[2] = α_snowv - dα_mltv*fT
+    jcolumn.α_idf[2] = α_snowi - dα_mlti*fT
 
     # Direct albedos (same as diffuse albedos for now)
-    alvdrni = alvdfni
-    alidrni = alidfni
-    alvdrns = alvdfns
-    alidrns = alidfns
+    jcolumn.α_vdr[1] = jcolumn.α_vdf[1]
+    jcolumn.α_idr[1] = jcolumn.α_idf[1]
+    jcolumn.α_vdr[2] = jcolumn.α_vdf[2]
+    jcolumn.α_idr[2] = jcolumn.α_idf[2]
 
+    #=
     # Compute area of ice covered by snow:
     area_snow = 0.0
     if jcolumn.H_s > puny
         area_snow = jcolumn.H_s / (jcolumn.H_s + 0.02)
     end
+    
 
     # Now computing the visible and infrared diffuse and direct albedos, weighted by area of snow cover
     jcolumn.α_vdr = alvdrni*(1.0-area_snow) + alvdrns*area_snow
     jcolumn.α_idr = alidrni*(1.0-area_snow) + alidrns*area_snow
     jcolumn.α_vdf = alvdfni*(1.0-area_snow) + alvdfns*area_snow
     jcolumn.α_idf = alidfni*(1.0-area_snow) + alidfns*area_snow
+
+    =#
 end
