@@ -65,7 +65,7 @@ end
         maindiag[k]  = 1 + η_k*(K̄[k-1] + K̄[k])
         subdiag[k-1] = -η_k*K̄[k-1]
         supdiag[k]   = -η_k*K̄[k]
-        rhs[k]      += η_k*I_pen[k]
+        rhs[k]      += η_k*I_pen[k-1]
     end
 
     # Top surface, based on (50) in science guide

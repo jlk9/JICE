@@ -11,6 +11,7 @@ const c_0    = 2106.0   # J/kg/K    specific heat of fresh ice
 const c_w    = 3900.0   # J kg K    specific heat of seawater (estimate)
 const c_h    = 0.006    #           heat transfer coefficient
 const L_0    = 334000.0 # J / kg    latent heat of fusion of fresh ice
+const κ_i    = 1.4      #           extinction coefficient
 const μ      = 0.054    # deg/ppt   liquidus ratio between the freezing temperature and salinity of brine
 const S_max  = 3.2      # ppt       maximum salinity of sea ice
 const ahmax  = 0.3      # m         thickness above which albedo is constant
@@ -22,10 +23,10 @@ const α_snowv   = 0.98  # cold snow albedo, visible
 const α_snowi   = 0.70  # cold snow albedo, near IR
 
 const dα_mlt    = -0.075 # albedo change for temp change of 1 degree for ice
-const dα_mltv   = -0.1 # albedo change for temp change of 1 degree for snow, visible
-const dα_mlti   = -0.15 # albedo change for temp change of 1 degree for snow, infrared
+const dα_mltv   = -0.1   # albedo change for temp change of 1 degree for snow, visible
+const dα_mlti   = -0.15  # albedo change for temp change of 1 degree for snow, infrared
 
-const i0vis     = 0.7   # fraction of penetrating solar radiation
+const i0vis     = 0.7   # fraction of penetrating solar radiation at top surface
 
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
@@ -38,8 +39,6 @@ Properties:
     H_i    (m)          total ice thickness, float
     H_s    (m)          total snow thickness, float
     T_frz  (K)          freezing point of water at salinity S, float
-    i_0    (W m^-2)     the penetrating solar flux reduction at the top surface, float
-    κ_i    ()           extinction coefficient, float
     Δt     (sec)        size of time step, float
     u_star ()           friction velocity, float
     T_w    (K)          temperature of sea surface
@@ -83,8 +82,6 @@ mutable struct JICEColumn
     H_i::Float64
     H_s::Float64
     T_frz::Float64
-    i_0::Float64
-    κ_i::Float64
     Δt::Float64
     u_star::Float64
     T_w::Float64
@@ -130,7 +127,7 @@ mutable struct JICEColumn
 end
 
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0)
+function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
     T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
 
@@ -139,7 +136,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u
         Δh[k+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, i_0, κ_i, Δt, u_star, T_w, T_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                         zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
                         Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
@@ -175,7 +172,7 @@ function allocate_memory(N_i, N_t)
     c_i    = zeros(Float64, N_i+1)
     K      = zeros(Float64, N_i+1)
     K̄      = zeros(Float64, N_i)
-    I_pen  = zeros(Float64, N_i+1)
+    I_pen  = zeros(Float64, N_i)
     q_i    = zeros(Float64, N_i+1)
     q_inew = zeros(Float64, N_i+1)
     z_old  = zeros(Float64, N_i+1)

@@ -3,9 +3,9 @@
 
 include("../src/grid_cell/run_grid_cell.jl")
 
-function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
-    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
+    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)
 
     run_ice_cell(jcell)
 
@@ -22,9 +22,7 @@ N_s_cols    = [0, 0]
 H_i_cols    = [1.1, 2.0]
 H_s_cols    = [0.0, 0.0]
 T_frz       = 271.35 - 273.15
-i_0_cols    = [0.7, 0.7]
-κ_i_cols    = [1.4, 1.4]
-T_0_cols    = [0 .- [14.75, 12.5, 8, 3.5], 0 .- [21.25, 19.0, 14.5, 10.0, 5.5, 1.0]]
+T_0_cols    = [0 .- [14.75, 12.5, 8, 3.5], 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]]
 Δt          = 1.0
 u_star_cols = [0.0005, 0.0005] # recommended minimum value of u_star in CICE
 T_w         = 274.47 - 273.15 # typical temp in C for sea surface in arctic
@@ -44,5 +42,5 @@ c_p     = 0.7171
 U_a     = zeros(Float64, 3)
 
 println("Testing cell run...")
-test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, i_0_cols, κ_i_cols, u_star_cols, T_0_cols,
+test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, areas)

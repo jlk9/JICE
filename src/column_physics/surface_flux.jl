@@ -3,8 +3,8 @@
 # the ATModel struct
 
 # Computes the (constant) atmospheric flux affecting the model
-@inline function step_surface_flux(α_vdr, α_idr, α_vdf, α_idf, i_0, T_sfc, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
-                                   F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
+@inline function step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+                                   F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
 
     # Compute atmospheric fluxes dependent on ice:
     set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H_i, step)
@@ -30,6 +30,15 @@
     F_SWsfc = F_SWabs - F_SWpen
     
     # TODO: Break up F_SWpen here to determine what goes into I_pen
+    # Transmittance at the top of the ice:
+    trantop = 1.0
+    tranbot = 0.0
+    for k in 1:N_i
+        tranbot  = exp(-κ_i*(H_i/N_i)*k)
+        I_pen[k] = F_SWpen * (trantop - tranbot)
+        trantop  = tranbot
+    end
+    
 
     # Now compute total surface flux:
     F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
