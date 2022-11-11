@@ -27,8 +27,8 @@ function run_cell_step(jcell, step)
 
         jcolumn = jcell.columns[k]
 
-        run_column_step(jcolumn.N_i, jcolumn.N_t, jcolumn.H_i, jcolumn.T_frz, jcolumn.i_0, jcolumn.κ_i, jcolumn.Δt,
-                        jcolumn.u_star, jcolumn.T_w,
+        run_column_step(jcolumn.N_i, jcolumn.N_t, jcolumn.H_i, jcolumn.H_s, jcolumn.T_frz, jcolumn.i_0, jcolumn.κ_i,
+                        jcolumn.Δt, jcolumn.u_star, jcolumn.T_w,
                         jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.F_0, jcolumn.dF_0,
                         jcolumn.Δh, jcolumn.Δh̄, jcolumn.S, jcolumn.c_i, jcolumn.K, jcolumn.K̄, jcolumn.I_pen, jcolumn.q_i,
                         jcolumn.q_inew, jcolumn.z_old, jcolumn.z_new, jcolumn.maindiag,
