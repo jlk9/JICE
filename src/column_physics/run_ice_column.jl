@@ -55,6 +55,9 @@ end
                                 c_u, c_Θ, c_q, atm_u_star, U_a,
                                 T_n, T_nplus, step)
 
+    # Computes the current albedo
+    generate_α(H_i, α_vdr, α_idr, α_vdf, α_idf, T_n[1])
+
     # Computes the surface fluxes at this time step
     step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_n[1], H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                         F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
@@ -68,17 +71,4 @@ end
     step_growth_melt(N_i, S, T_frz, Δh, T_nplus, K, q_i, q_inew,
                     z_old, z_new, Δt, u_star, T_w)
 
-end
-
-# Gets the penetrating solar radiation for this column of sea ice
-# This approach is no longer used, since I_pen is now computed in
-# step_surface_flux
-@inline function generate_I_pen(I_pen, I_0, H_i, N_i)
-
-    for k in 1:N_i
-        z      = k / N_i
-        I_pen[k] = I_0*exp(-κ_i*z*H_i)
-    end
-
-    return nothing
 end

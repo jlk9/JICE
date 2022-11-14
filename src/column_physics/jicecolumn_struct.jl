@@ -7,9 +7,11 @@ const T_mlt0 = 273.15   # K         melting point of freshwater
 const ρ_0    = 917.0    # kg/m^3    density of fresh (pure) ice
 const ρ_i    = 917.0    # kg/m^3    density of sea ice
 const ρ_w    = 1025.0   # kg/m^3    density of seawater (based on common estimate)
+const ρ_s    = 330.0    # kg/m^3    density of snow
 const c_0    = 2106.0   # J/kg/K    specific heat of fresh ice
 const c_w    = 3900.0   # J kg K    specific heat of seawater (estimate)
 const c_h    = 0.006    #           heat transfer coefficient
+const K_s    = 0.3      # W/m/deg   thermal conductivity of snow
 const L_0    = 334000.0 # J / kg    latent heat of fusion of fresh ice
 const κ_i    = 1.4      #           extinction coefficient
 const μ      = 0.054    # deg/ppt   liquidus ratio between the freezing temperature and salinity of brine
@@ -147,7 +149,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
     generate_S(jcolumn.S, jcolumn.N_i)
     
     # TODO: more detailed implementation of α
-    generate_α(jcolumn)
+    #generate_α(jcolumn.H_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1])
                 
     jcolumn.T_array[:, 1] = jcolumn.T_n
     jcolumn.Δh_array[:,1] = jcolumn.Δh
@@ -207,51 +209,4 @@ end
     end
 
     return nothing
-end
-
-# Computes the albedo for this column's ice and snow, assumed to be constant throughout
-# model run (at least for now)
-function generate_α(jcolumn)
-
-    # Get the albedo values for bare ice:
-    fh      = min(atan(4.0jcolumn.H_i)/atan(4.0ahmax), 1.0)
-    albo    = α_o*(1.0-fh)
-    jcolumn.α_vdf[1] = α_icev*fh + albo
-    jcolumn.α_idf[1] = α_icei*fh + albo
-
-    # Temperature dependence component:
-    dTs      = -jcolumn.T_n[1]
-    fT       = min(dTs - 1.0, 0.0)
-    jcolumn.α_vdf[1] -= dα_mlt*fT
-    jcolumn.α_idf[1] -= dα_mlt*fT
-
-    # Prevent negative albedos:
-    jcolumn.α_vdf[1] = max(jcolumn.α_vdf[1], α_o)
-    jcolumn.α_idf[1] = max(jcolumn.α_idf[1], α_o)
-
-    # Snow albedo:
-    jcolumn.α_vdf[2] = α_snowv - dα_mltv*fT
-    jcolumn.α_idf[2] = α_snowi - dα_mlti*fT
-
-    # Direct albedos (same as diffuse albedos for now)
-    jcolumn.α_vdr[1] = jcolumn.α_vdf[1]
-    jcolumn.α_idr[1] = jcolumn.α_idf[1]
-    jcolumn.α_vdr[2] = jcolumn.α_vdf[2]
-    jcolumn.α_idr[2] = jcolumn.α_idf[2]
-
-    #=
-    # Compute area of ice covered by snow:
-    area_snow = 0.0
-    if jcolumn.H_s > puny
-        area_snow = jcolumn.H_s / (jcolumn.H_s + 0.02)
-    end
-    
-
-    # Now computing the visible and infrared diffuse and direct albedos, weighted by area of snow cover
-    jcolumn.α_vdr = alvdrni*(1.0-area_snow) + alvdrns*area_snow
-    jcolumn.α_idr = alidrni*(1.0-area_snow) + alidrns*area_snow
-    jcolumn.α_vdf = alvdfni*(1.0-area_snow) + alvdfns*area_snow
-    jcolumn.α_idf = alidfni*(1.0-area_snow) + alidfns*area_snow
-
-    =#
 end

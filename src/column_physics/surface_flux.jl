@@ -38,6 +38,8 @@
         I_pen[k] = F_SWpen * (trantop - tranbot)
         trantop  = tranbot
     end
+
+    # TODO: want to compute dF_SWsfc. Can we use enzyme for this?
     
 
     # Now compute total surface flux:
@@ -117,6 +119,39 @@ end
     c_u[1] = c_u[1] / (1 + c_u[1]*(λ - ψ_m)/κ)
     c_Θ[1] = c_Θ[1] / (1 + c_Θ[1]*(λ - ψ_s)/κ)
     c_q[1] = c_Θ[1]
+
+    return nothing
+end
+
+# Computes the albedo for this column's ice and snow, assumed to be constant throughout
+# model run (at least for now)
+@inline function generate_α(H_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc)
+
+    # Get the albedo values for bare ice:
+    fh       = min(atan(4.0H_i)/atan(4.0ahmax), 1.0)
+    albo     = α_o*(1.0-fh)
+    α_vdf[1] = α_icev*fh + albo
+    α_idf[1] = α_icei*fh + albo
+
+    # Temperature dependence component:
+    dTs       = -T_sfc
+    fT        = min(dTs - 1.0, 0.0)
+    α_vdf[1] -= dα_mlt*fT
+    α_idf[1] -= dα_mlt*fT
+
+    # Prevent negative albedos:
+    α_vdf[1] = max(α_vdf[1], α_o)
+    α_idf[1] = max(α_idf[1], α_o)
+
+    # Snow albedo:
+    α_vdf[2] = α_snowv - dα_mltv*fT
+    α_idf[2] = α_snowi - dα_mlti*fT
+
+    # Direct albedos (same as diffuse albedos for now)
+    α_vdr[1] = α_vdf[1]
+    α_idr[1] = α_idf[1]
+    α_vdr[2] = α_vdf[2]
+    α_idr[2] = α_idf[2]
 
     return nothing
 end
