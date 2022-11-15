@@ -54,7 +54,7 @@ end
 
     # Getting K̄ (length N_i):
     for k in 1:(N_i+N_s)
-        K̄[k] = (2*K[k]*K[k+1]) / (Δh[k]*K[k] + Δh[k+1]*K[k+1])
+        K̄[k] = (2*K[k]*K[k+1]) / (Δh[k+1]*K[k] + Δh[k]*K[k+1])
     end
 
     # Top surface, based on (50) in science guide

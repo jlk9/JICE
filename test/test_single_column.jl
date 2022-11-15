@@ -41,9 +41,11 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println("Thicknesses over time are: (should be close to initial in bottom)")
     println(jcmodel.Δh_array[:,N_t+1])
 
+    println(jcmodel.F_0)
+
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
-    @time run_ice_column(jcmodel, atmodel)
+    #@time run_ice_column(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
 end
@@ -286,14 +288,14 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
     println(rel_errors)
 end
 
-N_t    = 60
+N_t    = 1
 N_i    = 5
 N_s    = 0
 H_i    = 2.0
 H_s    = 0
 T_frz  = 271.35 - 273.15
 T_0    = 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
-Δt     = 60.0
+Δt     = 1
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 
@@ -335,13 +337,13 @@ println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
-N_t    = 100
+N_t    = 1
 N_i    = 5
 N_s    = 1
 H_i    = 2.0
 H_s    = 0.5
 T_frz  = 271.35 - 273.15
-T_0    = 0 .- [22.0, 22.0, 19.0, 14.5, 10.0, 5.5, 1.0]
+T_0    = 0 .- [20.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 Δt     = 1.0
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
@@ -349,7 +351,7 @@ T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
-T_0 = 0 .- [22.0, 22.0, 19.0, 14.5, 10.0, 5.5, 1.0]
+T_0 = 0 .- [20.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 N_t = 4 # other variables are same as before
 
 #test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
