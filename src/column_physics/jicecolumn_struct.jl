@@ -131,11 +131,14 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-    T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_t)
+    T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
 
-    # Get initial thicknesses of each layer:
+    # Get initial thicknesses of each snow and ice layer:
+    for k in 1:N_s
+        Δh[k+1] = H_s / N_s
+    end
     for k in 1:N_i
-        Δh[k+1] = H_i / N_i
+        Δh[k+N_s+1] = H_i / N_i
     end
 
     jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
@@ -158,31 +161,31 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(N_i, N_t)
+function allocate_memory(N_i, N_s, N_t)
 
-    T_nplus = zeros(Float64, N_i+1)
+    T_nplus = zeros(Float64, N_i+N_s+1)
 
     F_0  = zeros(Float64, N_t)
     dF_0 = zeros(Float64, N_t)
 
     # Getting Δh̄ (averages of adjacent thicknesses, length K)
-    Δh = zeros(Float64, N_i+1)
-    Δh̄ = zeros(Float64, N_i)
+    Δh = zeros(Float64, N_i+N_s+1)
+    Δh̄ = zeros(Float64, N_i+N_s)
 
     # Other intermediate data to keep:
-    S      = zeros(Float64, N_i+1)
-    c_i    = zeros(Float64, N_i+1)
-    K      = zeros(Float64, N_i+1)
-    K̄      = zeros(Float64, N_i)
+    S      = zeros(Float64, N_i)
+    c_i    = zeros(Float64, N_i+N_s+1)
+    K      = zeros(Float64, N_i+N_s+1)
+    K̄      = zeros(Float64, N_i+N_s)
     I_pen  = zeros(Float64, N_i)
-    q_i    = zeros(Float64, N_i+1)
-    q_inew = zeros(Float64, N_i+1)
+    q_i    = zeros(Float64, N_i)
+    q_inew = zeros(Float64, N_i)
     z_old  = zeros(Float64, N_i+1)
     z_new  = zeros(Float64, N_i+1)
 
-    maindiag = zeros(Float64, N_i+1)
-    subdiag  = zeros(Float64, N_i)
-    supdiag  = zeros(Float64, N_i)
+    maindiag = zeros(Float64, N_i+N_s+1)
+    subdiag  = zeros(Float64, N_i+N_s)
+    supdiag  = zeros(Float64, N_i+N_s)
 
     F_Lu = zeros(Float64, N_t)
     F_s  = zeros(Float64, N_t)
@@ -192,8 +195,8 @@ function allocate_memory(N_i, N_t)
     dF_s  = zeros(Float64, N_t)
     dF_l  = zeros(Float64, N_t)
 
-    T_array  = zeros(Float64, N_i+1, N_t+1)
-    Δh_array = zeros(Float64, N_i+1, N_t+1)
+    T_array  = zeros(Float64, N_i+N_s+1, N_t+1)
+    Δh_array = zeros(Float64, N_i+N_s+1, N_t+1)
 
     return T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
@@ -203,9 +206,9 @@ end
 # is constant
 @inline function generate_S(S, N_i)
 
-    for k in 0:N_i
+    for k in 1:N_i
         z      = k / N_i
-        S[k+1] = 0.5 * S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+        S[k] = 0.5 * S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
     end
 
     return nothing

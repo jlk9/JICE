@@ -58,20 +58,20 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     # Producing derivatives for inputs / intermdiate variables:
     ∂f_∂F_0      = zeros(Float64, jcmodel.N_t)
     ∂f_∂dF_0     = zeros(Float64, jcmodel.N_t)
-    ∂f_∂h̄        = zeros(Float64, jcmodel.N_i)
-    ∂f_∂S        = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂T_old    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂c_i      = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂K        = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂K̄        = zeros(Float64, jcmodel.N_i)
-    ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂q_inew   = zeros(Float64, jcmodel.N_i+1)
+    ∂f_∂h̄        = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂S        = zeros(Float64, jcmodel.N_i)
+    ∂f_∂T_old    = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂c_i      = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂K        = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂K̄        = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i)
+    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i)
+    ∂f_∂q_inew   = zeros(Float64, jcmodel.N_i)
     ∂f_∂z_old    = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂z_new    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i)
-    ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
+    ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
     ∂f_∂F_Lu     = zeros(Float64, jcmodel.N_t)
     ∂f_∂F_s      = zeros(Float64, jcmodel.N_t)
     ∂f_∂F_l      = zeros(Float64, jcmodel.N_t)
@@ -91,7 +91,7 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂U_a        = zeros(Float64, 3)
 
 
-    autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
+    autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_s), Const(jcmodel.N_t),
             Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.H_s), Const(jcmodel.T_frz),
             Const(jcmodel.Δt), Const(jcmodel.u_star), Const(jcmodel.T_w),
             Duplicated(jcmodel.α_vdr, ∂f_∂α_vdr), Duplicated(jcmodel.α_idr, ∂f_∂α_idr),
@@ -123,20 +123,20 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     # Producing derivatives for inputs / intermdiate variables:
     ∂f_∂F_0      = zeros(Float64, jcmodel.N_t)
     ∂f_∂dF_0     = zeros(Float64, jcmodel.N_t)
-    ∂f_∂h̄        = zeros(Float64, jcmodel.N_i)
-    ∂f_∂S        = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂T_old    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂c_i      = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂K        = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂K̄        = zeros(Float64, jcmodel.N_i)
-    ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂q_inew   = zeros(Float64, jcmodel.N_i+1)
+    ∂f_∂h̄        = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂S        = zeros(Float64, jcmodel.N_i)
+    ∂f_∂T_old    = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂c_i      = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂K        = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂K̄        = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂I_pen    = zeros(Float64, jcmodel.N_i)
+    ∂f_∂q_i      = zeros(Float64, jcmodel.N_i)
+    ∂f_∂q_inew   = zeros(Float64, jcmodel.N_i)
     ∂f_∂z_old    = zeros(Float64, jcmodel.N_i+1)
     ∂f_∂z_new    = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+1)
-    ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i)
-    ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i)
+    ∂f_∂maindiag = zeros(Float64, jcmodel.N_i+jcmodel.N_s+1)
+    ∂f_∂subdiag  = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
+    ∂f_∂supdiag  = zeros(Float64, jcmodel.N_i+jcmodel.N_s)
     ∂f_∂F_Lu     = zeros(Float64, jcmodel.N_t)
     ∂f_∂F_s      = zeros(Float64, jcmodel.N_t)
     ∂f_∂F_l      = zeros(Float64, jcmodel.N_t)
@@ -156,7 +156,7 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     ∂f_∂U_a        = zeros(Float64, 3)
 
 
-    ∂f_∂T_w = autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_t),
+    ∂f_∂T_w = autodiff(run_column_step, Const, Const(jcmodel.N_i), Const(jcmodel.N_s), Const(jcmodel.N_t),
                 Const(sum(jcmodel.Δh_array[:,step])), Const(jcmodel.H_s), Const(jcmodel.T_frz),
                 Const(jcmodel.Δt), Const(jcmodel.u_star), Active(jcmodel.T_w),
                 Duplicated(jcmodel.α_vdr, ∂f_∂α_vdr), Duplicated(jcmodel.α_idr, ∂f_∂α_idr),
