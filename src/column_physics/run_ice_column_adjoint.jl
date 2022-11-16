@@ -23,7 +23,6 @@ function run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
     end
 
     return ∂h, ∂T_old
-
 end
 
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
@@ -33,7 +32,7 @@ function run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
 
     # run one step of the adjoint function, for both T_w and h, T_old:
     ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, atmodel, jcmodel.N_t, ad_h, ad_T)
-    ∂T_w = run_ice_adjoint_Tw_step(jcmodel, atmodel, jcmodel.N_t, ad_h, ad_T)
+    ∂T_w       = run_ice_adjoint_Tw_step(jcmodel, atmodel, jcmodel.N_t, ad_h, ad_T)
 
     # then the rest back to the original time step:
     for j in (jcmodel.N_t-1):-1:1
@@ -42,8 +41,7 @@ function run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
         ad_T[:] = ∂T_old
 
         ∂h, ∂T_old = run_ice_adjoint_hT_step(jcmodel, atmodel, j, ad_h, ad_T)
-
-        ∂T_w += run_ice_adjoint_Tw_step(jcmodel, atmodel, j, ad_h, ad_T)
+        ∂T_w      += run_ice_adjoint_Tw_step(jcmodel, atmodel, j, ad_h, ad_T)
 
     end
 
@@ -51,9 +49,58 @@ function run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
 
 end
 
-# Runs the AD steps for computing how initial Δh and T_old affect changes in Δh and T_new
-# TODO: keep track of time step for flux
+# Runs the AD steps for computing how initial Δh and T_old affect changes in Δh and T_new.
+# It applies enzyme directly to the struct, which requires us to create a second (empty)
+# struct as the derivative
 function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_new)
+
+    # first we need to allocate d_jcmodel and d_atmodel:
+    d_jcmodel = initialize_JICEColumn(jcmodel.N_t, jcmodel.N_i, jcmodel.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcmodel.N_i+jcmodel.N_s+1))
+    d_atmodel = initialize_ATModel(jcmodel.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, 3))
+
+    # Want to reset some derivatives to 0:
+    d_jcmodel.S[:] = zeros(Float64, jcmodel.N_i)
+    d_jcmodel.N_t  = 0
+    d_jcmodel.N_i  = 0
+    d_jcmodel.N_s  = 0
+
+    d_jcmodel.T_nplus = ∂f_∂T_new
+    d_jcmodel.Δh      = ∂f_∂h
+
+    autodiff(run_column_step, Const, Duplicated(jcmodel, d_jcmodel), Duplicated(atmodel, d_atmodel), Const(step))
+
+    return d_jcmodel.Δh, d_jcmodel.T_n
+
+end
+
+# Runs the AD steps for computing how initial T_w affects changes in Δh and T_new
+# It applies enzyme directly to the struct, which requires us to create a second (empty)
+# struct as the derivative
+function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_new)
+
+    # first we need to allocate d_jcmodel and d_atmodel:
+    d_jcmodel = initialize_JICEColumn(jcmodel.N_t, jcmodel.N_i, jcmodel.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcmodel.N_i+jcmodel.N_s+1))
+    d_atmodel = initialize_ATModel(jcmodel.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, 3))
+
+    # Want to reset some derivatives to 0:
+    d_jcmodel.S[:] = zeros(Float64, jcmodel.N_i)
+    d_jcmodel.N_t  = 0
+    d_jcmodel.N_i  = 0
+    d_jcmodel.N_s  = 0
+
+    d_jcmodel.T_nplus = ∂f_∂T_new
+    d_jcmodel.Δh      = ∂f_∂h
+
+    autodiff(run_column_step, Const, Duplicated(jcmodel, d_jcmodel), Duplicated(atmodel, d_atmodel), Const(step))
+
+    return d_jcmodel.T_w
+
+end
+
+#=
+# Runs the AD steps for computing how initial Δh and T_old affect changes in Δh and T_new
+# OLD VERSION that applies enzyme on all the struct's separate fields
+function run_ice_adjoint_hT_step_old(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_new)
 
     # Producing derivatives for inputs / intermdiate variables:
     ∂f_∂F_0      = zeros(Float64, jcmodel.N_t)
@@ -117,8 +164,8 @@ function run_ice_adjoint_hT_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
 end
 
 # Runs the AD steps for computing how initial T_w affects changes in Δh and T_new
-# TODO: keep track of time step for flux
-function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_new)
+# OLD VERSION that applies enzyme on all the struct's separate fields
+function run_ice_adjoint_Tw_step_old(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_new)
 
     # Producing derivatives for inputs / intermdiate variables:
     ∂f_∂F_0      = zeros(Float64, jcmodel.N_t)
@@ -180,3 +227,4 @@ function run_ice_adjoint_Tw_step(jcmodel, atmodel, step, ∂f_∂h, ∂f_∂T_ne
 
     return ∂f_∂T_w[1]
 end
+=#

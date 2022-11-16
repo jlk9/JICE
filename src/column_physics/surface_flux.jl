@@ -42,8 +42,8 @@
     
 
     # Now compute total surface flux:
-    println(F_SWsfc)
-    println(F_Ld + F_Lu[step] + F_l[step] + F_s[step])
+    #println(F_SWsfc)
+    #println(F_Ld + F_Lu[step] + F_l[step] + F_s[step])
     F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
     # And now compute derivative of flux:
     dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
