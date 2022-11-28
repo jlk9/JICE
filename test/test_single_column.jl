@@ -344,11 +344,11 @@ println("")
 
 N_t    = 100
 N_i    = 5
-N_s    = 2
+N_s    = 1
 H_i    = 2.0
-H_s    = 0.1
+H_s    = 0.05
 T_frz  = 271.35 - 273.15
-T_0    = 0 .- [21.0, 20.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
+T_0    = 0 .- [21.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 Δt     = 1.0
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
@@ -356,7 +356,7 @@ T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
-T_0 = 0 .- [21.0, 20.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
+T_0 = 0 .- [21.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 N_t = 100 # other variables are same as before
 
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
