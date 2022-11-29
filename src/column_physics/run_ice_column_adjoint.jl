@@ -57,13 +57,13 @@ function run_ice_adjoint_hT_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_ne
     # first we need to allocate d_jcolumn and d_atmodel:
     d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))
     d_atmodel = initialize_ATModel(jcolumn.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, 3))
-
+    
     # Want to reset some derivatives to 0:
     d_jcolumn.S[:] = zeros(Float64, jcolumn.N_i)
     d_jcolumn.N_t  = 0
     d_jcolumn.N_i  = 0
     d_jcolumn.N_s  = 0
-
+    
     d_jcolumn.T_nplus = ∂f_∂T_new
     d_jcolumn.Δh      = ∂f_∂h
 

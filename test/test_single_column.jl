@@ -178,7 +178,7 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
     ad_h = zeros(Float64, N_i+N_s+1)
     ad_T = zeros(Float64, N_i+N_s+1)
     ad_T[N_i+N_s+1] = 1.0
-
+    
     ∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂h:")
@@ -291,14 +291,14 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
     println(rel_errors)
 end
 
-N_t    = 10
+N_t    = 100
 N_i    = 5
 N_s    = 0
 H_i    = 2.0
 H_s    = 0
 T_frz  = 271.35 - 273.15
 T_0    = 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
-Δt     = 1
+Δt     = 1.0
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 
@@ -318,7 +318,7 @@ U_a     = zeros(Float64, 3)
 println("TESTS WITH JUST ICE")
 println("")
 
-test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
 #=
@@ -328,17 +328,16 @@ println("")
 #test_run_ice_column_one_step(N_t, N_i, N_s, H_i, H_s, L, T_frz, Δt, u_star, T_w, T_0, 0.0, 0.0)
 println("")
 =#
-T_0  = 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
-N_t  = 100 # other variables are same as before
-#=
-test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+
+println("")
+test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 
-test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-=#
 
+println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
@@ -353,15 +352,12 @@ T_0    = 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 
-test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
-T_0    = 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
-N_t = 100 # other variables are same as before
-#=
-test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+println("")
+test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
-test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-=#

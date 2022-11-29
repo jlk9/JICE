@@ -3,10 +3,13 @@
 # and rebalances layers obeying conservation of energy.
 
 # Runs a single time step of the ice growth/melt in bottom layer and rebalancing
-@inline function step_growth_melt(N_i, N_s, S, T_frz, Δh, T_new, K, q, q_new, z_old, z_new, Δt, u_star, T_w)
+@inline function step_growth_melt(N_i, N_s, S, T_frz, Δh, T_new, K, K̄, q, q_new, z_old, z_new, Δt, u_star, T_w, F_0)
 
     # Updating ice enthalpy:
     generate_q_from_T(q, N_i, N_s, T_new, S)
+
+    # Updating top ice/snow thickness:
+    surface_ice_snow_change(T_new, q, K̄, F_0, Δh, Δt)
 
     # Updating bottom ice thickness:
     bottom_ice_change(N_i, N_s, Δh, T_new, q, K, T_frz, Δt, u_star, T_w)
@@ -60,10 +63,14 @@ end
 end
 
 # Computes the melt at the surface ice/snow, if such melting occurs
-@inline function surface_ice_snow_change(T_new, q, K̄)
+@inline function surface_ice_snow_change(T_new, q, K̄, F_0, Δh, Δt)
 
     # Get the conditional surface flux
     F_ct = K̄[1] * (T_new[1] - T_new[2])
+
+    δh = max((Δt*(F_0 - F_ct) / q[1]), 0.0)
+
+    Δh[2] -= δh
 
 end
 
@@ -102,7 +109,7 @@ end
     z_old[1] = 0.0
     z_new[1] = 0.0
     for k in 2:(N_s+1)
-        z_old[k] = Δh[k] + z_old[k]
+        z_old[k] = Δh[k] + z_old[k-1]
         z_new[k] = Δh_snew * (k-1)
     end
 
@@ -111,13 +118,18 @@ end
         q_new[k+1] = 0.0
         for m in 1:N_s
         
-            η_km            = min(z_old[m+1], z_new[k+1]) - max(z_old[m], z_new[k])
-            η_km            = max(η_km, 0.0)
+            η_km        = min(z_old[m+1], z_new[k+1]) - max(z_old[m], z_new[k])
+            η_km        = max(η_km, 0.0)
             q_new[k+1] += η_km*q[m+1]
         end
         q_new[k+1] /= Δh_snew
     end
 
+    # Now that we have q_new and Δh_snew, we can replace current q and Δh with these:
+    for k in 1:N_s
+        q[k+1]  = q_new[k+1]
+        Δh[k+1] = Δh_snew
+    end
 
     # NEXT, rebalance ice layers
 
