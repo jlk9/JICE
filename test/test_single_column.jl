@@ -41,7 +41,7 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println("Thicknesses over time are: (should be close to initial in bottom)")
     println(jcmodel.Δh_array[:,N_t+1])
 
-    println(jcmodel.F_0)
+    #println(jcmodel.F_0)
 
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
@@ -330,14 +330,14 @@ println("")
 =#
 T_0  = 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 N_t  = 100 # other variables are same as before
-
+#=
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 
 test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-
+=#
 
 println("NEXT, TESTS FEATURING SNOW")
 println("")
@@ -358,9 +358,10 @@ test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
 
 T_0 = 0 .- [21.0, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 N_t = 100 # other variables are same as before
-
+#=
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+=#
