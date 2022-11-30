@@ -10,19 +10,19 @@ using Enzyme
 function run_ice_column_adjoint_hT(jcolumn, atmodel, ad_h, ad_T)
 
     # run one step of the adjoint function:
-    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
+    d_jcol = run_ice_adjoint_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
 
     # then the rest back to the original time step:
     for j in (jcolumn.N_t-1):-1:1
 
-        ad_h[:] = ∂h
-        ad_T[:] = ∂T_old
+        ad_h[:] = d_jcol.Δh
+        ad_T[:] = d_jcol.T_n
 
-        ∂h, ∂T_old = run_ice_adjoint_hT_step(jcolumn, atmodel, j, ad_h, ad_T)
+        d_jcol = run_ice_adjoint_step(jcolumn, atmodel, j, ad_h, ad_T)
 
     end
 
-    return ∂h, ∂T_old
+    return d_jcol.Δh, d_jcol.T_n
 end
 
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
@@ -31,17 +31,17 @@ end
 function run_ice_column_adjoint_Tw(jcolumn, atmodel, ad_h, ad_T)
 
     # run one step of the adjoint function, for both T_w and h, T_old:
-    ∂h, ∂T_old = run_ice_adjoint_hT_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
-    ∂T_w       = run_ice_adjoint_Tw_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
+    d_jcol = run_ice_adjoint_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
+    ∂T_w   = d_jcol.T_w
 
     # then the rest back to the original time step:
     for j in (jcolumn.N_t-1):-1:1
 
-        ad_h[:] = ∂h
-        ad_T[:] = ∂T_old
+        ad_h[:] = d_jcol.Δh
+        ad_T[:] = d_jcol.T_n
 
-        ∂h, ∂T_old = run_ice_adjoint_hT_step(jcolumn, atmodel, j, ad_h, ad_T)
-        ∂T_w      += run_ice_adjoint_Tw_step(jcolumn, atmodel, j, ad_h, ad_T)
+        d_jcol     = run_ice_adjoint_step(jcolumn, atmodel, j, ad_h, ad_T)
+        ∂T_w      += d_jcol.T_w
 
     end
 
@@ -49,10 +49,10 @@ function run_ice_column_adjoint_Tw(jcolumn, atmodel, ad_h, ad_T)
 
 end
 
-# Runs the AD steps for computing how initial Δh and T_old affect changes in Δh and T_new.
+# Runs the AD steps for computing how initial variables affect changes in the outputs of our model, Δh and T_new.
 # It applies enzyme directly to the struct, which requires us to create a second (empty)
 # struct as the derivative
-function run_ice_adjoint_hT_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
+function run_ice_adjoint_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
 
     # first we need to allocate d_jcolumn and d_atmodel:
     d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))
@@ -69,32 +69,7 @@ function run_ice_adjoint_hT_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_ne
 
     autodiff(run_column_step, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel), Const(step))
 
-    return d_jcolumn.Δh, d_jcolumn.T_n
-
-end
-
-# Runs the AD steps for computing how initial T_w affects changes in Δh and T_new
-# It applies enzyme directly to the struct, which requires us to create a second (empty)
-# struct as the derivative
-function run_ice_adjoint_Tw_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
-
-    # first we need to allocate d_jcolumn and d_atmodel:
-    d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))
-    d_atmodel = initialize_ATModel(jcolumn.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, 3))
-
-    # Want to reset some derivatives to 0:
-    d_jcolumn.S[:] = zeros(Float64, jcolumn.N_i)
-    d_jcolumn.N_t  = 0
-    d_jcolumn.N_i  = 0
-    d_jcolumn.N_s  = 0
-
-    d_jcolumn.T_nplus = ∂f_∂T_new
-    d_jcolumn.Δh      = ∂f_∂h
-
-    autodiff(run_column_step, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel), Const(step))
-
-    return d_jcolumn.T_w
-
+    return d_jcolumn
 end
 
 #=
