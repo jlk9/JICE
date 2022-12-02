@@ -5,6 +5,7 @@
 
 include("../column_physics/run_ice_column.jl")
 include("./jicecell_struct.jl")
+include("linear_itd_change.jl")
 
 #= Runs the model of a JICE Cell object
 
@@ -23,7 +24,7 @@ end
 function run_cell_step(jcell, step)
 
     # Run one step for each column
-    for k in 1:length(jcell.areas)
+    for k in 1:N_cat
 
         jcolumn = jcell.columns[k]
 
@@ -38,7 +39,17 @@ function run_cell_step(jcell, step)
 
     end
 
-    # Apply horizontal transport between columns
+    # Apply horizontal transport between columns vis a linear map
+    # This is done with function linear_itd in icepack_therm_itd
+    linear_itd_change(jcell)
+
+
+    # Add new ice growing in ocean run_cell_step
+    # This isd done with add_new_ice in icepack_therm_itd
+
+
+    # Melt ice laterally
+    # This is done with lateral_melt in icepack_therm_itd
     
 
 end

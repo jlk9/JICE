@@ -3,9 +3,9 @@
 
 include("../src/grid_cell/run_grid_cell.jl")
 
-function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
+function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
 
-    jcell = initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
 
     run_ice_cell(jcell)
 
@@ -16,6 +16,7 @@ function test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_c
 
 end
 
+N_cat          = 2
 N_t            = 4
 N_i_cols       = [3, 5]
 N_s_cols       = [0, 0]
@@ -43,5 +44,5 @@ c_p     = 0.7171
 U_a     = zeros(Float64, 3)
 
 println("Testing cell run...")
-test_cell_run(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)

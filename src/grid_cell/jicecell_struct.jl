@@ -10,6 +10,7 @@ include("../atmosphere_model/atmodel_struct.jl")
 =#
 struct JICECell
 
+    N_cat::Int64
     N_t::Int64
 
     T_frz::Float64
@@ -26,7 +27,7 @@ end
 # Creates a JICECell object.
 # Fields ending with '_cols' are lists of the given data, organized for each column in the JICECell object.
 # It is assumed areas and all fields ending with '_cols' are the same length.
-function initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
+function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_cats, areas)
 
     # TODO: error checking to make sure lengths are consistent
 
@@ -43,6 +44,6 @@ function initialize_JICECell(N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols,
     end
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_t, T_frz, T_w, thickness_cats, areas, columns, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_cats, areas, columns, atm)
     return grid_cell
 end
