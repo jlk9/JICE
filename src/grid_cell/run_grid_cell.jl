@@ -10,7 +10,7 @@ include("linear_itd_change.jl")
 #= Runs the model of a JICE Cell object
 
 =#
-function run_ice_cell(jcell)
+@inline function run_ice_cell(jcell)
 
     for step in 1:jcell.N_t
         run_cell_step(jcell, step)
@@ -21,10 +21,10 @@ end
 #= Runs one step of the model for a JICE Cell object
 
 =#
-function run_cell_step(jcell, step)
+@inline function run_cell_step(jcell, step)
 
     # Run one step for each column
-    for k in 1:N_cat
+    for k in 1:jcell.N_cat
 
         jcolumn = jcell.columns[k]
 
@@ -32,7 +32,7 @@ function run_cell_step(jcell, step)
 
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
-        jcolumn.H_i    = sum(jcolumn.Δh)
+        readd_total_thickness(jcolumn)
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh

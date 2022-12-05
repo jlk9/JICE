@@ -19,7 +19,7 @@ Output:
     Technically nothing, but the function updates jcolumn's T_array and Δh_arrays to have a log
     of updated ice temperatures and thicknesses
 =#
-function run_ice_column(jcolumn, atmodel)
+@inline function run_ice_column(jcolumn, atmodel)
 
     # Main loop of temperature modifications:
     for step in 1:jcolumn.N_t
@@ -42,14 +42,7 @@ function run_ice_column(jcolumn, atmodel)
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
         # Julia's sum() operation is memory inefficient, this is much faster
-        jcolumn.H_s = 0.0
-        jcolumn.H_i = 0.0
-        for k in 1:(jcolumn.N_s+1)
-            jcolumn.H_s += jcolumn.Δh[k]
-        end
-        for k in (jcolumn.N_s+2):(jcolumn.N_i+jcolumn.N_s+1)
-            jcolumn.H_i += jcolumn.Δh[k]
-        end
+        readd_total_thickness(jcolumn)
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
@@ -80,6 +73,19 @@ end
     step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄, jcolumn.q_i, jcolumn.q_inew,
                     jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
     
+end
+
+# Julia's sum() operation is memory inefficient for slices of arrays, this is much faster
+function readd_total_thickness(jcolumn)
+
+    jcolumn.H_s = 0.0
+    jcolumn.H_i = 0.0
+    for k in 1:(jcolumn.N_s+1)
+        jcolumn.H_s += jcolumn.Δh[k]
+    end
+    for k in (jcolumn.N_s+2):(jcolumn.N_i+jcolumn.N_s+1)
+        jcolumn.H_i += jcolumn.Δh[k]
+    end
 end
 
 #=

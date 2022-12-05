@@ -21,6 +21,7 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols
         println(jcell.columns[k].Δh_array[:,N_t+1])
 
     end
+    @time run_ice_cell(jcell)
 end
 
 N_cat         = 5
