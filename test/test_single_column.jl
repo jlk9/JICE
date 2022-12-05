@@ -41,11 +41,15 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println("Thicknesses over time are: (should be close to initial in bottom)")
     println(jcmodel.Δh_array[:,N_t+1])
 
+    println("Total sums updated correctly? Results are and should be:")
+    println(jcmodel.H_s + jcmodel.H_i)
+    println(sum(jcmodel.Δh_array[:,N_t+1]))
+
     #println(jcmodel.F_0)
 
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
-    #@time run_ice_column(jcmodel, atmodel)
+    @time run_ice_column(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
 end
@@ -315,7 +319,7 @@ Q_a     = 0.005 #?
 c_p     = 0.7171
 U_a     = zeros(Float64, 3)
 
-println("TESTS WITH JUST ICE")
+println("\nTESTS WITH JUST ICE")
 println("")
 
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),

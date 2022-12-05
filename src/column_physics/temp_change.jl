@@ -106,7 +106,6 @@ end
     @inbounds for i in N:-1:1
 
         x[i] = (x[i] - supdiag[i]*x[i+1])/maindiag[i]
-
     end
 
     return nothing
@@ -138,7 +137,6 @@ end
     for i in (N_s+2):(N_i+N_s+1)
     
         K[i] = 2.03 + (0.13*S[i-N_s-1])/T[i]
-
     end
 
     return nothing
@@ -153,7 +151,6 @@ end
         K[i]   = 1.162 * (1.905 + 0.00866*θ[i] + 0.0000297*(θ[i]^2))
         K[i]  *= (2*K[i] + K_a - (2*V_a)*(K[i]-K_a)) / (2*K[i] + K_a - (2*V_a)*(K[i]-K_a))
         K[i]  -= (K[i]-K_b[i])*((T_mltS-T_mlt0)/θ[i])
-
     end
 
     return nothing

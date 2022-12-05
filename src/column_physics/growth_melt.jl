@@ -28,7 +28,8 @@ end
 @inline function generate_q_from_T(q, N_i, N_s, T, S)
 
     # For the surface, using either ice or snow formulation
-    q[1] = -ρ_s*(-c_0*T[1]+L_0) + min(N_s, 1)*(-ρ_i*(c_0*(-T[1]) + L_0) + ρ_s*(-c_0*T[1]+L_0))
+    w    = -c_0*T[1] + L_0 # intermediate variable
+    q[1] = -ρ_s*w + min(N_s, 1)*((ρ_s-ρ_i)*w)
 
     # For the snow layers
     for k in 1:N_s
@@ -48,15 +49,16 @@ end
 @inline function generate_T_from_q(T, N_i, N_s, q, S)
 
     # For the snow layers
-    for k in 1:N_s
-        T[k+1] = (q[k+1]/ρ_s + L_0)/c_0
+    for k in 2:N_s+1
+        T[k] = (q[k]/ρ_s + L_0)/c_0
     end
 
     # For the ice layers
     for k in 1:N_i
-        T_m    = -μ*S[k]
-        b      = (c_w-c_0)*T_m - (q[k+N_s+1]/ρ_i) - L_0
-        T[k+N_s+1] = (-b - sqrt(b^2 - 4c_0*L_0*T_m))/(2c_0)
+        index    = k+N_s+1
+        T_m      = -μ*S[k]
+        b        = (c_w-c_0)*T_m - (q[index]/ρ_i) - L_0
+        T[index] = (-b - sqrt(b^2 - 4c_0*L_0*T_m))/(2c_0)
     end
 
     return nothing
@@ -68,10 +70,11 @@ end
     # Get the conditional surface flux
     F_ct = K̄[1] * (T_new[1] - T_new[2])
 
-    δh = max((Δt*(F_0 - F_ct) / q[1]), 0.0)
-
+    # Then the possible ice/snow melt
+    δh     = max((Δt*(F_0 - F_ct) / q[1]), 0.0)
     Δh[2] -= δh
 
+    return nothing
 end
 
 # Computes the change in thickness of the bottom ice layer due to growth / melting
@@ -126,17 +129,17 @@ end
     end
 
     # Now that we have q_new and Δh_snew, we can replace current q and Δh with these:
-    for k in 1:N_s
-        q[k+1]  = q_new[k+1]
-        Δh[k+1] = Δh_snew
+    for k in 2:(N_s+1)
+        q[k]  = q_new[k]
+        Δh[k] = Δh_snew
     end
 
     # NEXT, rebalance ice layers
 
     # Get new total ice thickness
     H_inew = 0.0
-    for k in 1:N_i
-        H_inew += Δh[k+N_s+1]
+    for k in (N_s+2):(N_i+N_s+1)
+        H_inew += Δh[k]
     end
 
     # Split evenly
@@ -152,20 +155,24 @@ end
 
     # Update enthalpies for each layer:
     for k in 1:N_i
-        q_new[k+N_s+1] = 0.0
+        k_index = k+N_s+1
+        q_new[k_index] = 0.0
         for m in 1:N_i
         
-            η_km            = min(z_old[m+N_s+2], z_new[k+N_s+2]) - max(z_old[m+N_s+1], z_new[k+N_s+1])
-            η_km            = max(η_km, 0.0)
-            q_new[k+N_s+1] += η_km*q[m+N_s+1]
+            m_index = m+N_s+1
+            η_km    = min(z_old[m_index+1], z_new[k_index+1]) - max(z_old[m_index], z_new[k_index])
+            η_km    = max(η_km, 0.0)
+
+            q_new[k_index] += η_km*q[m_index]
         end
-        q_new[k+N_s+1] /= Δh_inew
+        q_new[k_index] /= Δh_inew
     end
 
     # Now that we have q_new and Δh_inew, we can replace current q and Δh with these:
     for k in 1:N_i
-        q[k+N_s+1] = q_new[k+N_s+1]
-        Δh[k+N_s+1]  = Δh_inew
+        index     = k+N_s+1
+        q[index]  = q_new[index]
+        Δh[index] = Δh_inew
     end
 
 end

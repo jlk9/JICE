@@ -41,8 +41,15 @@ function run_ice_column(jcolumn, atmodel)
         
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
-        jcolumn.H_s    = sum(jcolumn.Δh[1:jcolumn.N_s+1])
-        jcolumn.H_i    = sum(jcolumn.Δh[jcolumn.N_s+2:length(jcolumn.Δh)])
+        # Julia's sum() operation is memory inefficient, this is much faster
+        jcolumn.H_s = 0.0
+        jcolumn.H_i = 0.0
+        for k in 1:(jcolumn.N_s+1)
+            jcolumn.H_s += jcolumn.Δh[k]
+        end
+        for k in (jcolumn.N_s+2):(jcolumn.N_i+jcolumn.N_s+1)
+            jcolumn.H_i += jcolumn.Δh[k]
+        end
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
@@ -53,10 +60,10 @@ end
 
 # Runs one step of ice process. This approach uses the struct within each step:
 @inline function run_column_step(jcolumn, atmodel, step)
-
+    
     # Computes the current albedo
     generate_α(jcolumn.H_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1])
-
+    
     # Computes the surface fluxes at this time step
     step_surface_flux(jcolumn.N_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1], jcolumn.H_i, jcolumn.H_s,
                         jcolumn.F_0, jcolumn.dF_0, jcolumn.F_Lu, jcolumn.F_s, jcolumn.F_l, jcolumn.dF_Lu, jcolumn.dF_s, jcolumn.dF_l,

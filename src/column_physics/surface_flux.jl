@@ -14,15 +14,16 @@
     if H_s > puny
         area_snow = H_s / (H_s+0.02)
     end
+    area_no_snow = 1.0 - area_snow
     
     # Reduce shortwave fluxes with albedo, getting absorbed shortwave fluxes.
     # Note that the albedo terms include ice and snow components:
-    F_SWabsv = F_SWvdr * ((1.0-α_vdr[1])*(1.0-area_snow) + (1.0-α_vdr[2])*area_snow) + F_SWvdf * ((1.0-α_vdf[1])*(1.0-area_snow) + (1.0-α_vdf[2])*area_snow)
-    F_SWabsi = F_SWidr * ((1.0-α_idr[1])*(1.0-area_snow) + (1.0-α_idr[2])*area_snow) + F_SWidf * ((1.0-α_idf[1])*(1.0-area_snow) + (1.0-α_idf[2])*area_snow)
+    F_SWabsv = F_SWvdr * ((1.0-α_vdr[1])*area_no_snow + (1.0-α_vdr[2])*area_snow) + F_SWvdf * ((1.0-α_vdf[1])*area_no_snow + (1.0-α_vdf[2])*area_snow)
+    F_SWabsi = F_SWidr * ((1.0-α_idr[1])*area_no_snow + (1.0-α_idr[2])*area_snow) + F_SWidf * ((1.0-α_idf[1])*area_no_snow + (1.0-α_idf[2])*area_snow)
     F_SWabs  = F_SWabsv + F_SWabsi
 
-    F_SWpenvdr = F_SWvdr * (1.0-α_vdr[1]) * (1.0-area_snow) * i0vis
-    F_SWpenvdf = F_SWvdf * (1.0-α_vdf[1]) * (1.0-area_snow) * i0vis
+    F_SWpenvdr = F_SWvdr * (1.0-α_vdr[1]) * area_no_snow * i0vis
+    F_SWpenvdf = F_SWvdf * (1.0-α_vdf[1]) * area_no_snow * i0vis
 
     # The total penetrating SW radiation, only visible flux that enters the ice penetrates
     F_SWpen = F_SWpenvdr + F_SWpenvdf
@@ -87,9 +88,9 @@ end
     dF_s[step] = -C_s
 
     # Latent heat flux:
-    Q_sf    = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K))
-    dQ_sf   = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K)) * (-q_2 / (T_sfc + C_to_K)^2)
-    F_l[step]  = C_l * (Q_a[1] - Q_sf)
+    Q_sf       = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K))
+    dQ_sf      = Q_sf * (-q_2 / (T_sfc + C_to_K)^2)
+    F_l[step]  = C_l  * (Q_a[1] - Q_sf)
     dF_l[step] = -C_l * dQ_sf
 
     return nothing
