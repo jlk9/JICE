@@ -17,10 +17,15 @@ struct JICECell
     T_w::Float64
 
     H_bds::Vector{Float64}
-    H_bdsnew::Vector{Float64}
+    H_bnew::Vector{Float64}
     dH::Vector{Float64}
     areas::Vector{Float64}
     columns::Vector{JICEColumn}
+
+    g0::Vector{Float64}
+    g1::Vector{Float64}
+    hL::Vector{Float64}
+    hR::Vector{Float64}
 
     atm::ATModel
 
@@ -32,6 +37,7 @@ end
 function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     # TODO: error checking to make sure lengths are consistent
+    # Want all variables ending with 'cols' to be length N_cat, and areas and H_bds to be length N_cat+1
 
     # Initialize the atmosphere object:
     atm = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
@@ -45,10 +51,15 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
         push!(columns, column)
     end
 
-    H_bdsnew = zeros(Float64, N_cat)
-    dH       = zeros(Float64, N_cat)
+    H_bnew = zeros(Float64, N_cat+1)
+    dH     = zeros(Float64, N_cat)
+
+    g0 = zeros(Float64, N_cat+1)
+    g1 = zeros(Float64, N_cat+1)
+    hL = zeros(Float64, N_cat+1)
+    hR = zeros(Float64, N_cat+1)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bdsnew, dH, areas, columns, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, columns, g0, g1, hL, hR, atm)
     return grid_cell
 end
