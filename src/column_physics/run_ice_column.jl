@@ -41,8 +41,7 @@ Output:
         
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
-        # Julia's sum() operation is memory inefficient, this is much faster
-        readd_total_thickness(jcolumn)
+        
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
@@ -72,6 +71,9 @@ end
     # Gets the growth/melt and rebalances
     step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄, jcolumn.q_i, jcolumn.q_inew,
                     jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
+
+    # Add up the layer thicknesses to get the new total thickness
+    readd_total_thickness(jcolumn)
     
 end
 

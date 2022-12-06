@@ -32,7 +32,7 @@ end
 
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
-        readd_total_thickness(jcolumn)
+        #readd_total_thickness(jcolumn)
 
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
