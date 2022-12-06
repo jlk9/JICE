@@ -44,7 +44,7 @@ include("./jicecell_struct.jl")
 
     # For last thickness category bound:
     N_catplus1 = jcell.N_cat+1
-    if areas[N_catplus1] > puny
+    if jcell.areas[N_catplus1] > puny
         jcell.H_bnew[N_catplus1] = 3.0jcell.columns[jcell.N_cat].H_i - 2.0jcell.H_bnew[jcell.N_cat]
     else
         jcell.H_bnew[N_catplus1] = jcell.H_bds[N_catplus1]
@@ -63,7 +63,76 @@ end
 
     Comapred to version in CICE, here we want to do it in one array
 =#
-@inline function fit_line()
+@inline function fit_line(jcell)
 
+    # First for first column (different rules, line ~431 in icepack_therm_itd.F90)
+    if (jcell.areas[1] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
 
+        # Initialize hL and hR
+        hL   = jcell.H_bnew[1]
+        hR   = jcell.H_bds[2]
+        hice = jcell.columns[1].H_iold
+
+        # Change hL or hR if hicen(n) falls outside central third of range
+        h13 = (2.0hL + hR) / 3.0
+        h23 = (hL + 2.0hR) / 3.0
+        if (hice < h13)
+            hR = 3.0hice - 2.0hL
+        elseif (hice > h23)
+            hL = 3.0hice - 2.0hR
+        end
+
+        # Compute coefficients of g(eta) = g0 + g1*eta
+        dhr = 1.0 / (hR - hL)
+        wk1 = 6.0jcell.areas[1] * dhr
+        wk2 = (hice - hL) * dhr
+
+        jcell.g0[1] = wk1 * (2.0/3.0 - wk2)
+        jcell.g1[1] = c2*dhr * wk1 * (wk2 - 0.5)
+        jcell.hL[1] = hL
+        jcell.hR[1] = hR
+    else
+        jcell.g0[1] = 0.0
+        jcell.g1[1] = 0.0
+        jcell.hL[1] = 0.0
+        jcell.hR[1] = 0.0
+    end
+
+    # Then for subsequent columns (line ~485 in icepack_therm_itd.F90)
+    for n = 1:jcell.N_cat
+        nplus1 = n + 1
+
+        if (jcell.areas[nplus1] > puny) && (jcell.H_bnew[nplus1] - jcell.H_bnew[n] > puny)
+            # Initialize hL and hR
+            hL   = jcell.H_bnew[n]
+            hR   = jcell.H_bnew[nplus1]
+            hice = jcell.columns[n].H_i
+
+            # Change hL or hR if hicen(n) falls outside central third of range
+            h13 = (2.0hL + hR) / 3.0
+            h23 = (hL + 2.0hR) / 3.0
+            if (hice < h13)
+                hR = 3.0hice - 2.0hL
+            elseif (hice > h23)
+                hL = 3.0hice - 2.0hR
+            end
+
+            # Compute coefficients of g(eta) = g0 + g1*eta
+            dhr = 1.0 / (hR - hL)
+            wk1 = 6.0jcell.areas[nplus1] * dhr
+            wk2 = (hice - hL) * dhr
+
+            jcell.g0[nplus1] = wk1 * (2.0/3.0 - wk2)
+            jcell.g1[nplus1] = c2*dhr * wk1 * (wk2 - 0.5)
+            jcell.hL[nplus1] = hL
+            jcell.hR[nplus1] = hR
+        else
+            jcell.g0[nplus1] = 0.0
+            jcell.g1[nplus1] = 0.0
+            jcell.hL[nplus1] = 0.0
+            jcell.hR[nplus1] = 0.0
+        end
+    end
+
+    return nothing
 end
