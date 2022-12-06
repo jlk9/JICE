@@ -17,6 +17,7 @@ struct JICECell
     T_w::Float64
 
     thickness_bds::Vector{Float64}
+    thickness_changes::Vector{Float64}
     areas::Vector{Float64}
     columns::Vector{JICEColumn}
 
@@ -43,7 +44,9 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
         push!(columns, column)
     end
 
+    thickness_changes = zeros(Float64, N_cat)
+
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, areas, columns, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, thickness_changes, areas, columns, atm)
     return grid_cell
 end

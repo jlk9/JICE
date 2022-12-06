@@ -83,6 +83,7 @@ mutable struct JICEColumn
 
     H_i::Float64
     H_s::Float64
+    H_iold::Float64
     T_frz::Float64
     Δt::Float64
     u_star::Float64
@@ -141,7 +142,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
         Δh[k+N_s+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, 0.0, T_frz, Δt, u_star, T_w, T_0,
                         zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
                         Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)

@@ -80,8 +80,11 @@ end
 # Julia's sum() operation is memory inefficient for slices of arrays, this is much faster
 function readd_total_thickness(jcolumn)
 
+    jcolumn.H_iold = jcolumn.H_i
+
     jcolumn.H_s = 0.0
     jcolumn.H_i = 0.0
+
     for k in 1:(jcolumn.N_s+1)
         jcolumn.H_s += jcolumn.Δh[k]
     end
