@@ -29,7 +29,7 @@ include("./jicecell_struct.jl")
                 jcell.H_bnew[nplus1] = jcell.H_bds[nplus1] + jcell.dH[n] + slope*(jcell.H_bds[nplus1] - H_ioldn)
             else
                 println("Oh no! Category bounds crossed streams!")
-                break
+                return nothing
             end
         elseif H_ioldn > puny # implies H_ioldnp ~= 0
             jcell.H_bnew[nplus1] = jcell.H_bds[nplus1] + jcell.dH[n]
@@ -51,7 +51,17 @@ include("./jicecell_struct.jl")
     end
     jcell.H_bnew[N_catplus1] = max(jcell.H_bnew[N_catplus1], jcell.H_bds[jcell.N_cat])
 
-    # TODO: Boundary check (each one lies between adjacent values of H_i)
+    # Boundary check (each one lies between adjacent values of H_i)
+    for n in 1:jcell.N_cat
+        if jcell.H_bnew[n] > jcell.H_bds[n+1]
+            println("Oh no! One of the new catagory bounds exceeds the next (old) bound up.")
+            return nothing
+        end
+        if jcell.H_bnew[+1] < jcell.H_bds[n]
+            println("Oh no! One of the new catagory bounds is smaller than the previous old bound.")
+            return nothing
+        end
+    end
 
     # Compute g0, g1, hL, hR for remapping:
     fit_line(jcell)
