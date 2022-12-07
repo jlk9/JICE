@@ -51,7 +51,42 @@ include("./jicecell_struct.jl")
     end
     jcell.H_bnew[N_catplus1] = max(jcell.H_bnew[N_catplus1], jcell.H_bds[jcell.N_cat])
 
-    # Boundary check (each one lies between adjacent values of H_i)
+    # TODO: Boundary check (each one lies between adjacent values of H_i)
+
+    # Compute g0, g1, hL, hR for remapping:
+    fit_line(jcell)
+
+    # Find area lost due to melting of thin ice (line ~439) (NOTE: we keep track of all areas including open water)
+    if jcell.areas[2] > puny
+
+        dh0 = jcell.dH[1]
+        if dh0 < 0.0
+
+            dh0 = min(-dh0,jcell.H_bds[2])
+            # Integrate g(1) from 0 to dh0 to estimate area melted
+            # First the right integration limit:
+            η_max = min(dh0, hR[1]) - hL[1]
+
+            if η_max > 0.0
+                x1  = η_max
+                x2  = 0.5η_max^2
+                da0 = g1[1]*x2 + g0[1]*x1 # total ice area removed
+
+                # Now constrain the new thickness so it is <= H_iold
+                damax = jcell.areas[2] * (1.0 - jcell.columns[1].H_i / jcell.columns[1].H_iold)
+                da0   = min(da0, damax)
+
+                # Remove this area, while conserving volume
+                jcell.columns[1].H_i = jcell.columns[1].H_i * jcell.areas[2] / (jcell.areas[2] - da0)
+                jcell.areas[2]      -= da0
+                jcell.areas[1]      += da0 # MAKE SURE THIS INDEXING IS RIGHT
+            end
+        else #dh0 >= 0.0
+            jcell.H_bnew[1] = min(dh0, jcell.H_bds[2]) # shift lower boundary to the right, as thin ice grew
+        end
+    end
+
+    # Compute the area and volume to be shifted across each boundary (line ~493)
 
     return nothing
 end
@@ -66,7 +101,7 @@ end
 @inline function fit_line(jcell)
 
     # First for first column (different rules, line ~431 in icepack_therm_itd.F90)
-    if (jcell.areas[1] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
+    if (jcell.areas[2] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
 
         # Initialize hL and hR
         hL   = jcell.H_bnew[1]
@@ -84,11 +119,11 @@ end
 
         # Compute coefficients of g(eta) = g0 + g1*eta
         dhr = 1.0 / (hR - hL)
-        wk1 = 6.0jcell.areas[1] * dhr
+        wk1 = 6.0jcell.areas[2] * dhr
         wk2 = (hice - hL) * dhr
 
         jcell.g0[1] = wk1 * (2.0/3.0 - wk2)
-        jcell.g1[1] = c2*dhr * wk1 * (wk2 - 0.5)
+        jcell.g1[1] = 2.0dhr * wk1 * (wk2 - 0.5)
         jcell.hL[1] = hL
         jcell.hR[1] = hR
     else
@@ -123,7 +158,7 @@ end
             wk2 = (hice - hL) * dhr
 
             jcell.g0[nplus1] = wk1 * (2.0/3.0 - wk2)
-            jcell.g1[nplus1] = c2*dhr * wk1 * (wk2 - 0.5)
+            jcell.g1[nplus1] = 2.0dhr * wk1 * (wk2 - 0.5)
             jcell.hL[nplus1] = hL
             jcell.hR[nplus1] = hR
         else
