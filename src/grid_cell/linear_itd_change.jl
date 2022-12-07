@@ -65,12 +65,12 @@ include("./jicecell_struct.jl")
             dh0 = min(-dh0,jcell.H_bds[2])
             # Integrate g(1) from 0 to dh0 to estimate area melted
             # First the right integration limit:
-            η_max = min(dh0, hR[1]) - hL[1]
+            η_max = min(dh0, jcell.hR[1]) - jcell.hL[1]
 
             if η_max > 0.0
                 x1  = η_max
                 x2  = 0.5η_max^2
-                da0 = g1[1]*x2 + g0[1]*x1 # total ice area removed
+                da0 = jcell.g1[1]*x2 + jcell.g0[1]*x1 # total ice area removed
 
                 # Now constrain the new thickness so it is <= H_iold
                 damax = jcell.areas[2] * (1.0 - jcell.columns[1].H_i / jcell.columns[1].H_iold)
