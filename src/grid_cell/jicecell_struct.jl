@@ -20,6 +20,11 @@ struct JICECell
     H_bnew::Vector{Float64}
     dH::Vector{Float64}
     areas::Vector{Float64}
+    vol_i::Vector{Float64}
+    vol_s::Vector{Float64}
+    areas_old::Vector{Float64}
+    vol_i_old::Vector{Float64}
+    vol_s_old::Vector{Float64}
     columns::Vector{JICEColumn}
 
     g0::Vector{Float64}
@@ -28,7 +33,8 @@ struct JICECell
     hR::Vector{Float64}
 
     dareas::Vector{Float64}
-    dvolumes::Vector{Float64}
+    dvol_i::Vector{Float64}
+    dvol_s::Vector{Float64}
     donor::Vector{Int64}
 
     atm::ATModel
@@ -41,7 +47,7 @@ end
 function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     # TODO: error checking to make sure lengths are consistent
-    # Want all variables ending with 'cols' to be length N_cat, and areas and H_bds to be length N_cat+1
+    # Want all variables ending with 'cols' and areas to be length N_cat, and H_bds to be length N_cat+1
 
     # Initialize the atmosphere object:
     atm = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
@@ -57,17 +63,24 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
 
     H_bnew = zeros(Float64, N_cat+1)
     dH     = zeros(Float64, N_cat)
+    vol_i  = zeros(Float64, N_cat)
+    vol_s  = zeros(Float64, N_cat)
+
+    areas_old = zeros(Float64, N_cat)
+    vol_i_old = zeros(Float64, N_cat)
+    vol_s_old = zeros(Float64, N_cat)
 
     g0 = zeros(Float64, N_cat+1)
     g1 = zeros(Float64, N_cat+1)
     hL = zeros(Float64, N_cat+1)
     hR = zeros(Float64, N_cat+1)
 
-    dareas   = zeros(Float64, N_cat)
-    dvolumes = zeros(Float64, N_cat)
-    donor    = zeros(Int64, N_cat)
+    dareas = zeros(Float64, N_cat)
+    dvol_i = zeros(Float64, N_cat)
+    dvol_s = zeros(Float64, N_cat)
+    donor  = zeros(Int64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, columns, g0, g1, hL, hR, dareas, dvolumes, donor, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns, g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, atm)
     return grid_cell
 end

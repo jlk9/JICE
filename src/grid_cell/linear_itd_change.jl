@@ -44,7 +44,7 @@ include("./jicecell_struct.jl")
 
     # For last thickness category bound:
     N_catplus1 = jcell.N_cat+1
-    if jcell.areas[N_catplus1] > puny
+    if jcell.areas[jcell.N_cat] > puny
         jcell.H_bnew[N_catplus1] = 3.0jcell.columns[jcell.N_cat].H_i - 2.0jcell.H_bnew[jcell.N_cat]
     else
         jcell.H_bnew[N_catplus1] = jcell.H_bds[N_catplus1]
@@ -67,7 +67,7 @@ include("./jicecell_struct.jl")
     fit_line(jcell)
 
     # Find area lost due to melting of thin ice (line ~439) (NOTE: we keep track of all areas including open water)
-    if jcell.areas[2] > puny
+    if jcell.areas[1] > puny
 
         dh0 = jcell.dH[1]
         if dh0 < 0.0
@@ -83,13 +83,12 @@ include("./jicecell_struct.jl")
                 da0 = jcell.g1[1]*x2 + jcell.g0[1]*x1 # total ice area removed
 
                 # Now constrain the new thickness so it is <= H_iold
-                damax = jcell.areas[2] * (1.0 - jcell.columns[1].H_i / jcell.columns[1].H_iold)
+                damax = jcell.areas[1] * (1.0 - jcell.columns[1].H_i / jcell.columns[1].H_iold)
                 da0   = min(da0, damax)
 
                 # Remove this area, while conserving volume
-                jcell.columns[1].H_i = jcell.columns[1].H_i * jcell.areas[2] / (jcell.areas[2] - da0)
-                jcell.areas[2]      -= da0
-                jcell.areas[1]      += da0 # MAKE SURE THIS INDEXING IS RIGHT
+                jcell.columns[1].H_i = jcell.columns[1].H_i * jcell.areas[1] / (jcell.areas[1] - da0)
+                jcell.areas[1]      -= da0
             end
         else #dh0 >= 0.0
             jcell.H_bnew[1] = min(dh0, jcell.H_bds[2]) # shift lower boundary to the right, as thin ice grew
@@ -123,15 +122,14 @@ include("./jicecell_struct.jl")
             x3   = (wk2 - wk1) / 3.0
             nd   = jcell.donor[n] + 1 # increment by 1 in pur implementation vs CICE
             
-            jcell.dareas[n]   = jcell.g1[nd]*x2 + jcell.g0[nd]*x1
-            jcell.dvolumes[n] = jcell.g1[nd]*x3 + jcell.g0[nd]*x2 + jcell.dareas[n]*jcell.hL[nd]
+            jcell.dareas[n] = jcell.g1[nd]*x2 + jcell.g0[nd]*x1
+            jcell.dvol_i[n] = jcell.g1[nd]*x3 + jcell.g0[nd]*x2 + jcell.dareas[n]*jcell.hL[nd]
         end
 
         # Optional TODO: shift 0 ice if dareas[n] too small, or entire category if dareas[n] is close to areas[n+1]
     end
 
     # Shift ice between categories as necessary (line ~564)
-
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
         for k in 2:(jcell.columns[n].N_s+1)
@@ -161,7 +159,7 @@ end
 @inline function fit_line(jcell)
 
     # First for first column (different rules, line ~431 in icepack_therm_itd.F90)
-    if (jcell.areas[2] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
+    if (jcell.areas[1] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
 
         # Initialize hL and hR
         hL   = jcell.H_bnew[1]
@@ -179,7 +177,7 @@ end
 
         # Compute coefficients of g(eta) = g0 + g1*eta
         dhr = 1.0 / (hR - hL)
-        wk1 = 6.0jcell.areas[2] * dhr
+        wk1 = 6.0jcell.areas[1] * dhr
         wk2 = (hice - hL) * dhr
 
         jcell.g0[1] = wk1 * (2.0/3.0 - wk2)
@@ -197,7 +195,7 @@ end
     for n = 1:jcell.N_cat
         nplus1 = n + 1
 
-        if (jcell.areas[nplus1] > puny) && (jcell.H_bnew[nplus1] - jcell.H_bnew[n] > puny)
+        if (jcell.areas[n] > puny) && (jcell.H_bnew[nplus1] - jcell.H_bnew[n] > puny)
             # Initialize hL and hR
             hL   = jcell.H_bnew[n]
             hR   = jcell.H_bnew[nplus1]
@@ -214,7 +212,7 @@ end
 
             # Compute coefficients of g(eta) = g0 + g1*eta
             dhr = 1.0 / (hR - hL)
-            wk1 = 6.0jcell.areas[nplus1] * dhr
+            wk1 = 6.0jcell.areas[n] * dhr
             wk2 = (hice - hL) * dhr
 
             jcell.g0[nplus1] = wk1 * (2.0/3.0 - wk2)
@@ -229,9 +227,10 @@ end
         end
 
         # Also reset change variables:
-        jcell.donor[n]    = 0
-        jcell.dareas[n]   = 0.0
-        jcell.dvolumes[n] = 0.0
+        jcell.donor[n]  = 0
+        jcell.dareas[n] = 0.0
+        jcell.dvol_i[n] = 0.0
+        jcell.dvol_s[n] = 0.0
     end
 
     return nothing
@@ -241,6 +240,17 @@ end
 # Shifts ice between layers, as well as ice enthalpy for conservation of energy
 # Based on shift_ice in Icepack/icepack_itd.F90, line ~356
 @inline function shift_ice(jcell)
+
+    # First set old areas and volumes:
+    for n in 1:jcell.N_cat
+        jcell.areas_old[n] = jcell.areas[n]
+        jcell.vol_i[n]     = jcell.columns[n].H_i * jcell.areas[n]
+        jcell.vol_s[n]     = jcell.columns[n].H_s * jcell.areas[n]
+        jcell.vol_i_old[n] = jcell.vol_i[n]
+        jcell.vol_s_old[n] = jcell.vol_s[n]
+    end
+
+    # TODO: define variables equal to area and volume * tracers (line ~440 in icepack_itd)
 
     return nothing
 end

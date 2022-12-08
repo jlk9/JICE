@@ -41,7 +41,7 @@ T_0_cols      = [0 .- [7.0, 6.0],
 u_star_cols   = 0.0005 .+ zeros(Float64, N_cat) # recommended minimum value of u_star in CICE
 T_w           = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 thickness_bds = [0.0, 0.3, 0.7, 1.2, 2.0, 999.9]
-areas         = [0.3, 0.2, 0.1, 0.1, 0.1, 0.2]
+areas         = [0.2, 0.1, 0.1, 0.1, 0.2] # Area of open water is 1 - sum(areas), in this case 0.3
 
 # "Educated" guess for some normal atmospheric values
 F_Ld    = 10.0
