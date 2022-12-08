@@ -57,7 +57,7 @@ include("./jicecell_struct.jl")
             println("Oh no! One of the new catagory bounds exceeds the next (old) bound up.")
             return nothing
         end
-        if jcell.H_bnew[+1] < jcell.H_bds[n]
+        if jcell.H_bnew[n+1] < jcell.H_bds[n]
             println("Oh no! One of the new catagory bounds is smaller than the previous old bound.")
             return nothing
         end
@@ -97,6 +97,56 @@ include("./jicecell_struct.jl")
     end
 
     # Compute the area and volume to be shifted across each boundary (line ~493)
+    for n in 1:(jcell.N_cat-1)
+
+        nplus1 = n + 1
+        nplus2 = n + 2
+        η_min  = 0.0
+        η_max  = 0.0
+
+        if jcell.H_bnew[nplus1] > jcell.H_bds[nplus1] # transfer from n+1 to n+2
+            η_min          = max(jcell.H_bds[nplus1], jcell.hL[nplus1]) - jcell.hL[nplus1]
+            η_max          = max(jcell.H_bnew[nplus1], jcell.hR[nplus1]) - jcell.hL[nplus1]
+            jcell.donor[n] = n
+        else # transfer down a category, η_min = 0
+            η_max          = min(jcell.H_bds[nplus1], jcell.hR[nplus2]) - jcell.hL[nplus2]
+            jcell.donor[n] = nplus1
+        end
+
+        if η_max > η_min
+            x1   = η_max - η_min
+            wk1  = η_min^2
+            wk2  = η_max^2
+            x2   = 0.5*(wk2-wk1)
+            wk1 *= η_min
+            wk2 *= η_max
+            x3   = (wk2 - wk1) / 3.0
+            nd   = jcell.donor[n] + 1 # increment by 1 in pur implementation vs CICE
+            
+            jcell.dareas[n]   = jcell.g1[nd]*x2 + jcell.g0[nd]*x1
+            jcell.dvolumes[n] = jcell.g1[nd]*x3 + jcell.g0[nd]*x2 + jcell.dareas[n]*jcell.hL[nd]
+        end
+
+        # Optional TODO: shift 0 ice if dareas[n] too small, or entire category if dareas[n] is close to areas[n+1]
+    end
+
+    # Shift ice between categories as necessary (line ~564)
+
+    # Maintain negative definiteness of snow enthalpy:
+    for n in 1:jcell.N_cat
+        for k in 2:(jcell.columns[n].N_s+1)
+            jcell.columns[n].q_i[k] += ρ_s*L_0
+        end
+    end
+
+    shift_ice(jcell)
+
+    # Maintain negative definiteness of snow enthalpy:
+    for n in 1:jcell.N_cat
+        for k in 2:(jcell.columns[n].N_s+1)
+            jcell.columns[n].q_i[k] -= ρ_s*L_0
+        end
+    end
 
     return nothing
 end
@@ -177,7 +227,20 @@ end
             jcell.hL[nplus1] = 0.0
             jcell.hR[nplus1] = 0.0
         end
+
+        # Also reset change variables:
+        jcell.donor[n]    = 0
+        jcell.dareas[n]   = 0.0
+        jcell.dvolumes[n] = 0.0
     end
+
+    return nothing
+end
+
+
+# Shifts ice between layers, as well as ice enthalpy for conservation of energy
+# Based on shift_ice in Icepack/icepack_itd.F90, line ~356
+@inline function shift_ice(jcell)
 
     return nothing
 end

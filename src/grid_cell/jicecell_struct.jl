@@ -27,6 +27,10 @@ struct JICECell
     hL::Vector{Float64}
     hR::Vector{Float64}
 
+    dareas::Vector{Float64}
+    dvolumes::Vector{Float64}
+    donor::Vector{Int64}
+
     atm::ATModel
 
 end
@@ -59,7 +63,11 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
     hL = zeros(Float64, N_cat+1)
     hR = zeros(Float64, N_cat+1)
 
+    dareas   = zeros(Float64, N_cat)
+    dvolumes = zeros(Float64, N_cat)
+    donor    = zeros(Int64, N_cat)
+
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, columns, g0, g1, hL, hR, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, columns, g0, g1, hL, hR, dareas, dvolumes, donor, atm)
     return grid_cell
 end
