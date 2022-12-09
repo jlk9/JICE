@@ -120,7 +120,7 @@ include("./jicecell_struct.jl")
             wk1 *= η_min
             wk2 *= η_max
             x3   = (wk2 - wk1) / 3.0
-            nd   = jcell.donor[n] + 1 # increment by 1 in pur implementation vs CICE
+            nd   = jcell.donor[n] + 1 # increment by 1 in our implementation vs CICE
             
             jcell.dareas[n] = jcell.g1[nd]*x2 + jcell.g0[nd]*x1
             jcell.dvol_i[n] = jcell.g1[nd]*x3 + jcell.g0[nd]*x2 + jcell.dareas[n]*jcell.hL[nd]
@@ -251,6 +251,40 @@ end
     end
 
     # TODO: define variables equal to area and volume * tracers (line ~440 in icepack_itd)
+
+
+    # Check for daice or dvice out of range (line ~458)
+
+
+    # Transfer volume and energy between categories (line ~595)
+    for n in 1:(jcell.N_cat-1)
+
+        if jcell.dareas[n] > 0.0
+
+            nd = jcell.donor[n]
+            nr = n
+            if nd == n
+                nr += 1
+            end
+        end
+
+        # Modify the area
+        jcell.areas[nd] -= jcell.dareas[n]
+        jcell.areas[nr] += jcell.dareas[n]
+
+        # Modify the ice volume
+        jcell.vol_i[nd] -= jcell.dvol_i[n]
+        jcell.vol_i[nr] += jcell.dvol_i[n]
+
+        # Now modify the snow volume
+        worka  = jcell.dareas[n] / jcell.areas_old[nd]
+        dvsnow = jcell.vol_s_old[nd] * worka
+        workb  = dvsnow
+
+        jcell.vol_s[nd] -= dvsnow
+        jcell.vol_s[nr] += dvsnow
+
+        # Where changes in enthalpy are traced (adapted from line ~621):
 
     return nothing
 end
