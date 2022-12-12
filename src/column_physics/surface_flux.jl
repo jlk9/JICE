@@ -112,6 +112,7 @@ end
     ψ_s = ψ_m
 
     if Y < 0.0
+        # try to simplify this, might be an issue with derivative
         χ   = (1 - 16Y)^0.25
         ψ_m = 2*log(0.5*(1+χ)) + log(0.5*(1+χ^2)) - 2*atan(χ) + π/2
         ψ_s = 2*log(0.5*(1+χ^2))

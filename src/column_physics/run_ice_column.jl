@@ -57,11 +57,13 @@ end
     generate_α(jcolumn.H_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1])
     
     # Computes the surface fluxes at this time step
+    #=
     step_surface_flux(jcolumn.N_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1], jcolumn.H_i, jcolumn.H_s,
                         jcolumn.F_0, jcolumn.dF_0, jcolumn.F_Lu, jcolumn.F_s, jcolumn.F_l, jcolumn.dF_Lu, jcolumn.dF_s, jcolumn.dF_l,
                         atmodel.F_SWvdr, atmodel.F_SWidr, atmodel.F_SWvdf, atmodel.F_SWidf, atmodel.F_Ld, jcolumn.I_pen,
                         atmodel.c_u, atmodel.c_Θ, atmodel.c_q, atmodel.U_a, atmodel.Θ_a, atmodel.Q_a, atmodel.atm_u_star,
                         atmodel.ρ_a, atmodel.c_p, step)
+    =#
     
     # Computes the temperature changes at this step
     step_temp_change(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.Δh̄, jcolumn.T_n, jcolumn.T_nplus, jcolumn.c_i,

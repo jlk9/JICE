@@ -25,6 +25,28 @@ function run_ice_column_adjoint_hT(jcolumn, atmodel, ad_h, ad_T)
     return d_jcol.Δh, d_jcol.T_n
 end
 
+function run_ice_autodiff_all(jcolumn, atmodel, ad_h, ad_T)
+
+    # first we need to allocate d_jcolumn and d_atmodel:
+    d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))
+    d_atmodel = initialize_ATModel(jcolumn.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, 3))
+
+    # Want to reset some derivatives to 0:
+    d_jcolumn.S[:] = zeros(Float64, jcolumn.N_i)
+    d_jcolumn.N_t  = 0
+    d_jcolumn.N_i  = 0
+    d_jcolumn.N_s  = 0
+    
+    d_jcolumn.T_nplus = ad_T
+    d_jcolumn.Δh      = ad_h
+
+    autodiff(run_ice_column, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel))
+
+
+    return d_jcolumn.Δh, d_jcolumn.T_n
+
+end
+
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
 # This one gets the adjoint for T_w, which is tricky because T_w is applied
 # separately at each step
@@ -53,6 +75,8 @@ end
 # It applies enzyme directly to the struct, which requires us to create a second (empty)
 # struct as the derivative
 function run_ice_adjoint_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
+
+    # TODO: autodiff includes forward loop and reverse mode AD pullback
 
     # first we need to allocate d_jcolumn and d_atmodel:
     d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))

@@ -183,7 +183,8 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
     ad_T = zeros(Float64, N_i+N_s+1)
     ad_T[N_i+N_s+1] = 1.0
     
-    ∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
+    #∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
+    ∂h, ∂T_old =  run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
 
     println("∂h:")
     println(∂h)
@@ -338,8 +339,8 @@ test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 
-test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
-                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+#test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
+#                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
 println("")
 println("NEXT, TESTS FEATURING SNOW")
@@ -363,5 +364,5 @@ println("")
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
-test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
-                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+#test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
+#                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
