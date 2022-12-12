@@ -180,7 +180,7 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
     ad_T[N_i+N_s+1] = 1.0
     
     #∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
-    d_jcolumn = run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
+    d_jcolumn = run_ice_column_autodiff(jcmodel, atmodel, ad_h, ad_T)
     ∂h        = d_jcolumn.Δh
     ∂T_old    = d_jcolumn.T_n
 
@@ -252,7 +252,7 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
     ad_h[N_i+N_s+1] = 1.0
 
     #∂T_w = run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
-    d_jcolumn = run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
+    d_jcolumn = run_ice_column_autodiff(jcmodel, atmodel, ad_h, ad_T)
     ∂T_w = d_jcolumn.T_w
 
     println(jcmodel.T_array[:, N_t+1])

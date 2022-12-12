@@ -6,26 +6,7 @@ include("run_ice_column.jl")
 
 using Enzyme
 
-# Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
-function run_ice_column_adjoint_hT(jcolumn, atmodel, ad_h, ad_T)
-
-    # run one step of the adjoint function:
-    d_jcol = run_ice_adjoint_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
-
-    # then the rest back to the original time step:
-    for j in (jcolumn.N_t-1):-1:1
-
-        ad_h[:] = d_jcol.Δh
-        ad_T[:] = d_jcol.T_n
-
-        d_jcol = run_ice_adjoint_step(jcolumn, atmodel, j, ad_h, ad_T)
-
-    end
-
-    return d_jcol.Δh, d_jcol.T_n
-end
-
-function run_ice_autodiff_all(jcolumn, atmodel, ad_h, ad_T)
+function run_ice_column_autodiff(jcolumn, atmodel, ad_h, ad_T)
 
     # first we need to allocate d_jcolumn and d_atmodel:
     d_jcolumn = initialize_JICEColumn(jcolumn.N_t, jcolumn.N_i, jcolumn.N_s, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64, jcolumn.N_i+jcolumn.N_s+1))
@@ -45,6 +26,26 @@ function run_ice_autodiff_all(jcolumn, atmodel, ad_h, ad_T)
 
     return d_jcolumn #d_jcolumn.Δh, d_jcolumn.T_n
 
+end
+
+#=
+# Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
+function run_ice_column_adjoint_hT(jcolumn, atmodel, ad_h, ad_T)
+
+    # run one step of the adjoint function:
+    d_jcol = run_ice_adjoint_step(jcolumn, atmodel, jcolumn.N_t, ad_h, ad_T)
+
+    # then the rest back to the original time step:
+    for j in (jcolumn.N_t-1):-1:1
+
+        ad_h[:] = d_jcol.Δh
+        ad_T[:] = d_jcol.T_n
+
+        d_jcol = run_ice_adjoint_step(jcolumn, atmodel, j, ad_h, ad_T)
+
+    end
+
+    return d_jcol.Δh, d_jcol.T_n
 end
 
 # Finds the adjoint of a completed JCModel (i.e. run_ice has already been called)
@@ -96,7 +97,7 @@ function run_ice_adjoint_step(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
     return d_jcolumn
 end
 
-#=
+
 # Runs the AD steps for computing how initial Δh and T_old affect changes in Δh and T_new
 # OLD VERSION that applies enzyme on all the struct's separate fields
 function run_ice_adjoint_hT_step_old(jcolumn, atmodel, step, ∂f_∂h, ∂f_∂T_new)
