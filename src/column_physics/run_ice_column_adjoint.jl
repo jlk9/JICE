@@ -43,7 +43,7 @@ function run_ice_autodiff_all(jcolumn, atmodel, ad_h, ad_T)
     autodiff(run_ice_column, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel))
 
 
-    return d_jcolumn.Δh, d_jcolumn.T_n
+    return d_jcolumn #d_jcolumn.Δh, d_jcolumn.T_n
 
 end
 

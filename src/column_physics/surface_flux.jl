@@ -96,6 +96,15 @@ end
     return nothing
 end
 
+llpow(x::Float64, y::Float64) = Base.llvmcall(("""
+declare double @llvm.pow.f64(double, double)
+define double @f(double %x, double %y) {
+entry:
+  %z = call double @llvm.pow.f64(double %x, double %y)
+  ret double %z
+}
+""","f"), Float64, Tuple{Float64, Float64}, x, y)
+
 # Performs one step in the iteration for set_atm_helper_values
 @inline function set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
 
@@ -113,7 +122,7 @@ end
 
     if Y < 0.0
         # try to simplify this, might be an issue with derivative
-        χ   = (1 - 16Y)^0.25
+        χ   = llpow(1 - 16Y, 0.25)
         ψ_m = 2*log(0.5*(1+χ)) + log(0.5*(1+χ^2)) - 2*atan(χ) + π/2
         ψ_s = 2*log(0.5*(1+χ^2))
     end

@@ -173,19 +173,20 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
 
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0))
-    run_ice_column(jcmodel, atmodel)
 
-    println(jcmodel.T_array[:, N_t+1])
-
-    println("Now we'll go backwards.")
     # run one step of the adjoint function, Enzyme preferred that I did this one and then all of the others, I'm not sure why.......
     ad_h = zeros(Float64, N_i+N_s+1)
     ad_T = zeros(Float64, N_i+N_s+1)
     ad_T[N_i+N_s+1] = 1.0
     
     #∂h, ∂T_old = run_ice_column_adjoint_hT(jcmodel, atmodel, ad_h, ad_T)
-    ∂h, ∂T_old =  run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
+    d_jcolumn = run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
+    ∂h        = d_jcolumn.Δh
+    ∂T_old    = d_jcolumn.T_n
 
+    println(jcmodel.T_array[:, N_t+1])
+
+    println("Now we'll go backwards.")
     println("∂h:")
     println(∂h)
     println("∂T_old:")
@@ -244,17 +245,18 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
 
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0))
-    run_ice_column(jcmodel, atmodel)
 
-    println(jcmodel.T_array[:, N_t+1])
-
-    println("Now we'll go backwards.")
     # run one step of the adjoint function, Enzyme preferred that I did this one and then all of the others, I'm not sure why.......
     ad_h = zeros(Float64, N_i+N_s+1)
     ad_T = zeros(Float64, N_i+N_s+1)
     ad_h[N_i+N_s+1] = 1.0
 
-    ∂T_w = run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
+    #∂T_w = run_ice_column_adjoint_Tw(jcmodel, atmodel, ad_h, ad_T)
+    d_jcolumn = run_ice_autodiff_all(jcmodel, atmodel, ad_h, ad_T)
+    ∂T_w = d_jcolumn.T_w
+
+    println(jcmodel.T_array[:, N_t+1])
+    println("Now we'll go backwards.")
 
     println("∂T_w:")
     println(∂T_w)
@@ -268,13 +270,13 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
     for ϵ in step_sizes
 
         # Needs to be the same as our original T_0
-        jcmodelp = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w + ϵ, T_0)
+        jcmodelp = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w + ϵ, deepcopy(T_0))
         run_ice_column(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+N_s+1, N_t+1]
         Δh_ϵp_value = jcmodelp.Δh_array[N_i+N_s+1, N_t+1]
 
-        jcmodeln = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w - ϵ, T_0)
+        jcmodeln = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w - ϵ, deepcopy(T_0))
         run_ice_column(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+N_s+1, N_t+1]
@@ -339,8 +341,8 @@ test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 
-#test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
-#                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
+                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
 println("")
 println("NEXT, TESTS FEATURING SNOW")
@@ -364,5 +366,5 @@ println("")
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
-#test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
-#                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
+                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
