@@ -286,5 +286,18 @@ end
 
         # Where changes in enthalpy are traced (adapted from line ~621):
 
+
+
+        # Update ice thickness and tracers (line ~647)
+        for n in 1:jcell.N_cat
+
+            jcell.columns[n].H_i = 0.0
+            if jcell.areas[n] > puny
+                jcell.columns[n].H_i = jcell.vol_i[n] / jcell.areas[n]
+            end
+        end
+
+    end
+
     return nothing
 end
