@@ -279,7 +279,7 @@ end
         # Now modify the snow volume
         worka  = jcell.dareas[n] / jcell.areas_old[nd]
         dvsnow = jcell.vol_s_old[nd] * worka
-        workb  = dvsnow
+        #workb  = dvsnow
 
         jcell.vol_s[nd] -= dvsnow
         jcell.vol_s[nr] += dvsnow
