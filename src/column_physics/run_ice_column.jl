@@ -71,7 +71,7 @@ end
                     jcolumn.subdiag, jcolumn.supdiag, jcolumn.Δt)
 
     # Gets the growth/melt and rebalances
-    step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄, jcolumn.q_i, jcolumn.q_inew,
+    step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄, jcolumn.q, jcolumn.q_new,
                     jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
 
     # Add up the layer thicknesses to get the new total thickness

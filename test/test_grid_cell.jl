@@ -12,29 +12,37 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols
     run_ice_cell(jcell)
 
     for k in 1:N_cat
-        @printf("Initial and final temps for layer %d are:\n", k)
+        #=
+        @printf("Initial and final temps for category %d are:\n", k)
         println(jcell.columns[k].T_array[:,1])
         println(jcell.columns[k].T_array[:,N_t+1])
 
-        @printf("Initial and final thicknesses for layer %d are:\n", k)
+        @printf("Initial and final thicknesses for category %d are:\n", k)
         println(jcell.columns[k].Δh_array[:,1])
         println(jcell.columns[k].Δh_array[:,N_t+1])
-
+        =#
+        @printf("Initial and final total thickness for category %d is:\n", k)
+        println(sum(jcell.columns[k].Δh_array[:,1]))
+        println(sum(jcell.columns[k].H_i + jcell.columns[k].H_s))
     end
+
+    println("Category areas are:")
+    println(jcell.areas)
+
     @time run_ice_cell(jcell)
 end
 
 N_cat         = 5
-N_t           = 4
-N_i_cols      = [1, 2, 3, 4, 5]
-N_s_cols      = [0, 0, 0, 1, 2]
+N_t           = 1
+N_i_cols      = [5, 5, 5, 5, 5]
+N_s_cols      = [2, 2, 2, 2, 2]
 H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
-H_s_cols      = [0.0, 0.0, 0.0, 0.05, 0.09]
+H_s_cols      = [0.0, 0.0, 0.01, 0.05, 0.09]
 T_frz         = 271.35 - 273.15
-T_0_cols      = [0 .- [7.0, 6.0],
-                 0 .- [9.0, 8.0, 4.0],
-                 0 .- [13.75, 12.5, 8.0, 3.5],
-                 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+T_0_cols      = [0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
                  0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]]
 
 Δt            = 1.0

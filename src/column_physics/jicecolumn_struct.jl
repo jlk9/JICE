@@ -108,8 +108,8 @@ mutable struct JICEColumn
     K::Vector{Float64}
     K̄::Vector{Float64}
     I_pen::Vector{Float64}
-    q_i::Vector{Float64}
-    q_inew::Vector{Float64}
+    q::Vector{Float64}
+    q_new::Vector{Float64}
     z_old::Vector{Float64}
     z_new::Vector{Float64}
     maindiag::Vector{Float64}

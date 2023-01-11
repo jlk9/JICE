@@ -3,7 +3,9 @@
 # between thickness categories within one grid cell
 
 include("./jicecell_struct.jl")
-
+#=
+    MAJOR ASSUMPTION: hee we assume each thickness category has the same number of ice/snow layers
+=#
 @inline function linear_itd_change(jcell)
 
     # Compute thickness changes in each category
@@ -133,7 +135,7 @@ include("./jicecell_struct.jl")
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
         for k in 2:(jcell.columns[n].N_s+1)
-            jcell.columns[n].q_i[k] += ρ_s*L_0
+            jcell.columns[n].q[k] += ρ_s*L_0
         end
     end
 
@@ -142,7 +144,7 @@ include("./jicecell_struct.jl")
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
         for k in 2:(jcell.columns[n].N_s+1)
-            jcell.columns[n].q_i[k] -= ρ_s*L_0
+            jcell.columns[n].q[k] -= ρ_s*L_0
         end
     end
 
@@ -154,7 +156,7 @@ end
     we actually compute g(eta), where eta = h - hL, and hL is the
     left boundary.
 
-    Comapred to version in CICE, here we want to do it in one array
+    Compared to version in CICE, here we want to do it in one array
 =#
 @inline function fit_line(jcell)
 
@@ -251,10 +253,28 @@ end
     end
 
     # TODO: define variables equal to area and volume * tracers (line ~440 in icepack_itd)
+    for n in 1:jcell.N_cat
 
+        # idea: atrcrn is the tracers (ice/snow enthalpy) * the column's area
+        # the conditional statement handles multiple layers
+        # it looks like atrcrn just takes the product of all layers in a category if there are multiple
+        jcolumn = jcell.columns[n]
+
+        # first we'll get snow enthalpy:
+        jcell.aq_s[n] = jcell.vol_s[n]
+        for k in 1:jcolumn.N_s
+            jcell.aq_s[n] *= jcolumn.q[k+1]
+        end
+
+        # then we'll get ice enthalpy:
+        jcell.aq_i[n] = jcell.vol_i[n]
+        for k in 1:jcolumn.N_i
+            jcell.aq_i[n] *= jcolumn.q[jcolumn.N_s+k+1]
+        end
+    end
 
     # Check for daice or dvice out of range (line ~458)
-
+    
 
     # Transfer volume and energy between categories (line ~595)
     for n in 1:(jcell.N_cat-1)
@@ -285,19 +305,61 @@ end
         jcell.vol_s[nr] += dvsnow
 
         # Where changes in enthalpy are traced (adapted from line ~621):
+        # iterate over variables to trace (def enthalpy, maybe others too)
+            # get nd and nr (necessary? we already get those)
+            # compute change in tracer (datrcr)
+            # modify datrcr further if n_trcr_strata(index of this tracer) > 0
 
+            # finally modify area of tracer at indices nd and nr using datrcr
 
+            # idea: atrcrn is the tracers (ice/snow enthalpy) * the column's area
+            # the conditional statement handles multiple layers
+            # it looks like atrcrn just takes the product of all layers in a category if there are multiple
 
-        # Update ice thickness and tracers (line ~647)
-        for n in 1:jcell.N_cat
+        # we draw from the nd column to get the change in tracers
+        jcolumn = jcell.columns[nd]
 
-            jcell.columns[n].H_i = 0.0
-            if jcell.areas[n] > puny
-                jcell.columns[n].H_i = jcell.vol_i[n] / jcell.areas[n]
-            end
+        # first we'll get snow enthalpy:
+        jcell.daq_s[n] = jcell.vol_s[n]
+        for k in 1:jcolumn.N_s
+            jcell.daq_s[n] *= jcolumn.q[k+1]
         end
+
+        # then we'll get ice enthalpy:
+        jcell.daq_i[n] = jcell.vol_i[n]
+        for k in 1:jcolumn.N_i
+            jcell.daq_i[n] *= jcolumn.q[jcolumn.N_s+k+1]
+        end
+
+        # Now we modiy the area/volume-adjusted enthalpies. First snow:
+        jcell.aq_s[nd] -= jcell.daq_s[n]
+        jcell.aq_s[nr] += jcell.daq_s[n]
+
+        # Then ice:
+        jcell.aq_i[nd] -= jcell.daq_i[n]
+        jcell.aq_i[nr] += jcell.daq_i[n]
 
     end
 
+    # Update ice thickness and tracers (line ~647)
+    for n in 1:jcell.N_cat
+
+        jcell.columns[n].H_i = 0.0
+        if jcell.areas[n] > puny
+            jcell.columns[n].H_i = jcell.vol_i[n] / jcell.areas[n]
+        end
+    end
+
+    #compute_new_enthalpy(jcell)
+
     return nothing
+end
+
+#=
+    Computes the new enthalpy values based on the modified tracers
+=#
+@inline function compute_new_enthalpy(jcell)
+
+
+
 end
