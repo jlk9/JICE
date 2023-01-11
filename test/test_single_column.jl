@@ -302,7 +302,7 @@ N_t    = 100
 N_i    = 5
 N_s    = 0
 H_i    = 2.0
-H_s    = 0
+H_s    = 0.0
 T_frz  = 271.35 - 273.15
 T_0    = 0 .- [20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 Δt     = 1.0
@@ -328,6 +328,36 @@ println("")
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 
+N_t    = 100
+N_i    = 5
+N_s    = 2
+H_i    = 2.0
+H_s    = 0.0
+T_frz  = 271.35 - 273.15
+T_0    = 0 .- [20.0, 0.0, 0.0, 19.0, 14.5, 10.0, 5.5, 1.0]
+Δt     = 1.0
+u_star = 0.0005 # recommended minimum value of u_star in CICE
+T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
+
+# "Educated" guess for some normal atmospheric values
+F_Ld    = 10.0
+F_SWvdr = 120.0 
+F_SWidr = 0.0
+F_SWvdf = 0.0
+F_SWidf = 0.0 
+T_a     = -34.0
+Θ_a     = T_a*(1000.0/1045.6)^0.286
+ρ_a     = 1.4224
+Q_a     = 0.005 #?
+c_p     = 0.7171
+U_a     = zeros(Float64, 3)
+
+println("\nTESTS WITH JUST ICE, EMPTY SNOW LAYERS")
+println("")
+
+test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
+                    F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+
 #=
 println("")
 #test_tridiagonal_solve(T_0, N_i)
@@ -335,7 +365,7 @@ println("")
 #test_run_ice_column_one_step(N_t, N_i, N_s, H_i, H_s, L, T_frz, Δt, u_star, T_w, T_0, 0.0, 0.0)
 println("")
 =#
-
+#=
 println("")
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
@@ -343,7 +373,7 @@ println("")
 
 test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-
+=#
 println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
@@ -361,10 +391,11 @@ T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
-
+#=
 println("")
 test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 println("")
 test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+=#
