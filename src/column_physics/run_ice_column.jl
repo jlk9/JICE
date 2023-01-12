@@ -66,13 +66,13 @@ end
     
     
     # Computes the temperature changes at this step
-    step_temp_change(jcolumn.N_i, jcolumn.N_s, jcolumn.H_i, jcolumn.H_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.Δh̄, jcolumn.T_n,
-                    jcolumn.T_nplus, jcolumn.c_i, jcolumn.K, jcolumn.K̄, jcolumn.I_pen, jcolumn.F_0[step], jcolumn.dF_0[step], jcolumn.maindiag,
-                    jcolumn.subdiag, jcolumn.supdiag, jcolumn.Δt)
+    step_temp_change(jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.Δh̄, jcolumn.T_n,
+                    jcolumn.T_nplus, jcolumn.c_i, jcolumn.K, jcolumn.K̄, jcolumn.I_pen, jcolumn.F_0[step], jcolumn.dF_0[step],
+                    jcolumn.maindiag, jcolumn.subdiag, jcolumn.supdiag, jcolumn.Δt)
 
     # Gets the growth/melt and rebalances
-    #step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄, jcolumn.q, jcolumn.q_new,
-    #                jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
+    step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄,
+                     jcolumn.q, jcolumn.q_new, jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
 
     # Add up the layer thicknesses to get the new total thickness
     readd_total_thickness(jcolumn)
