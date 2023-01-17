@@ -40,11 +40,11 @@ end
 
     # Apply horizontal transport between columns vis a linear map
     # This is done with function linear_itd in icepack_therm_itd
-    #linear_itd_change(jcell)
+    linear_itd_change(jcell)
 
 
     # Add new ice growing in ocean run_cell_step
-    # This isd done with add_new_ice in icepack_therm_itd
+    # This is done with add_new_ice in icepack_therm_itd
 
 
     # Melt ice laterally

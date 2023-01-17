@@ -29,7 +29,7 @@ end
 
     # For the surface, using either ice or snow formulation
     w    = -c_0*T[1] + L_0 # intermediate variable
-    q[1] = -ρ_i*w # + min(N_s, 1)*((ρ_s-ρ_i)*w)
+    q[1] = -ρ_i*w
 
     # For the snow layers
     if H_s >= puny
@@ -54,9 +54,12 @@ end
 
     # For the snow layers
     if H_s >= puny
-        for k in 2:N_s+1
+        for k in 1:N_s+1
             T[k] = (q[k]/ρ_s + L_0)/c_0
         end
+    else # need surface temp based on ice
+        b    = - (q[1]/ρ_i + L_0)
+        T[1] = (-b - sqrt(b^2))/(2c_0)
     end
 
     # For the ice layers

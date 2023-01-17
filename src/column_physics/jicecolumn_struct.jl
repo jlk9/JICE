@@ -179,8 +179,8 @@ function allocate_memory(N_i, N_s, N_t)
     K      = zeros(Float64, N_i+N_s+1)
     K̄      = zeros(Float64, N_i+N_s)
     I_pen  = zeros(Float64, N_i)
-    q_i    = zeros(Float64, N_i+N_s+1)
-    q_inew = zeros(Float64, N_i+N_s+1)
+    q      = zeros(Float64, N_i+N_s+1)
+    q_new = zeros(Float64, N_i+N_s+1)
     z_old  = zeros(Float64, N_i+N_s+2)
     z_new  = zeros(Float64, N_i+N_s+2)
 
@@ -199,7 +199,7 @@ function allocate_memory(N_i, N_s, N_t)
     T_array  = zeros(Float64, N_i+N_s+1, N_t+1)
     Δh_array = zeros(Float64, N_i+N_s+1, N_t+1)
 
-    return T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
 end
 

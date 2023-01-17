@@ -4,7 +4,7 @@
 
 include("./jicecell_struct.jl")
 #=
-    MAJOR ASSUMPTION: hee we assume each thickness category has the same number of ice/snow layers
+    MAJOR ASSUMPTION: here we assume each thickness category has the same number of ice/snow layers
 =#
 @inline function linear_itd_change(jcell)
 
@@ -251,8 +251,8 @@ end
         jcell.vol_i_old[n] = jcell.vol_i[n]
         jcell.vol_s_old[n] = jcell.vol_s[n]
     end
-
-    # TODO: define variables equal to area and volume * tracers (line ~440 in icepack_itd)
+    
+    # Define variables equal to (area or volume) * tracers (line ~440 in icepack_itd)
     for n in 1:jcell.N_cat
 
         # idea: atrcrn is the tracers (ice/snow enthalpy) * the column's area
@@ -260,16 +260,25 @@ end
         # it looks like atrcrn just takes the product of all layers in a category if there are multiple
         jcolumn = jcell.columns[n]
 
-        # first we'll get snow enthalpy:
-        jcell.aq_s[n] = jcell.vol_s[n]
-        for k in 1:jcolumn.N_s
-            jcell.aq_s[n] *= jcolumn.q[k+1]
+        # NOTE: we are temporalily modifying jcolumn's enthalpy with its area/volume
+        # first store q values in q_new as well:
+        #for k in 1:(jcolumn.N_s+jcolumn.N_i+1)
+        #    jcolumn.q_new[k] = jcolumn.q[k]
+        #end
+
+        # get area-adjusted surface enthalpy:
+        jcolumn.q[1] *= jcell.areas_old[n]
+
+        # we'll get volume-adjusted snow enthalpy:
+        w_s = jcell.vol_s_old[n] / jcolumn.N_s
+        for k in 2:(jcolumn.N_s+1)
+            jcolumn.q[k] *= w_s
         end
 
-        # then we'll get ice enthalpy:
-        jcell.aq_i[n] = jcell.vol_i[n]
-        for k in 1:jcolumn.N_i
-            jcell.aq_i[n] *= jcolumn.q[jcolumn.N_s+k+1]
+        # then we'll get volume-adjusted ice enthalpy:
+        w_i = jcell.vol_i_old[n] / jcolumn.N_i
+        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            jcolumn.q[k] *= w_i
         end
     end
 
@@ -286,71 +295,91 @@ end
             if nd == n
                 nr += 1
             end
+        
+
+            # Modify the area
+            jcell.areas[nd] -= jcell.dareas[n]
+            jcell.areas[nr] += jcell.dareas[n]
+
+            # Modify the ice volume
+            jcell.vol_i[nd] -= jcell.dvol_i[n]
+            jcell.vol_i[nr] += jcell.dvol_i[n]
+
+            # Now modify the snow volume
+            worka  = jcell.dareas[n] / jcell.areas_old[nd]
+            dvsnow = jcell.vol_s_old[nd] * worka
+            #workb  = dvsnow
+
+            jcell.vol_s[nd] -= dvsnow
+            jcell.vol_s[nr] += dvsnow
+
+            # Where changes in enthalpy are traced (adapted from line ~621):
+            # iterate over variables to trace (def enthalpy, maybe others too)
+                # get nd and nr (necessary? we already get those)
+                # compute change in tracer (datrcr)
+                # modify datrcr further if n_trcr_strata(index of this tracer) > 0
+
+                # finally modify area of tracer at indices nd and nr using datrcr
+
+                # idea: atrcrn is the tracers (ice/snow enthalpy) * the column's area
+                # the conditional statement handles multiple layers
+                # it looks like atrcrn just takes the product of all layers in a category if there are multiple
+
+            # we draw from the nd column to get the change in tracers
+            jcolumn_d = jcell.columns[nd]
+            jcolumn_r = jcell.columns[nr]
+
+            # NOTE: we store change in enthalpy in jcolumn.q_new
+            # NOTE: since we weighted enthalpy by area/volume, we have to divide q here by old areas/volumes
+
+            # first we'll get surface change to weighted enthalpy:
+            jcolumn_d.q_new[1] = jcolumn_d.q[1] * jcell.dareas[n] / jcell.areas_old[n]
+
+            # next we'll get snow change to weighted enthalpy:
+            w_s = dvsnow / jcell.vol_s_old[n]
+            for k in 2:(jcolumn_d.N_s+1)
+                jcolumn_d.q_new[k] = jcolumn_d.q[k] * w_s
+            end
+
+            # then we'll get ice change to weighted enthalpy:
+            w_i = jcell.dvol_i[n] / jcell.vol_i_old[n]
+            for k in (jcolumn_d.N_s+2):(jcolumn_d.N_s+jcolumn_d.N_i+1)
+                jcolumn_d.q_new[k] = jcolumn_d.q[k] * w_i
+            end
+
+            # Now we modify the area/volume-adjusted enthalpies.
+            # NOTE: since sirface is sometimes snow and sometimes ice, we might need to
+            # handle special cases there
+            for k in 1:(jcolumn_d.N_s+jcolumn_d.N_i+1)
+
+                jcolumn_d.q[k] -= jcolumn_d.q_new[k]
+                jcolumn_r.q[k] += jcolumn_d.q_new[k]
+            end
         end
-
-        # Modify the area
-        jcell.areas[nd] -= jcell.dareas[n]
-        jcell.areas[nr] += jcell.dareas[n]
-
-        # Modify the ice volume
-        jcell.vol_i[nd] -= jcell.dvol_i[n]
-        jcell.vol_i[nr] += jcell.dvol_i[n]
-
-        # Now modify the snow volume
-        worka  = jcell.dareas[n] / jcell.areas_old[nd]
-        dvsnow = jcell.vol_s_old[nd] * worka
-        #workb  = dvsnow
-
-        jcell.vol_s[nd] -= dvsnow
-        jcell.vol_s[nr] += dvsnow
-
-        # Where changes in enthalpy are traced (adapted from line ~621):
-        # iterate over variables to trace (def enthalpy, maybe others too)
-            # get nd and nr (necessary? we already get those)
-            # compute change in tracer (datrcr)
-            # modify datrcr further if n_trcr_strata(index of this tracer) > 0
-
-            # finally modify area of tracer at indices nd and nr using datrcr
-
-            # idea: atrcrn is the tracers (ice/snow enthalpy) * the column's area
-            # the conditional statement handles multiple layers
-            # it looks like atrcrn just takes the product of all layers in a category if there are multiple
-
-        # we draw from the nd column to get the change in tracers
-        jcolumn = jcell.columns[nd]
-
-        # first we'll get snow enthalpy:
-        jcell.daq_s[n] = jcell.vol_s[n]
-        for k in 1:jcolumn.N_s
-            jcell.daq_s[n] *= jcolumn.q[k+1]
-        end
-
-        # then we'll get ice enthalpy:
-        jcell.daq_i[n] = jcell.vol_i[n]
-        for k in 1:jcolumn.N_i
-            jcell.daq_i[n] *= jcolumn.q[jcolumn.N_s+k+1]
-        end
-
-        # Now we modiy the area/volume-adjusted enthalpies. First snow:
-        jcell.aq_s[nd] -= jcell.daq_s[n]
-        jcell.aq_s[nr] += jcell.daq_s[n]
-
-        # Then ice:
-        jcell.aq_i[nd] -= jcell.daq_i[n]
-        jcell.aq_i[nr] += jcell.daq_i[n]
-
     end
 
-    # Update ice thickness and tracers (line ~647)
+    # Update snow/ice thickness and tracers (line ~647)
     for n in 1:jcell.N_cat
 
-        jcell.columns[n].H_i = 0.0
+        jcolumn = jcell.columns[n]
+
         if jcell.areas[n] > puny
-            jcell.columns[n].H_i = jcell.vol_i[n] / jcell.areas[n]
+            if jcell.vol_s[n] > puny
+                jcolumn.H_s = jcell.vol_s[n] / jcell.areas[n]
+                for k in 2:(jcolumn.N_s+1)
+                    jcolumn.Δh[k] = jcolumn.H_s / jcolumn.N_s
+                end
+            end
+            if jcell.vol_i[n] > puny
+                jcolumn.H_i = jcell.vol_i[n] / jcell.areas[n]
+                for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+                    jcolumn.Δh[k] = jcolumn.H_i / jcolumn.N_i
+                end
+            end
         end
     end
 
-    #compute_new_enthalpy(jcell)
+    compute_new_enthalpy(jcell)
 
     return nothing
 end
@@ -360,6 +389,23 @@ end
 =#
 @inline function compute_new_enthalpy(jcell)
 
+    # We need to divide our enthalpies by the new weighted area/volume
+    for n in 1:jcell.N_cat
 
+        jcolumn = jcell.columns[n]
+        w_s     = jcell.vol_s[n] / jcolumn.N_s
+        w_i     = jcell.vol_i[n] / jcolumn.N_i
+
+        jcolumn.q[1] /= jcell.areas[n]
+        for k in 2:(jcolumn.N_s+1)
+            jcolumn.q[k] /= w_s
+        end
+        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            jcolumn.q[k] /= w_i
+        end
+
+        # And then get the new temperatures from these enthalpies:
+        generate_T_from_q(jcolumn.T_n, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+    end
 
 end

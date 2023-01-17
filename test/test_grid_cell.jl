@@ -12,18 +12,19 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols
     run_ice_cell(jcell)
 
     for k in 1:N_cat
-        #=
+        
         @printf("Initial and final temps for category %d are:\n", k)
         println(jcell.columns[k].T_array[:,1])
         println(jcell.columns[k].T_array[:,N_t+1])
-
+        
         @printf("Initial and final thicknesses for category %d are:\n", k)
         println(jcell.columns[k].Δh_array[:,1])
         println(jcell.columns[k].Δh_array[:,N_t+1])
-        =#
+        
         @printf("Initial and final total thickness for category %d is:\n", k)
         println(sum(jcell.columns[k].Δh_array[:,1]))
         println(sum(jcell.columns[k].H_i + jcell.columns[k].H_s))
+        
     end
 
     println("Category areas are:")
@@ -37,13 +38,15 @@ N_t           = 1
 N_i_cols      = [5, 5, 5, 5, 5]
 N_s_cols      = [2, 2, 2, 2, 2]
 H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
-H_s_cols      = [0.0, 0.0, 0.01, 0.05, 0.09]
+#H_s_cols      = [0.0, 0.0, 0.01, 0.05, 0.09]
+#H_s_cols      = [0.0, 0.0, 0.0, 0.0, 0.0]
+H_s_cols      = [0.01, 0.02, 0.05, 0.07, 0.09]
 T_frz         = 271.35 - 273.15
-T_0_cols      = [0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
-                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
-                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
-                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
-                 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]]
+T_0_cols      = [0.0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0.1 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0.2 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0.3 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
+                 0.4 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]]
 
 Δt            = 1.0
 u_star_cols   = 0.0005 .+ zeros(Float64, N_cat) # recommended minimum value of u_star in CICE
