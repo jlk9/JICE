@@ -128,7 +128,17 @@ include("./jicecell_struct.jl")
             jcell.dvol_i[n] = jcell.g1[nd]*x3 + jcell.g0[nd]*x2 + jcell.dareas[n]*jcell.hL[nd]
         end
 
-        # Optional TODO: shift 0 ice if dareas[n] too small, or entire category if dareas[n] is close to areas[n+1]
+        # Shift 0 ice if dareas[n] too small:
+        nd = jcell.donor[n]
+        if (jcell.dareas[n] < jcell.areas[nd]*puny) || (jcell.dvol_i[n] < jcell.columns[nd].H_i*jcell.areas[n]*puny)
+            jcell.dareas[n] = 0.0
+            jcell.donor[n]  = 0
+        end
+
+        # Shift entire category if dareas[n] is close to areas[n+1]:
+        if (jcell.dareas[n] > jcell.areas[nd]*(1.0-puny)) || (jcell.dvol_i[n] > jcell.columns[nd].H_i*jcell.areas[n]*(1.0-puny))
+            jcell.dareas[n] = jcell.areas[nd]
+        end
     end
 
     # Shift ice between categories as necessary (line ~564)
@@ -283,7 +293,73 @@ end
     end
 
     # Check for daice or dvice out of range (line ~458)
-    
+    for n in 1:(jcell.N_cat-1)
+
+        darea_neg = false
+        dvoli_neg = false
+        darea_gre = false
+        dvoli_gre = false
+
+        if jcell.donor[n] > 0
+
+            nd = jcell.donor[n]
+
+            # If change in area is negative, either round back to 0 or report an error
+            if jcell.dareas[n] < 0.0
+                if jcell.dareas[n] > -puny*jcell.areas[nd]
+                    jcell.dareas[n] = 0.0
+                    jcell.dvol_i[n] = 0.0
+                else
+                    darea_neg = true
+                end
+            end
+
+            # If change in ice volume is negative, either round back to 0 or report an error
+            if jcell.dvol_i[n] < 0.0
+                if jcell.dvol_i[n] > -puny*jcell.vol_i[nd]
+                    jcell.dareas[n] = 0.0
+                    jcell.dvol_i[n] = 0.0
+                else
+                    dvoli_neg = true
+                end
+            end
+
+            # If change in area is greater than source area, either round back to source or report error
+            if jcell.dareas[n] > jcell.areas[nd]*(1.0-puny)
+                if jcell.dareas[n] < jcell.areas[nd]*(1.0+puny)
+                    jcell.dareas[n] = jcell.areas[nd]
+                    jcell.dvol_i[n] = jcell.vol_i[nd]
+                else
+                    darea_gre = true
+                end
+            end
+
+            # If change in ice volume is greater than source volume, either round back to source or report error
+            if jcell.dvol_i[n] > jcell.vol_i[nd]*(1.0-puny)
+                if jcell.dvol_i[n] < jcell.vol_i[nd]*(1.0+puny)
+                    jcell.dareas[n] = jcell.areas[nd]
+                    jcell.dvol_i[n] = jcell.vol_i[nd]
+                else
+                    dvoli_gre = true
+                end
+            end
+
+        end
+
+        # Error messages
+        if darea_neg
+            println("Oh no! The change in ice area for a column is negative, that is unphysical")
+        end
+        if dvoli_neg
+            println("Oh no! The change in ice volumn for a column is negative, that is unphysical")
+        end
+        if darea_gre
+            println("Oh no! The change in ice area for a column is greater than its source, that is numerically unstable")
+        end
+        if dvoli_gre
+            println("Oh no! The change in ice volumn for a column is greater than its source, that is numerically unstable")
+        end
+    end
 
     # Transfer volume and energy between categories (line ~595)
     for n in 1:(jcell.N_cat-1)

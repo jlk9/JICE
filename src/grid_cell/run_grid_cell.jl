@@ -45,7 +45,7 @@ end
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-
+    #add_new_ice(jcell)
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
