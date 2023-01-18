@@ -208,8 +208,8 @@ end
 @inline function generate_S(S, N_i)
 
     for k in 1:N_i
-        z      = k / N_i
-        S[k] = 0.5 * S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+        z    = k / N_i
+        S[k] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
     end
 
     return nothing

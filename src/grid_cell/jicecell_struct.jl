@@ -39,10 +39,11 @@ struct JICECell
     dvol_s::Vector{Float64}
     donor::Vector{Int64}
 
-    aq_i::Vector{Float64}
-    aq_s::Vector{Float64}
-    daq_i::Vector{Float64}
-    daq_s::Vector{Float64}
+
+    i_energy::Vector{Float64}
+    s_energy::Vector{Float64}
+    i_energy_old::Vector{Float64}
+    s_energy_old::Vector{Float64}
 
     atm::ATModel
 
@@ -87,13 +88,13 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
     dvol_s = zeros(Float64, N_cat)
     donor  = zeros(Int64, N_cat)
 
-    aq_i    = zeros(Float64, N_cat)
-    aq_s    = zeros(Float64, N_cat)
-    daq_i   = zeros(Float64, N_cat)
-    daq_s   = zeros(Float64, N_cat)
+    i_energy     = zeros(Float64, N_cat)
+    s_energy     = zeros(Float64, N_cat)
+    i_energy_old = zeros(Float64, N_cat)
+    s_energy_old = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old,
-                        columns, g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, aq_i, aq_s, daq_i, daq_s, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
+                         g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old, atm)
     return grid_cell
 end

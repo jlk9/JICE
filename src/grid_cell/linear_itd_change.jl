@@ -8,6 +8,12 @@ include("./jicecell_struct.jl")
 =#
 @inline function linear_itd_change(jcell)
 
+    # Compute energy sums remapping should conserve:
+    sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell)
+
+    #println(jcell.i_energy_old)
+    #println(jcell.s_energy_old)
+
     # Compute thickness changes in each category
     for n in 1:jcell.N_cat
         jcell.dH[n] = jcell.columns[n].H_i - jcell.columns[n].H_iold
@@ -157,6 +163,12 @@ include("./jicecell_struct.jl")
             jcell.columns[n].q[k] -= ρ_s*L_0
         end
     end
+
+    # Compute new energy sums remapping should still conserve:
+    sum_total_energy(jcell.i_energy, jcell.s_energy, jcell)
+
+    #println(jcell.i_energy)
+    #println(jcell.s_energy)
 
     return nothing
 end
@@ -482,6 +494,38 @@ end
 
         # And then get the new temperatures from these enthalpies:
         generate_T_from_q(jcolumn.T_n, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+    end
+
+end
+
+
+#= Adds up sum for total ice/snow energy
+
+    ice_energy is either i_energy or i_energy_old
+    sno_energy is either s_energy or s_energy_old, before or after model run
+=#
+@inline function sum_total_energy(ice_energy, sno_energy, jcell)
+
+    for n in 1:jcell.N_cat
+
+        jcolumn = jcell.columns[n]
+
+        ice_energy[n] = 0.0
+        sno_energy[n] = 0.0
+        
+        # Get snow energy if it exists
+        if jcolumn.H_s > 0.0
+            w_s = jcell.areas[n]*jcolumn.H_s / jcolumn.N_s
+            for k in 2:(jcolumn.N_s+1)
+                sno_energy[n] += jcolumn.q[k] * w_s
+            end
+        end
+        # Get ice energy
+        w_i = jcell.areas[n]*jcolumn.H_i / jcolumn.N_i
+        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            ice_energy[n] += jcolumn.q[k] * w_i
+        end
+
     end
 
 end

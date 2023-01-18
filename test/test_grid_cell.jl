@@ -34,7 +34,7 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols
 end
 
 N_cat         = 5
-N_t           = 1
+N_t           = 10
 N_i_cols      = [5, 5, 5, 5, 5]
 N_s_cols      = [2, 2, 2, 2, 2]
 H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
