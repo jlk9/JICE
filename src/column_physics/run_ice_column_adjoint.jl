@@ -6,6 +6,13 @@ include("run_ice_column.jl")
 
 using Enzyme
 
+#= Runs the single column sea ice model and computes the derivatives for all of its fields. The various
+    fields of d_jcolumn are the partial derivatives of those fields given the gradients for thickness and
+    current temperature (ad_h and ad_T).
+
+NOTE:   In cases where there is no snow and empty (thickness 0) snow layers, the partial derivative in terms of
+        thickness can be NaN.
+=#
 function run_ice_column_autodiff(jcolumn, atmodel, ad_h, ad_T)
 
     # first we need to allocate d_jcolumn and d_atmodel:
