@@ -52,7 +52,7 @@ end
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
     
-
+    return nothing
 end
 
 #= Checks that energy is conserved through linear remapping and other processes
@@ -60,21 +60,40 @@ end
 =#
 @inline function conservation_check(jcell)
 
+    total_i_vol_old    = 0.0
+    total_s_vol_old    = 0.0
     total_i_energy_old = 0.0
     total_s_energy_old = 0.0
+
+    total_i_vol    = 0.0
+    total_s_vol    = 0.0
     total_i_energy = 0.0
     total_s_energy = 0.0
 
     for n in 1:jcell.N_cat
+        total_i_vol_old    += jcell.vol_i_old[n]
+        total_s_vol_old    += jcell.vol_s_old[n]
         total_i_energy_old += jcell.i_energy_old[n]
         total_s_energy_old += jcell.s_energy_old[n]
-        total_i_energy     += jcell.i_energy[n]
-        total_s_energy     += jcell.s_energy[n]
+
+        total_i_vol    += jcell.vol_i[n]
+        total_s_vol    += jcell.vol_s[n]
+        total_i_energy += jcell.i_energy[n]
+        total_s_energy += jcell.s_energy[n]
     end
+
+    i_vol_change    = abs(total_i_vol_old - total_i_vol) / abs(total_i_vol_old)
+    s_vol_change    = abs(total_s_vol_old - total_s_vol) / abs(total_s_vol_old)
 
     i_energy_change = abs(total_i_energy_old - total_i_energy) / abs(total_i_energy_old)
     s_energy_change = abs(total_s_energy_old - total_s_energy) / abs(total_s_energy_old)
 
+    if i_vol_change > puny
+        println("Oh no! The total change in ice volume from horizontal transport is above acceptable machine precision.")
+    end
+    if s_vol_change > puny
+        println("Oh no! The total change in snow volume from horizontal transport is above acceptable machine precision.")
+    end
     if i_energy_change > puny
         println("Oh no! The total change in ice energy from horizontal transport is above acceptable machine precision.")
     end
@@ -82,7 +101,5 @@ end
         println("Oh no! The total change in snow energy from horizontal transport is above acceptable machine precision.")
     end
 
-    #println(i_energy_change)
-    #println(s_energy_change)
-
+    return nothing
 end
