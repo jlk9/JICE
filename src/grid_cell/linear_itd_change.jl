@@ -146,7 +146,7 @@ include("./jicecell_struct.jl")
             jcell.dareas[n] = jcell.areas[nd]
         end
     end
-
+    #=
     # Shift ice between categories as necessary (line ~564)
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
@@ -154,16 +154,16 @@ include("./jicecell_struct.jl")
             jcell.columns[n].q[k] += ρ_s*L_0
         end
     end
-
+    =#
     shift_ice(jcell)
-
+    #=
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
         for k in 2:(jcell.columns[n].N_s+1)
             jcell.columns[n].q[k] -= ρ_s*L_0
         end
     end
-
+    =#
     # Compute new energy sums remapping should still conserve:
     sum_total_energy(jcell.i_energy, jcell.s_energy, jcell)
 
@@ -436,7 +436,7 @@ end
             end
 
             # Now we modify the area/volume-adjusted enthalpies.
-            # NOTE: since sirface is sometimes snow and sometimes ice, we might need to
+            # NOTE: since surface is sometimes snow and sometimes ice, we might need to
             # handle special cases there
             for k in 1:(jcolumn_d.N_s+jcolumn_d.N_i+1)
 

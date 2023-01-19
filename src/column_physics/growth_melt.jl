@@ -54,7 +54,7 @@ end
 
     # For the snow layers
     if H_s >= puny
-        for k in 1:N_s+1
+        for k in 1:(N_s+1)
             T[k] = (q[k]/ρ_s + L_0)/c_0
         end
     else # need surface temp based on ice
