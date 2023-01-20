@@ -147,7 +147,7 @@ include("./jicecell_struct.jl")
         end
     end
     #=
-    # Shift ice between categories as necessary (line ~564)
+    # Shift ice between categories as necessary (line ~564) NOT SURE WHY CICE DOES THIS
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
         for k in 2:(jcell.columns[n].N_s+1)
@@ -496,6 +496,7 @@ end
         generate_T_from_q(jcolumn.T_n, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
     end
 
+    return nothing
 end
 
 
@@ -528,4 +529,5 @@ end
 
     end
 
+    return nothing
 end

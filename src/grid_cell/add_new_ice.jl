@@ -30,12 +30,42 @@ include("./jicecell_struct.jl")
 
     # conditional for fsd
 
-    # We will reuse old area and ice volume fields here since we are done with itd shift:
+    # We will reuse old area and ice volume fields here since we are done with itd shift (line 1526):
     for n in 1:jcell.N_cat
 
         jcell.areas_old[n] = jcell.areas[n]
         jcell.vol_i_old[n] = jcell.vol_i[n]
-        # TODO?: set energy = 0 for conservation of energy (could be good for itd as well) 
+        jcell.vol_s_old[n] = jcell.vol_s[n]
+
+        jcell.i_energy_old[n] = 0.0
+        jcell.s_energy_old[n] = 0.0
+        jcell.i_energy[n]     = 0.0
+        jcell.s_energy[n]     = 0.0
     end
 
+    # Conditional for conservation of energy (line 1537)
+
+
+    # Compute average enthalpy of new ice (line 1553)
+
+
+    # Compute the volume, area, and thickness of new ice (line 1579)
+
+
+    # Update freshwater and salt fluxes (line 1601)
+
+
+    # Decide how to distribute new ice (line 1633)
+
+
+    # Distribute excess ice volume among categories by increasing thickness (line 1694)
+
+
+    # Combine new ice into cat 1 since we don't track FSD yet (line 1792)
+    # NOTE: this will be more involved with FSD factored
+
+
+    # Biogeochemistry (ignored for now)
+
+    return nothing
 end

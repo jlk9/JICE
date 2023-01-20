@@ -16,6 +16,7 @@ include("linear_itd_change.jl")
         run_cell_step(jcell, step)
     end
 
+    return nothing
 end
 
 #= Runs one step of the model for a JICE Cell object
