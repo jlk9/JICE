@@ -38,9 +38,7 @@ include("./jicecell_struct.jl")
         jcell.vol_s_old[n] = jcell.vol_s[n]
 
         jcell.i_energy_old[n] = 0.0
-        jcell.s_energy_old[n] = 0.0
         jcell.i_energy[n]     = 0.0
-        jcell.s_energy[n]     = 0.0
 
         jcell.d_area_i_new[n]  = 0.0
         jcell.d_area_total[n]  = 0.0
@@ -53,23 +51,25 @@ include("./jicecell_struct.jl")
         # Get ice energy:
         jcolumn = jcell.columns[n]
         w_i     = (jcolumn.H_i * jcell.areas[n]) / jcolumn.N_i
-        for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
-            jcell.i_energy[n] += jcolumn.q[k] * w_i
+        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            jcell.i_energy_old[n] += jcolumn.q[k] * w_i
         end
     end
 
     # Compute average enthalpy of new ice (line 1553), using B-L thermodynamics of course
     # This assumes salinity profile is same for all columns, so we pick the first column arbitrarily
-    salinity_prof = jcell.columns[1].S
+    #salinity_prof = jcell.columns[1].S
     qi0_new       = -ρ_i*L_0
 
     # Compute the volume, area, and thickness of new ice (line 1579)
     # FOR NOW we're assuming freezing/melting potential is 0
     f_new    = max(jcell.frzmlt, 0.0)
     vi0_new  = -f_new * jcell.columns[1].Δt / qi0_new
-    vi0_init = vi0_new
+    #vi0_init = vi0_new
 
     # increment ice volume and energy (line 1586)
+    jcell.vol_i_old[1]    += vi0_new
+    jcell.i_energy_old[1] += vi0_new * qi0_new
 
     # Update freshwater and salt fluxes (line 1601)
     # For now it doesnt look like we do anything, unless we want to update ocen flux (nothing else for BL thermodynamics)

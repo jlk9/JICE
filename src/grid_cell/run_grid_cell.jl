@@ -5,7 +5,8 @@
 
 include("../column_physics/run_ice_column.jl")
 include("./jicecell_struct.jl")
-include("linear_itd_change.jl")
+include("./linear_itd_change.jl")
+include("./add_new_ice.jl")
 
 #= Runs the model of a JICE Cell object
 
@@ -44,11 +45,12 @@ end
     linear_itd_change(jcell)
 
     # Check that conservation of energy is conserved
-    conservation_check(jcell)
+    conservation_check_itd(jcell)
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-    #add_new_ice(jcell)
+    add_new_ice(jcell)
+    conservation_check_new_ice(jcell)
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
@@ -56,10 +58,10 @@ end
     return nothing
 end
 
-#= Checks that energy is conserved through linear remapping and other processes
+#= Checks that ice and snow volume and energy are conserved through linear remapping and other processes
 
 =#
-@inline function conservation_check(jcell)
+@inline function conservation_check_itd(jcell)
 
     total_i_vol_old    = 0.0
     total_s_vol_old    = 0.0
@@ -100,6 +102,40 @@ end
     end
     if s_energy_change > puny
         println("Oh no! The total change in snow energy from horizontal transport is above acceptable machine precision.")
+    end
+
+    return nothing
+end
+
+
+#= Checks that ice volume and energy are conserved through adding new ice
+
+=#
+@inline function conservation_check_new_ice(jcell)
+
+    total_i_vol_old    = 0.0
+    total_i_energy_old = 0.0
+
+    total_i_vol    = 0.0
+    total_i_energy = 0.0
+
+    for n in 1:jcell.N_cat
+        total_i_vol_old    += jcell.vol_i_old[n]
+        total_i_energy_old += jcell.i_energy_old[n]
+
+        total_i_vol    += jcell.vol_i[n]
+        total_i_energy += jcell.i_energy[n]
+    end
+
+    i_vol_change    = abs(total_i_vol_old - total_i_vol) / abs(total_i_vol_old)
+
+    i_energy_change = abs(total_i_energy_old - total_i_energy) / abs(total_i_energy_old)
+
+    if i_vol_change > puny
+        println("Oh no! The total change in ice volume from adding new ice (when factoring in added component) is above acceptable machine precision.")
+    end
+    if i_energy_change > puny
+        println("Oh no! The total change in ice energy from adding new ice (when factoring in added component) is above acceptable machine precision.")
     end
 
     return nothing
