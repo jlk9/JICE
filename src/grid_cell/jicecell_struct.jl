@@ -18,6 +18,8 @@ struct JICECell
     T_frz::Float64
     T_w::Float64
 
+    frzmlt::Float64
+
     H_bds::Vector{Float64}
     H_bnew::Vector{Float64}
     dH::Vector{Float64}
@@ -44,6 +46,11 @@ struct JICECell
     s_energy::Vector{Float64}
     i_energy_old::Vector{Float64}
     s_energy_old::Vector{Float64}
+
+    d_area_i_new::Vector{Float64}
+    d_area_total::Vector{Float64}
+
+    vi0_new_array::Vector{Float64}
 
     atm::ATModel
 
@@ -93,8 +100,13 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
     i_energy_old = zeros(Float64, N_cat)
     s_energy_old = zeros(Float64, N_cat)
 
+    d_area_i_new  = zeros(Float64, N_cat)
+    d_area_total  = zeros(Float64, N_cat)
+    vi0_new_array = zeros(Float64, N_cat)
+
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
-                         g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old, atm)
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, 0.0, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
+                         g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
+                         d_area_i_new, d_area_total, vi0_new_array, atm)
     return grid_cell
 end

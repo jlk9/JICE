@@ -32,6 +32,7 @@ const i0vis     = 0.7   # fraction of penetrating solar radiation at top surface
 
 const puny       = 1.0e-11  # For numerical tests
 const Tsf_errmax = 0.01     # For numerical test of convergence
+const hfrazilmin = 0.05     # m minimum thickness of new frazil ice
 
 #= JICEColumn struct
 Properties:
