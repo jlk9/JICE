@@ -50,7 +50,7 @@ include("./jicecell_struct.jl")
 
         # Get ice energy:
         jcolumn = jcell.columns[n]
-        w_i     = (jcolumn.H_i * jcell.areas[n]) / jcolumn.N_i
+        w_i     = jcell.vol_i_old[n] / jcolumn.N_i
         for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
             jcell.i_energy_old[n] += jcolumn.q[k] * w_i
         end
@@ -168,7 +168,7 @@ include("./jicecell_struct.jl")
                 jcolumn.Δh[k] = new_Δh
                 # Now we add corresponding enthalpy into new ice growth
                 if jcell.vol_i[n] > 0.0
-                    jcolumn.q[k] = (jcolumn.q[k]*v_tmp + qi0_new*v_surp) / jcell.vol_i[n]
+                    jcolumn.q[k] = (jcolumn.q[k]*v_tmp + qi0_new*jcell.vi0_new_array[n]) / jcell.vol_i[n]
                 end
             end
 
