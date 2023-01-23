@@ -178,7 +178,15 @@ include("./jicecell_struct.jl")
         end
     end
 
-    # Conservation check (line 1910)
+    # Conservation check (line 1910) here we add q's to get new ice energy:
+    for n in 1:jcell.N_cat
+
+        jcolumn = jcell.columns[n]
+        w_i     = jcell.vol_i[n] / jcolumn.N_i
+        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            jcell.i_energy[n] += jcolumn.q[k] * w_i
+        end
+    end
 
     # Biogeochemistry (ignored for now)
 
