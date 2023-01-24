@@ -5,9 +5,9 @@ include("../src/grid_cell/run_grid_cell.jl")
 
 using Printf
 
-function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
-    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     run_ice_cell(jcell)
 
@@ -34,7 +34,7 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols
 end
 
 N_cat         = 5
-N_t           = 100
+N_t           = 1
 N_i_cols      = [5, 5, 5, 5, 5]
 N_s_cols      = [2, 2, 2, 2, 2]
 H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
@@ -67,6 +67,9 @@ Q_a     = 0.005 #?
 c_p     = 0.7171
 U_a     = zeros(Float64, 3)
 
+# Heat transfer coefficient of water is 598.5 W/ m^2 K.
+frzmlt = 598.5*(T_w - -1.0)
+
 println("Testing cell run...")
-test_cell_run(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)

@@ -18,7 +18,7 @@ struct JICECell
     T_frz::Float64
     T_w::Float64
 
-    frzmlt::Float64
+    frzmlt::Float64 # freezing / melting potential (W/m^2)
 
     H_bds::Vector{Float64}
     H_bnew::Vector{Float64}
@@ -59,7 +59,7 @@ end
 # Creates a JICECell object.
 # Fields ending with '_cols' are lists of the given data, organized for each column in the JICECell object.
 # It is assumed areas and all fields ending with '_cols' are the same length.
-function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     # TODO: error checking to make sure lengths are consistent
     # Want all variables ending with 'cols' and areas to be length N_cat, and H_bds to be length N_cat+1
@@ -105,7 +105,7 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, N_i_cols, N_s_cols, H_
     vi0_new_array = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, 0.0, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
+    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, frzmlt, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
                          g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
                          d_area_i_new, d_area_total, vi0_new_array, atm)
     return grid_cell

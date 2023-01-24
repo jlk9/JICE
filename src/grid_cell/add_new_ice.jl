@@ -67,10 +67,6 @@ include("./jicecell_struct.jl")
     vi0_new  = -f_new * jcell.columns[1].Δt / qi0_new
     #vi0_init = vi0_new
 
-    # increment ice volume and energy (line 1586)
-    jcell.vol_i_old[1]    += vi0_new
-    jcell.i_energy_old[1] += vi0_new * qi0_new
-
     # Update freshwater and salt fluxes (line 1601)
     # For now it doesnt look like we do anything, unless we want to update ocen flux (nothing else for BL thermodynamics)
 
@@ -108,7 +104,7 @@ include("./jicecell_struct.jl")
         # combine area changes from new ice growth and lateral growth (lateral growth is fsd only):
         jcell.d_area_i_new[1]  = ai0_new
         jcell.d_area_total[1]  = jcell.d_area_i_new[1]
-        jcell.vi0_new_array[1] = vi0new
+        jcell.vi0_new_array[1] = vi0_new
 
     end
 
@@ -168,7 +164,7 @@ include("./jicecell_struct.jl")
                 jcolumn.Δh[k] = new_Δh
                 # Now we add corresponding enthalpy into new ice growth
                 if jcell.vol_i[n] > 0.0
-                    jcolumn.q[k] = (jcolumn.q[k]*v_tmp + qi0_new*jcell.vi0_new_array[n]) / jcell.vol_i[n]
+                    jcolumn.q[k] = (jcolumn.q[k]*jcell.vol_i_old[n] + qi0_new*jcell.vi0_new_array[n]) / jcell.vol_i[n]
                 end
             end
 
@@ -177,6 +173,10 @@ include("./jicecell_struct.jl")
 
         end
     end
+
+    # increment old ice volume and energy (line 1586), for conservation checks
+    jcell.vol_i_old[1]    += vi0_new
+    jcell.i_energy_old[1] += vi0_new * qi0_new
 
     # Conservation check (line 1910) here we add q's to get new ice energy:
     for n in 1:jcell.N_cat
