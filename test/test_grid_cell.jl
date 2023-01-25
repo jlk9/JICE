@@ -72,7 +72,7 @@ U_a     = zeros(Float64, 3)
 # Heat transfer coefficient of water is 598.5 W/ m^2 K.
 frzmlt = 598.5*(T_w - -1.0)
 # fraction of ice that melts laterally
-rside  = 0.0
+rside  = 0.000
 
 println("Testing cell run...")
 test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,

@@ -14,7 +14,7 @@ const ice_ref_salinity = 4.0     # reference salinity of sea ice, ppt
 #= JICECell struct
 
 =#
-struct JICECell
+mutable struct JICECell
 
     N_cat::Int64
     N_t::Int64

@@ -7,6 +7,7 @@ include("../column_physics/run_ice_column.jl")
 include("./jicecell_struct.jl")
 include("./linear_itd_change.jl")
 include("./add_new_ice.jl")
+include("./lateral_melt.jl")
 
 #= Runs the model of a JICE Cell object
 
@@ -54,6 +55,7 @@ end
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
+    lateral_melt(jcell)
     
     return nothing
 end
