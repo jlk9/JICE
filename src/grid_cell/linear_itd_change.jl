@@ -425,20 +425,20 @@ end
 
             # next we'll get snow change to weighted enthalpy:
             w_s = dvsnow / jcell.vol_s_old[n]
-            for k in 2:(jcolumn_d.N_s+1)
+            for k in 2:(jcell.N_s+1)
                 jcolumn_d.q_new[k] = jcolumn_d.q[k] * w_s
             end
 
             # then we'll get ice change to weighted enthalpy:
             w_i = jcell.dvol_i[n] / jcell.vol_i_old[n]
-            for k in (jcolumn_d.N_s+2):(jcolumn_d.N_s+jcolumn_d.N_i+1)
+            for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
                 jcolumn_d.q_new[k] = jcolumn_d.q[k] * w_i
             end
 
             # Now we modify the area/volume-adjusted enthalpies.
             # NOTE: since surface is sometimes snow and sometimes ice, we might need to
             # handle special cases there
-            for k in 1:(jcolumn_d.N_s+jcolumn_d.N_i+1)
+            for k in 1:(jcell.N_s+jcell.N_i+1)
 
                 jcolumn_d.q[k] -= jcolumn_d.q_new[k]
                 jcolumn_r.q[k] += jcolumn_d.q_new[k]
@@ -454,14 +454,16 @@ end
         if jcell.areas[n] > puny
             if jcell.vol_s[n] > puny
                 jcolumn.H_s = jcell.vol_s[n] / jcell.areas[n]
-                for k in 2:(jcolumn.N_s+1)
-                    jcolumn.Δh[k] = jcolumn.H_s / jcolumn.N_s
+                new_Δh_s    = jcolumn.H_s / jcell.N_s
+                for k in 2:(jcell.N_s+1)
+                    jcolumn.Δh[k] = new_Δh_s
                 end
             end
             if jcell.vol_i[n] > puny
                 jcolumn.H_i = jcell.vol_i[n] / jcell.areas[n]
-                for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
-                    jcolumn.Δh[k] = jcolumn.H_i / jcolumn.N_i
+                new_Δh_i    = jcolumn.H_i / jcell.N_i
+                for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
+                    jcolumn.Δh[k] = new_Δh_i
                 end
             end
         end
@@ -480,20 +482,20 @@ end
     # We need to divide our enthalpies by the new weighted area/volume
     for n in 1:jcell.N_cat
 
-        jcolumn = jcell.columns[n]
-        w_s     = jcell.vol_s[n] / jcolumn.N_s
-        w_i     = jcell.vol_i[n] / jcolumn.N_i
+        w_s     = jcell.vol_s[n] / jcell.N_s
+        w_i     = jcell.vol_i[n] / jcell.N_i
 
+        jcolumn       = jcell.columns[n]
         jcolumn.q[1] /= jcell.areas[n]
-        for k in 2:(jcolumn.N_s+1)
+        for k in 2:(jcell.N_s+1)
             jcolumn.q[k] /= w_s
         end
-        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+        for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
             jcolumn.q[k] /= w_i
         end
 
         # And then get the new temperatures from these enthalpies:
-        generate_T_from_q(jcolumn.T_n, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+        generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
     end
 
     return nothing
@@ -516,14 +518,14 @@ end
         
         # Get snow energy if it exists
         if jcolumn.H_s > 0.0
-            w_s = jcell.areas[n]*jcolumn.H_s / jcolumn.N_s
-            for k in 2:(jcolumn.N_s+1)
+            w_s = jcell.areas[n]*jcolumn.H_s / jcell.N_s
+            for k in 2:(jcell.N_s+1)
                 sno_energy[n] += jcolumn.q[k] * w_s
             end
         end
         # Get ice energy
-        w_i = jcell.areas[n]*jcolumn.H_i / jcolumn.N_i
-        for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+        w_i = jcell.areas[n]*jcolumn.H_i / jcell.N_i
+        for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
             ice_energy[n] += jcolumn.q[k] * w_i
         end
 

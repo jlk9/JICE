@@ -11,6 +11,7 @@ include("./jicecell_struct.jl")
     dheat_flux    = 0.0
     dfresh_flux   = 0.0
     dsalt_flux    = 0.0
+    #= Variables yet unused (maybe fsd?)
     dvssl         = 0.0
     dvint         = 0.0
     cat1_arealoss = 0.0
@@ -23,7 +24,7 @@ include("./jicecell_struct.jl")
     afsdn_init    = 0.0
     df_flx        = 0.0
     f_flx         = 0.0
-
+    =#
     flag = false
 
     # Optional FSD stuff
@@ -50,7 +51,7 @@ include("./jicecell_struct.jl")
             dfresh_flux = ρ_i*jcell.vol_i[n] + ρ_s*jcell.vol_s[n]
 
             # Assuming saltflux option is not prognostic
-            dsalt_flux = 0.001ρ_i*jcell.vol_i[n]*ice_ref_salinity*jcell.rside_array[n] / jcolumn.Δt
+            dsalt_flux = 0.001ρ_i*jcell.vol_i[n]*ice_ref_salinity*jcell.rside_array[n] / jcell.Δt
 
             jcell.fresh_flux += dfresh_flux
             jcell.salt_flux  += dsalt_flux
@@ -73,15 +74,15 @@ include("./jicecell_struct.jl")
             # enthalpy tracers don't change since energy/vol is constant, but we do need to track it for heat flux
             # first snow:
             # heat flux = enthalpy * volume of snow to be melted (rside*vol_s_old / N_s) per time = enthalpy * w_s here
-            w_s = (jcell.rside_array[n] * jcell.vol_s_old[n]) / (jcolumn.Δt * jcolumn.N_s)
-            for k in 2:(jcolumn.N_s+1)
+            w_s = (jcell.rside_array[n] * jcell.vol_s_old[n]) / (jcell.Δt * jcell.N_s)
+            for k in 2:(jcell.N_s+1)
                 dheat_flux       = jcolumn.q[k] * w_s
                 jcell.heat_flux += dheat_flux
             end
             # then ice:
             # heat flux = enthalpy * volume of ice to be melted (rside*vol_i_old / N_i) per time = enthalpy * w_i here
-            w_i = (jcell.rside_array[n] * jcell.vol_i_old[n]) / (jcolumn.Δt * jcolumn.N_i)
-            for k in (jcolumn.N_s+2):(jcolumn.N_s+jcolumn.N_i+1)
+            w_i = (jcell.rside_array[n] * jcell.vol_i_old[n]) / (jcell.Δt * jcell.N_i)
+            for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
                 # heat flux = enthalpy * volume of snow to be melted (rside*vol_s_old / N_s) per time
                 dheat_flux       = jcolumn.q[k] * w_i
                 jcell.heat_flux += dheat_flux

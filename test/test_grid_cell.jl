@@ -5,10 +5,10 @@ include("../src/grid_cell/run_grid_cell.jl")
 
 using Printf
 
-function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
+function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
                         F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
-    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     run_ice_cell(jcell)
@@ -35,10 +35,10 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s
     @time run_ice_cell(jcell)
 end
 
-N_cat         = 5
-N_t           = 1
-N_i_cols      = [5, 5, 5, 5, 5]
-N_s_cols      = [2, 2, 2, 2, 2]
+N_cat = 5
+N_t   = 10
+N_i   = 5
+N_s   = 2
 H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
 #H_s_cols      = [0.0, 0.0, 0.01, 0.05, 0.09]
 #H_s_cols      = [0.0, 0.0, 0.0, 0.0, 0.0]
@@ -75,5 +75,5 @@ frzmlt = 598.5*(T_w - -1.0)
 rside  = 0.000
 
 println("Testing cell run...")
-test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)

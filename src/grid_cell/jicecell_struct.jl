@@ -2,7 +2,7 @@
 # Outlines JICECell, a Julia structure for a single grid cell in sea ice physics consisting of multiple columns,
 # their areas, and shared fields (including an atmosphere model).
 
-# MAJOR ASSUMPTION: each column has the same number of layers
+# MAJOR ASSUMPTION: each column has the same number of ice and snow layers, N_i and N_s
 
 include("../column_physics/jicecolumn_struct.jl")
 include("../atmosphere_model/atmodel_struct.jl")
@@ -13,16 +13,19 @@ const ice_ref_salinity = 4.0     # reference salinity of sea ice, ppt
 
 #= JICECell struct
 Properties:
-    N_cat (dim'less)   Number of thickness categories, int
-    N_t (dim'less) Number of time steps in model, int
+    N_cat (dim'less)    number of thickness categories, int
+    N_t   (dim'less)    number of time steps in model,  int
+    N_i   (dim'less)    number of ice layers,           int
+    N_s   (dim'less)    number of snow layers,          int
 
+    Δt         (sec)        length of each time step,              float
     T_frz      (C)          freezing point of water at salinity S, float
     T_w        (C)          Temperature of water at ocean surface, float
     frzmlt     (W / m^2)    freezing / melting potential of ice,   float
     rside      (dim'less)   fraction of ice that metls laterally,  float
-    fresh_flux ()           freshwater flux to the ocean, float
-    salt_flux  ()           saltwater flux to the ocean,  float
-    heat_flux  ()           heat flux to the ocean,       float
+    fresh_flux ()           freshwater flux to the ocean,          float
+    salt_flux  ()           saltwater flux to the ocean,           float
+    heat_flux  ()           heat flux to the ocean,                float
 
     H_bds       (m)         upper and lower thickness bounds for each thickness category,                            Vector{Float64} of length N_cat+1
     H_bnew      (m)         upper and lower thickness bounds for temporary categories for linear remapping,          Vector{Float64} of length N_cat+1
@@ -68,7 +71,10 @@ mutable struct JICECell
 
     N_cat::Int64
     N_t::Int64
+    N_i::Int64
+    N_s::Int64
 
+    Δt::Float64
     T_frz::Float64
     T_w::Float64
 
@@ -120,7 +126,7 @@ end
 # Creates a JICECell object.
 # Fields ending with '_cols' are lists of the given data, organized for each column in the JICECell object.
 # It is assumed areas and all fields ending with '_cols' are the same length.
-function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_cols, N_s_cols, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     # TODO: error checking to make sure lengths are consistent
     # Want all variables ending with 'cols' and areas to be length N_cat, and H_bds to be length N_cat+1
@@ -133,7 +139,7 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_col
 
     for k in 1:N_cat
 
-        column = initialize_JICEColumn(N_t, N_i_cols[k], N_s_cols[k], H_i_cols[k], H_s_cols[k], T_frz, Δt, u_star_cols[k], T_w, T_0_cols[k])
+        column = initialize_JICEColumn(N_t, N_i, N_s, H_i_cols[k], H_s_cols[k], T_frz, Δt, u_star_cols[k], T_w, T_0_cols[k])
         push!(columns, column)
     end
 
@@ -167,7 +173,7 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i_col
     rside_array   = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, T_frz, T_w, frzmlt, rside, 0.0, 0.0, 0.0, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
+    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, T_w, frzmlt, rside, 0.0, 0.0, 0.0, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
                          g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
                          d_area_i_new, d_area_total, vi0_new_array, rside_array, atm)
     return grid_cell

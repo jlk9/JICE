@@ -73,7 +73,7 @@ Properties:
     dF_l        (W/m^2 C)   Derivative of latent heat flux relative to T_sf
 
     T_array     (C)         array of temperatures stored at each timestep, Matrix{Float64}
-    Δh_array    (M)         array of layer thicknesses stored at each timestep, Matrix{Float64}
+    Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{Float64}
 =#
 mutable struct JICEColumn
 

@@ -27,9 +27,9 @@ end
 @inline function run_cell_step(jcell, step)
 
     # Run one step for each column
-    for k in 1:jcell.N_cat
+    for n in 1:jcell.N_cat
 
-        jcolumn = jcell.columns[k]
+        jcolumn = jcell.columns[n]
 
         run_column_step(jcolumn, jcell.atm, step)
 
