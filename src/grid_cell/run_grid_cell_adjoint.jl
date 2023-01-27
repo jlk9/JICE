@@ -18,7 +18,7 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 
     d_T_0_cols    = Vector{Vector{Float64}}()
     for n in 1:jcell.N_cat
-        push!(d_T_0_cols, zeros(Float64, jcell.N_i+jcell.N_s))
+        push!(d_T_0_cols, zeros(Float64, jcell.N_i+jcell.N_s+1))
     end
 
     # First we need to allocate memory for the derivatives of jcell:
@@ -39,7 +39,7 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
     end
 
     # And run the model with autodiff:
-    autodiff(run_grid_cell, Const, Duplicated(jcell, d_jcell))
+    autodiff(run_ice_cell, Const, Duplicated(jcell, d_jcell))
 
     return d_jcell
 end

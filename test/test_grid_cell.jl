@@ -41,6 +41,15 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
     jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
+    ad_H_i_cols = [1.0, 0.0, 0.0, 0.0, 0.0]
+    ad_T_cols = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]]
+
+
+    run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 end
 
 N_cat = 5
