@@ -33,12 +33,8 @@ end
 
         run_column_step(jcolumn, jcell.atm, step)
 
-        # Update T_n and store current temps and thicknesses:
+        # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
-
-        jcolumn.T_array[:, step+1] = jcolumn.T_n
-        jcolumn.Δh_array[:,step+1] = jcolumn.Δh
-
     end
 
     # Apply horizontal transport between columns vis a linear map
@@ -56,6 +52,15 @@ end
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
     lateral_melt(jcell)
+
+    # Store current temps and thicknesses:
+    for n in 1:jcell.N_cat
+
+        jcolumn = jcell.columns[n]
+
+        jcolumn.T_array[:,step+1]  = jcolumn.T_n
+        jcolumn.Δh_array[:,step+1] = jcolumn.Δh
+    end
     
     return nothing
 end
