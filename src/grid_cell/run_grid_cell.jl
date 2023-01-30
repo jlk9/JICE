@@ -36,7 +36,7 @@ end
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
     end
-    #=
+    
     # Apply horizontal transport between columns vis a linear map
     # This is done with function linear_itd in icepack_therm_itd
     linear_itd_change(jcell)
@@ -52,7 +52,7 @@ end
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
     lateral_melt(jcell)
-    =#
+    
     # Store current temps and thicknesses:
     for n in 1:jcell.N_cat
 
