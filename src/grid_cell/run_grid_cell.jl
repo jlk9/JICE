@@ -52,7 +52,7 @@ end
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
     lateral_melt(jcell)
-    
+    =#
     # Store current temps and thicknesses:
     for n in 1:jcell.N_cat
 
@@ -61,7 +61,7 @@ end
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
     end
-    =#
+    
     return nothing
 end
 

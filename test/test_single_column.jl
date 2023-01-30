@@ -212,7 +212,6 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
         run_ice_column(jcmodelp, atmodel)
         
         T_ϵp_value  = jcmodelp.T_array[N_i+N_s+1, N_t+1]
-        Δz_ϵp_value = jcmodelp.Δh_array[N_i+N_s+1, N_t+1]
 
         T_ϵn              = deepcopy(T_0)
         T_ϵn[init_layer] -= ϵ
@@ -220,7 +219,6 @@ function test_adjoint_temp(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0
         run_ice_column(jcmodeln, atmodel)
 
         T_ϵn_value  = jcmodeln.T_array[N_i+N_s+1, N_t+1]
-        Δz_ϵn_value = jcmodeln.Δh_array[N_i+N_s+1, N_t+1]
 
         diff = (T_ϵp_value - T_ϵn_value) / (2*ϵ)
 

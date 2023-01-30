@@ -38,8 +38,8 @@ end
 function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
                         F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
-    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
-                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), deepcopy(T_0_cols),
+                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
 
     ad_H_i_cols = [1.0, 0.0, 0.0, 0.0, 0.0]
     ad_T_cols = [[0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
@@ -70,16 +70,16 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
         # Needs to be the same as our original T_0
         T_ϵp              = deepcopy(T_0_cols)
         T_ϵp[1][N_i+N_s] += ϵ
-        jcellp            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_ϵp,
-                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+        jcellp            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), T_ϵp,
+                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcellp)
         
         H_ϵp_value  = jcellp.columns[1].H_i
 
         T_ϵn              = deepcopy(T_0_cols)
         T_ϵn[1][N_i+N_s] -= ϵ
-        jcelln            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_ϵn,
-                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+        jcelln            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), T_ϵn,
+                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcelln)
 
         H_ϵn_value  = jcelln.columns[1].H_i
