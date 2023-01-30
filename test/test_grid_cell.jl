@@ -46,10 +46,59 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0],
-                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 1.0]]
+                 [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
 
 
-    run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
+    d_jcell = run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
+
+    println("Partial derivatives (∂H_i of first column) / (∂T of first column):")
+    println(d_jcell.columns[1].T_n)
+    println("In particular, the derivative of the first column thickness in terms of the second-from-bottom ice temperature is:")
+    println(d_jcell.columns[1].T_n[N_i+N_s])
+
+    println("To test this, we'll see the result we get from finite differences. The ϵ values are:")
+
+    step_sizes  = [1e-1, 1e-2, 1e-3, 1e-4, 1e-5, 1e-6, 1e-7, 1e-8, 1e-9, 1e-10, 1e-11, 1e-12, 1e-13]
+    diffs       = []
+    rel_errors  = []
+
+    #println(T_0)
+
+    #
+    for ϵ in step_sizes
+
+        # Needs to be the same as our original T_0
+        T_ϵp              = deepcopy(T_0_cols)
+        T_ϵp[1][N_i+N_s] += ϵ
+        jcellp            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_ϵp,
+                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+        run_ice_cell(jcellp)
+        
+        H_ϵp_value  = jcellp.columns[1].H_i
+
+        T_ϵn              = deepcopy(T_0_cols)
+        T_ϵn[1][N_i+N_s] -= ϵ
+        jcelln            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_ϵn,
+                                                F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+        run_ice_cell(jcelln)
+
+        H_ϵn_value  = jcelln.columns[1].H_i
+
+        diff = (H_ϵp_value - H_ϵn_value) / (2*ϵ)
+
+        error = abs(d_jcell.columns[1].T_n[N_i+N_s] - diff) / abs(d_jcell.columns[1].T_n[N_i+N_s])
+
+        push!(diffs, diff)
+        push!(rel_errors, error)
+
+    end
+
+    println(step_sizes)
+    println("The finite diffs are:")
+    println(diffs)
+    println("and the errors are:")
+    println(rel_errors)
+    
 end
 
 N_cat = 5

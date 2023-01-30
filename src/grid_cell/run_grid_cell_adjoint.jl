@@ -7,6 +7,8 @@ include("./run_grid_cell.jl")
 
 using Enzyme
 
+Enzyme.API.typeWarning!(false)
+
 
 function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 

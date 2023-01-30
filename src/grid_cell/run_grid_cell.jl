@@ -36,23 +36,23 @@ end
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
     end
-
+    #=
     # Apply horizontal transport between columns vis a linear map
     # This is done with function linear_itd in icepack_therm_itd
-    #linear_itd_change(jcell)
+    linear_itd_change(jcell)
 
     # Check that conservation of energy is conserved
-    #conservation_check_itd(jcell)
+    conservation_check_itd(jcell)
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-    #add_new_ice(jcell)
-    #conservation_check_new_ice(jcell)
+    add_new_ice(jcell)
+    conservation_check_new_ice(jcell)
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
-    #lateral_melt(jcell)
-
+    lateral_melt(jcell)
+    
     # Store current temps and thicknesses:
     for n in 1:jcell.N_cat
 
@@ -61,7 +61,7 @@ end
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
     end
-    
+    =#
     return nothing
 end
 
