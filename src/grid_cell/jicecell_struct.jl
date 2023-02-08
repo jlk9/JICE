@@ -86,6 +86,15 @@ mutable struct JICECell
     salt_flux::Float64
     heat_flux::Float64
 
+    # Conservation checks:
+    i_vol_itd_change::Bool
+    s_vol_itd_change::Bool
+    i_energy_itd_change::Bool
+    s_energy_itd_change::Bool
+
+    i_vol_new_change::Bool
+    i_energy_new_change::Bool
+
     H_bds::Vector{Float64}
     H_bnew::Vector{Float64}
     dH::Vector{Float64}
@@ -173,7 +182,8 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_
     rside_array   = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, T_w, frzmlt, rside, 0.0, 0.0, 0.0, thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
+    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, T_w, frzmlt, rside, 0.0, 0.0, 0.0, false, false, false, false, false, false,
+                         thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
                          g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
                          d_area_i_new, d_area_total, vi0_new_array, rside_array, atm)
     return grid_cell

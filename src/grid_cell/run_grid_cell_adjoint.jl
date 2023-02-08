@@ -41,7 +41,7 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
     end
 
     # And run the model with autodiff:
-    autodiff(run_ice_cell, Const, Duplicated(jcell, d_jcell))
+    autodiff(Reverse, run_ice_cell, Const, Duplicated(jcell, d_jcell))
 
     return d_jcell
 end

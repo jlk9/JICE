@@ -99,16 +99,16 @@ end
     s_energy_change = abs(total_s_energy_old - total_s_energy) / abs(total_s_energy_old)
 
     if i_vol_change > puny
-        println("Oh no! The total change in ice volume from horizontal transport is above acceptable machine precision.")
+        jcell.i_vol_itd_change = true
     end
     if s_vol_change > puny
-        println("Oh no! The total change in snow volume from horizontal transport is above acceptable machine precision.")
+        jcell.s_vol_itd_change = true
     end
     if i_energy_change > puny
-        println("Oh no! The total change in ice energy from horizontal transport is above acceptable machine precision.")
+        jcell.i_energy_itd_change = true
     end
     if s_energy_change > puny
-        println("Oh no! The total change in snow energy from horizontal transport is above acceptable machine precision.")
+        jcell.s_energy_itd_change = true
     end
 
     return nothing
@@ -135,14 +135,13 @@ end
     end
 
     i_vol_change    = abs(total_i_vol_old - total_i_vol) / abs(total_i_vol_old)
-
     i_energy_change = abs(total_i_energy_old - total_i_energy) / abs(total_i_energy_old)
 
     if i_vol_change > puny
-        println("Oh no! The total change in ice volume from adding new ice (when factoring in added component) is above acceptable machine precision.")
+        jcell.i_vol_new_change = true
     end
     if i_energy_change > puny
-        println("Oh no! The total change in ice energy from adding new ice (when factoring in added component) is above acceptable machine precision.")
+        jcell.i_energy_new_change = true
     end
 
     return nothing

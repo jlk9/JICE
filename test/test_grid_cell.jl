@@ -29,6 +29,26 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i
         
     end
 
+    if jcell.i_vol_itd_change
+        println("Oh no! The total change in ice volume from horizontal transport is above acceptable machine precision.")
+    end
+    if jcell.s_vol_itd_change
+        println("Oh no! The total change in snow volume from horizontal transport is above acceptable machine precision.")
+    end
+    if jcell.i_energy_itd_change
+        println("Oh no! The total change in ice energy from horizontal transport is above acceptable machine precision.")
+    end
+    if jcell.s_energy_itd_change
+        println("Oh no! The total change in snow energy from horizontal transport is above acceptable machine precision.")
+    end
+
+    if jcell.i_vol_new_change
+        println("Oh no! The total change in ice volume from adding new ice (when factoring in added component) is above acceptable machine precision.")
+    end
+    if jcell.i_energy_new_change
+        println("Oh no! The total change in ice energy from adding new ice (when factoring in added component) is above acceptable machine precision.")
+    end
+
     println("Category areas are:")
     println(jcell.areas)
 
@@ -49,7 +69,7 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
                  [0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0]]
 
 
-    d_jcell = run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
+    @time d_jcell = run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 
     println("Partial derivatives (∂H_i of first column) / (∂T of first column):")
     println(d_jcell.columns[1].T_n)
@@ -98,6 +118,8 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
     println(diffs)
     println("and the errors are:")
     println(rel_errors)
+
+    @time run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
     
 end
 

@@ -36,7 +36,7 @@ include("./jicecell_struct.jl")
                 slope                = (jcell.dH[nplus1] - jcell.dH[n]) / (H_ioldnp - H_ioldn)
                 jcell.H_bnew[nplus1] = jcell.H_bds[nplus1] + jcell.dH[n] + slope*(jcell.H_bds[nplus1] - H_ioldn)
             else
-                println("Oh no! Category bounds crossed streams!")
+                #println("Oh no! Category bounds crossed streams!")
                 return nothing
             end
         elseif H_ioldn > puny # implies H_ioldnp ~= 0
@@ -62,11 +62,11 @@ include("./jicecell_struct.jl")
     # Boundary check (each one lies between adjacent values of H_i)
     for n in 1:jcell.N_cat
         if jcell.H_bnew[n] > jcell.H_bds[n+1]
-            println("Oh no! One of the new catagory bounds exceeds the next (old) bound up.")
+            #println("Oh no! One of the new catagory bounds exceeds the next (old) bound up.")
             return nothing
         end
         if jcell.H_bnew[n+1] < jcell.H_bds[n]
-            println("Oh no! One of the new catagory bounds is smaller than the previous old bound.")
+            #println("Oh no! One of the new catagory bounds is smaller than the previous old bound.")
             return nothing
         end
     end

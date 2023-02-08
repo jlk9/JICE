@@ -28,7 +28,7 @@ function run_ice_column_autodiff(jcolumn, atmodel, ad_h, ad_T)
     d_jcolumn.T_nplus = ad_T
     d_jcolumn.Δh      = ad_h
 
-    autodiff(run_ice_column, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel))
+    autodiff(Reverse, run_ice_column, Const, Duplicated(jcolumn, d_jcolumn), Duplicated(atmodel, d_atmodel))
 
 
     return d_jcolumn #d_jcolumn.Δh, d_jcolumn.T_n
