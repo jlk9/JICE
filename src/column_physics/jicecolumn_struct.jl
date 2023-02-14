@@ -62,6 +62,8 @@ mutable struct JICEColumn
     T_n::Vector{Float64}
 
     # Variables that are created based on the above:
+    #H_i::Vector{Float64}
+    #H_s::Vector{Float64}
     α_vdr::Vector{Float64}
     α_idr::Vector{Float64}
     α_vdf::Vector{Float64}
@@ -72,7 +74,6 @@ mutable struct JICEColumn
     dF_0::Vector{Float64}
 
     Δh::Vector{Float64}
-    Δh̄::Vector{Float64}
     S::Vector{Float64}
     c_i::Vector{Float64}
     K::Vector{Float64}
@@ -102,7 +103,7 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-    T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
+    T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
 
     # Get initial thicknesses of each snow and ice layer:
     for k in 1:N_s
@@ -114,7 +115,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
 
     jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, 0.0, T_frz, Δt, u_star, T_w, T_0,
                         zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
-                        Δh, Δh̄, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
+                        Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
 
     # Some preliminary work before running the model:
@@ -138,10 +139,7 @@ function allocate_memory(N_i, N_s, N_t)
 
     F_0  = zeros(Float64, N_t)
     dF_0 = zeros(Float64, N_t)
-
-    # Getting Δh̄ (averages of adjacent thicknesses, length K)
-    Δh = zeros(Float64, N_i+N_s+1)
-    Δh̄ = zeros(Float64, N_i+N_s)
+    Δh   = zeros(Float64, N_i+N_s+1)
 
     # Other intermediate data to keep:
     S      = zeros(Float64, N_i)
@@ -169,7 +167,7 @@ function allocate_memory(N_i, N_s, N_t)
     T_array  = zeros(Float64, N_i+N_s+1, N_t+1)
     Δh_array = zeros(Float64, N_i+N_s+1, N_t+1)
 
-    return T_nplus, F_0, dF_0, Δh, Δh̄, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
 end
 

@@ -32,6 +32,8 @@ end
         jcolumn = jcell.columns[n]
 
         run_column_step(jcolumn, jcell.atm, step)
+        
+        readd_total_thickness(jcolumn)
 
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus

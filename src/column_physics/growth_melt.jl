@@ -3,23 +3,23 @@
 # and rebalances layers obeying conservation of energy.
 
 # Runs a single time step of the ice growth/melt in bottom layer and rebalancing
-@inline function step_growth_melt(jcolumn, step)
+@inline function step_growth_melt(N_i, N_s, H_s, S, T_frz, Δh, T_new, K, K̄, q, q_new, z_old, z_new, Δt, u_star, T_w, F_0)
 
     # Updating ice enthalpy:
-    generate_q_from_T(jcolumn.q, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.T_nplus, jcolumn.S)
+    generate_q_from_T(q, N_i, N_s, H_s, T_new, S)
 
     # Updating top ice/snow thickness:
-    surface_ice_snow_change(jcolumn.N_s, jcolumn.H_s, jcolumn.T_nplus, jcolumn.q, jcolumn.K̄, jcolumn.F_0[step], jcolumn.Δh, jcolumn.Δt)
+    surface_ice_snow_change(N_s, H_s, T_new, q, K̄, F_0, Δh, Δt)
 
     # Updating bottom ice thickness:
-    bottom_ice_change(jcolumn.N_i, jcolumn.N_s, jcolumn.Δh, jcolumn.T_nplus, jcolumn.q, jcolumn.K, jcolumn.T_frz, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w)
+    bottom_ice_change(N_i, N_s, Δh, T_new, q, K, T_frz, Δt, u_star, T_w)
 
     # Restore the sea ice thicknesses so that they are uniform again, and calculate new
     # enthalpies to preserve conservation of energy:
-    rebalance_ice_layers(jcolumn.Δh, jcolumn.q, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q_new, jcolumn.z_old, jcolumn.z_new)
+    rebalance_ice_layers(Δh, q, N_i, N_s, H_s, q_new, z_old, z_new)
 
     # Finally, recompute layer tempreatures to match new enthalpies:
-    generate_T_from_q(jcolumn.T_nplus, jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+    generate_T_from_q(T_new, N_i, N_s, H_s, q, S)
 
     return nothing
 end
