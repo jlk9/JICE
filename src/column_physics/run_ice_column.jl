@@ -39,13 +39,13 @@ Output:
 
         run_column_step(jcolumn, atmodel, step)
 
-        # Add up the layer thicknesses to get the new total thickness
-        readd_total_thickness(jcolumn)
+        jcolumn.H_iold = jcolumn.H_i_array[step]
+        jcolumn.H_i    = jcolumn.H_i_array[step+1]
+        jcolumn.H_s    = jcolumn.H_s_array[step+1]
         
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
         
-
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
     end
@@ -75,10 +75,13 @@ end
     step_growth_melt(jcolumn.N_i, jcolumn.N_s, jcolumn.H_s, jcolumn.S, jcolumn.T_frz, jcolumn.Δh, jcolumn.T_nplus, jcolumn.K, jcolumn.K̄,
                       jcolumn.q, jcolumn.q_new, jcolumn.z_old, jcolumn.z_new, jcolumn.Δt, jcolumn.u_star, jcolumn.T_w, jcolumn.F_0[step])
 
+    # Add up the layer thicknesses to get the new total thickness
+    readd_total_thickness(jcolumn.N_i, jcolumn.N_s, jcolumn.Δh, jcolumn.H_i_array, jcolumn.H_s_array, step)
+
 end
 
 # Julia's sum() operation is memory inefficient for slices of arrays, this is much faster
-function readd_total_thickness(jcolumn)
+function readd_total_thickness_old(jcolumn)
 
     jcolumn.H_iold = jcolumn.H_i
 
@@ -92,6 +95,22 @@ function readd_total_thickness(jcolumn)
         jcolumn.H_i += jcolumn.Δh[k]
     end
 end
+
+
+# Julia's sum() operation is memory inefficient for slices of arrays, this is oddly much faster
+function readd_total_thickness(N_i, N_s, Δh, H_i_array, H_s_array, step)
+
+    H_s_array[step+1] = 0.0
+    H_i_array[step+1] = 0.0
+
+    for k in 1:(N_s+1)
+        H_s_array[step+1] += Δh[k]
+    end
+    for k in (N_s+2):(N_i+N_s+1)
+        H_i_array[step+1] += Δh[k]
+    end
+end
+
 
 #=
 # Runs one step of ice process. This field-by-field approach was meant for old AD functions

@@ -62,6 +62,8 @@ mutable struct JICEColumn
     T_n::Vector{Float64}
 
     # Variables that are created based on the above:
+    H_i_array::Vector{Float64}
+    H_s_array::Vector{Float64}
     #H_i::Vector{Float64}
     #H_s::Vector{Float64}
     α_vdr::Vector{Float64}
@@ -103,7 +105,7 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-    T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
+    H_i_array, H_s_array, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
 
     # Get initial thicknesses of each snow and ice layer:
     for k in 1:N_s
@@ -113,7 +115,7 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
         Δh[k+N_s+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, 0.0, T_frz, Δt, u_star, T_w, T_0,
+    jcolumn = JICEColumn(N_t, N_i, N_s, H_i, H_s, 0.0, T_frz, Δt, u_star, T_w, T_0, H_i_array, H_s_array,
                         zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
                         Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
                         subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
@@ -123,9 +125,9 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
 
     generate_S(jcolumn.S, jcolumn.N_i)
     
-    # TODO: more detailed implementation of α
-    #generate_α(jcolumn.H_i, jcolumn.α_vdr, jcolumn.α_idr, jcolumn.α_vdf, jcolumn.α_idf, jcolumn.T_n[1])
-                
+    # Set initial temperatures and thicknesses:
+    jcolumn.H_i_array[1]  = H_i
+    jcolumn.H_s_array[1]  = H_s
     jcolumn.T_array[:, 1] = jcolumn.T_n
     jcolumn.Δh_array[:,1] = jcolumn.Δh
 
@@ -135,7 +137,9 @@ end
 # Allocates all necessary memory for intermediate variables in the model
 function allocate_memory(N_i, N_s, N_t)
 
-    T_nplus = zeros(Float64, N_i+N_s+1)
+    H_i_array = zeros(Float64, N_t+1)
+    H_s_array = zeros(Float64, N_t+1)
+    T_nplus   = zeros(Float64, N_i+N_s+1)
 
     F_0  = zeros(Float64, N_t)
     dF_0 = zeros(Float64, N_t)
@@ -167,7 +171,7 @@ function allocate_memory(N_i, N_s, N_t)
     T_array  = zeros(Float64, N_i+N_s+1, N_t+1)
     Δh_array = zeros(Float64, N_i+N_s+1, N_t+1)
 
-    return T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return H_i_array, H_s_array, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
 
 end
 

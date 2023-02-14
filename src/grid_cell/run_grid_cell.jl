@@ -32,8 +32,11 @@ end
         jcolumn = jcell.columns[n]
 
         run_column_step(jcolumn, jcell.atm, step)
-        
-        readd_total_thickness(jcolumn)
+
+        # Set total thicknesses for grid cell thermodynamics
+        jcolumn.H_iold = jcolumn.H_i_array[step]
+        jcolumn.H_i    = jcolumn.H_i_array[step+1]
+        jcolumn.H_s    = jcolumn.H_s_array[step+1]
 
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
@@ -41,7 +44,7 @@ end
     
     # Apply horizontal transport between columns vis a linear map
     # This is done with function linear_itd in icepack_therm_itd
-    linear_itd_change(jcell)
+    linear_itd_change(jcell, step)
 
     # Check that conservation of energy is conserved
     conservation_check_itd(jcell)
@@ -59,6 +62,9 @@ end
     for n in 1:jcell.N_cat
 
         jcolumn = jcell.columns[n]
+
+        jcolumn.H_i_array[step+1] = jcolumn.H_i
+        jcolumn.H_s_array[step+1] = jcolumn.H_s
 
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh

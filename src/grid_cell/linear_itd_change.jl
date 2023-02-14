@@ -6,7 +6,7 @@ include("./jicecell_struct.jl")
 #=
     MAJOR ASSUMPTION: here we assume each thickness category has the same number of ice/snow layers
 =#
-@inline function linear_itd_change(jcell)
+@inline function linear_itd_change(jcell, step)
 
     # Compute energy sums remapping should conserve:
     sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell)

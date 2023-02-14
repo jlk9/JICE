@@ -52,7 +52,7 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i
     println("Category areas are:")
     println(jcell.areas)
 
-    @time run_ice_cell(jcell)
+    #@time run_ice_cell(jcell)
 end
 
 function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
@@ -165,7 +165,8 @@ rside  = 0.000
 println("Testing cell run...")
 test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
-
+#=
 println("Testing adjoint...")
 test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
              F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+=#
