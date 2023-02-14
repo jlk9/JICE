@@ -9,7 +9,7 @@ include("./jicecell_struct.jl")
 @inline function linear_itd_change(jcell, step)
 
     # Compute energy sums remapping should conserve:
-    sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell)
+    sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell, step)
 
     #println(jcell.i_energy_old)
     #println(jcell.s_energy_old)
@@ -95,7 +95,7 @@ include("./jicecell_struct.jl")
                 da0   = min(da0, damax)
 
                 # Remove this area, while conserving volume
-                jcell.columns[1].H_i = jcell.columns[1].H_i_array[step+1] * jcell.areas[1] / (jcell.areas[1] - da0)
+                jcell.columns[1].H_i_array[step+1] = jcell.columns[1].H_i_array[step+1] * jcell.areas[1] / (jcell.areas[1] - da0)
                 jcell.areas[1]      -= da0
             end
         else #dh0 >= 0.0
@@ -165,7 +165,7 @@ include("./jicecell_struct.jl")
     end
     =#
     # Compute new energy sums remapping should still conserve:
-    sum_total_energy(jcell.i_energy, jcell.s_energy, jcell)
+    sum_total_energy(jcell.i_energy, jcell.s_energy, jcell, step)
 
     #println(jcell.i_energy)
     #println(jcell.s_energy)
@@ -453,15 +453,15 @@ end
 
         if jcell.areas[n] > puny
             if jcell.vol_s[n] > puny
-                jcolumn.H_s = jcell.vol_s[n] / jcell.areas[n]
-                new_Δh_s    = jcolumn.H_s / jcell.N_s
+                jcolumn.H_s_array[step+1] = jcell.vol_s[n] / jcell.areas[n]
+                new_Δh_s    = jcolumn.H_s_array[step+1] / jcell.N_s
                 for k in 2:(jcell.N_s+1)
                     jcolumn.Δh[k] = new_Δh_s
                 end
             end
             if jcell.vol_i[n] > puny
-                jcolumn.H_i = jcell.vol_i[n] / jcell.areas[n]
-                new_Δh_i    = jcolumn.H_i / jcell.N_i
+                jcolumn.H_i_array[step+1] = jcell.vol_i[n] / jcell.areas[n]
+                new_Δh_i    = jcolumn.H_i_array[step+1] / jcell.N_i
                 for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
                     jcolumn.Δh[k] = new_Δh_i
                 end
@@ -469,7 +469,7 @@ end
         end
     end
 
-    compute_new_enthalpy(jcell)
+    compute_new_enthalpy(jcell, step)
 
     return nothing
 end
@@ -477,7 +477,7 @@ end
 #=
     Computes the new enthalpy values based on the modified tracers
 =#
-@inline function compute_new_enthalpy(jcell)
+@inline function compute_new_enthalpy(jcell, step)
 
     # We need to divide our enthalpies by the new weighted area/volume
     for n in 1:jcell.N_cat
@@ -495,7 +495,7 @@ end
         end
 
         # And then get the new temperatures from these enthalpies:
-        generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+        generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s_array[step+1], jcolumn.q, jcolumn.S)
     end
 
     return nothing
@@ -507,7 +507,7 @@ end
     ice_energy is either i_energy or i_energy_old
     sno_energy is either s_energy or s_energy_old, before or after model run
 =#
-@inline function sum_total_energy(ice_energy, sno_energy, jcell)
+@inline function sum_total_energy(ice_energy, sno_energy, jcell, step)
 
     for n in 1:jcell.N_cat
 
@@ -517,14 +517,14 @@ end
         sno_energy[n] = 0.0
         
         # Get snow energy if it exists
-        if jcolumn.H_s > 0.0
-            w_s = jcell.areas[n]*jcolumn.H_s / jcell.N_s
+        if jcolumn.H_s_array[step+1] > 0.0
+            w_s = jcell.areas[n]*jcolumn.H_s_array[step+1] / jcell.N_s
             for k in 2:(jcell.N_s+1)
                 sno_energy[n] += jcolumn.q[k] * w_s
             end
         end
         # Get ice energy
-        w_i = jcell.areas[n]*jcolumn.H_i / jcell.N_i
+        w_i = jcell.areas[n]*jcolumn.H_i_array[step+1] / jcell.N_i
         for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
             ice_energy[n] += jcolumn.q[k] * w_i
         end

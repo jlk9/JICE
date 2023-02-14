@@ -62,8 +62,8 @@ end
 
         jcolumn = jcell.columns[n]
 
-        jcolumn.H_i_array[step+1] = jcolumn.H_i
-        jcolumn.H_s_array[step+1] = jcolumn.H_s
+        #jcolumn.H_i_array[step+1] = jcolumn.H_i
+        #jcolumn.H_s_array[step+1] = jcolumn.H_s
 
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
