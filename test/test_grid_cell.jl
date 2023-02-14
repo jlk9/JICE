@@ -25,7 +25,7 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i
         
         @printf("Initial and final total thickness for category %d is:\n", k)
         println(sum(jcell.columns[k].Δh_array[:,1]))
-        println(sum(jcell.columns[k].H_i + jcell.columns[k].H_s))
+        println(sum(jcell.columns[k].H_i_array[N_t+1] + jcell.columns[k].H_s_array[N_t+1]))
         
     end
 
