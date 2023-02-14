@@ -7,10 +7,6 @@
 include("../column_physics/jicecolumn_struct.jl")
 include("../atmosphere_model/atmodel_struct.jl")
 
-const sea_sal          = 35.0    # typical sea salt in ppt
-const dSin0_frazil     = 3.0     # bulk salinity reduction of newly formed frazil
-const ice_ref_salinity = 4.0     # reference salinity of sea ice, ppt
-
 #= JICECell struct
 Properties:
     N_cat (dim'less)    number of thickness categories, int
