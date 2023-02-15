@@ -5,7 +5,7 @@ include("./jicecell_struct.jl")
 
 #= Based on function of the same name in icepack_therm_itd, line 1284
 =#
-@inline function add_new_ice(jcell)
+@inline function add_new_ice(jcell, step)
 
     # Initialize new variables (line 1493)
     h_surp  = 0.0
@@ -114,9 +114,8 @@ include("./jicecell_struct.jl")
         for n in 1:jcell.N_cat
 
             jcolumn = jcell.columns[n]
-
-            v_surp = h_surp * jcell.areas[n]
-            v_tmp  = jcolumn.H_i * jcell.areas[n] + v_surp
+            v_surp  = h_surp * jcell.areas[n]
+            v_tmp   = jcolumn.H_i_array[step+1] * jcell.areas[n] + v_surp
 
             # number of conditionals for things we don't trace
 
@@ -126,8 +125,8 @@ include("./jicecell_struct.jl")
 
             # We get new ice thickness
             jcolumn     = jcell.columns[n]
-            jcolumn.H_i = jcell.vol_i[n] / jcell.areas[n]
-            new_Δh      = jcolumn.H_i / jcell.N_i
+            jcolumn.H_i_array[step+1] = jcell.vol_i[n] / jcell.areas[n]
+            new_Δh      = jcolumn.H_i_array[step+1] / jcell.N_i
             for k in (jcell.N_s+2):(jcell.N_i+jcell.N_s+1)
                 jcolumn.Δh[k] = new_Δh
                 # Now we add corresponding enthalpy into new ice growth
@@ -137,7 +136,7 @@ include("./jicecell_struct.jl")
             end
 
             # And then get the new temperatures from these enthalpies:
-            generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+            generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s_array[step+1], jcolumn.q, jcolumn.S)
             # TODO: consider modifying salinity(?)
         end
     end
@@ -158,8 +157,8 @@ include("./jicecell_struct.jl")
 
             # We get new ice thickness
             jcolumn     = jcell.columns[n]
-            jcolumn.H_i = jcell.vol_i[n] / jcell.areas[n]
-            new_Δh      = jcolumn.H_i / jcell.N_i
+            jcolumn.H_i_array[step+1] = jcell.vol_i[n] / jcell.areas[n]
+            new_Δh      = jcolumn.H_i_array[step+1] / jcell.N_i
             for k in (jcell.N_s+2):(jcell.N_i+jcell.N_s+1)
                 jcolumn.Δh[k] = new_Δh
                 # Now we add corresponding enthalpy into new ice growth
@@ -169,7 +168,7 @@ include("./jicecell_struct.jl")
             end
 
             # And then get the new temperatures from these enthalpies:
-            generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s, jcolumn.q, jcolumn.S)
+            generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s_array[step+1], jcolumn.q, jcolumn.S)
 
         end
     end

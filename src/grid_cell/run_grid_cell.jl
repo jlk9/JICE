@@ -50,20 +50,17 @@ end
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-    #add_new_ice(jcell)
-    #conservation_check_new_ice(jcell)
+    add_new_ice(jcell, step)
+    conservation_check_new_ice(jcell)
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
-    #lateral_melt(jcell)
+    lateral_melt(jcell)
     
     # Store current temps and thicknesses:
     for n in 1:jcell.N_cat
 
         jcolumn = jcell.columns[n]
-
-        #jcolumn.H_i_array[step+1] = jcolumn.H_i
-        #jcolumn.H_s_array[step+1] = jcolumn.H_s
 
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
