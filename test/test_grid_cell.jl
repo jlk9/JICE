@@ -94,7 +94,7 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
                                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcellp)
         
-        H_ϵp_value  = jcellp.columns[1].H_i
+        H_ϵp_value  = jcellp.columns[1].H_i_array[N_t+1]
 
         T_ϵn              = deepcopy(T_0_cols)
         T_ϵn[1][N_i+N_s] -= ϵ
@@ -102,7 +102,7 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
                                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcelln)
 
-        H_ϵn_value  = jcelln.columns[1].H_i
+        H_ϵn_value  = jcelln.columns[1].H_i_array[N_t+1]
 
         diff = (H_ϵp_value - H_ϵn_value) / (2*ϵ)
 
@@ -160,13 +160,12 @@ U_a     = zeros(Float64, 3)
 # Heat transfer coefficient of water is 598.5 W/ m^2 K.
 frzmlt = 598.5*(T_w - -1.0)
 # fraction of ice that melts laterally
-rside  = 0.001
+rside  = 0.000
 
 println("Testing cell run...")
 test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
-#=
+
 println("Testing adjoint...")
 test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
              F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
-=#

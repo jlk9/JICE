@@ -36,7 +36,8 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 
     # And add our gradient values of interest:
     for n in 1:jcell.N_cat
-        d_jcell.columns[n].H_i     = ad_H_i_cols[n]
+        d_jcell.columns[n].H_i_array[jcell.N_t+1] = ad_H_i_cols[n]
+        
         d_jcell.columns[n].T_nplus = ad_T_cols[n]
     end
 

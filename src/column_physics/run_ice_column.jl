@@ -39,10 +39,6 @@ Output:
 
         run_column_step(jcolumn, atmodel, step)
 
-        jcolumn.H_iold = jcolumn.H_i_array[step]
-        jcolumn.H_i    = jcolumn.H_i_array[step+1]
-        jcolumn.H_s    = jcolumn.H_s_array[step+1]
-        
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
         
