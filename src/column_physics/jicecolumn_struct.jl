@@ -61,8 +61,6 @@ mutable struct JICEColumn
     # Variables that are created based on the above:
     H_i_array::Vector{Float64}
     H_s_array::Vector{Float64}
-    #H_i::Vector{Float64}
-    #H_s::Vector{Float64}
     α_vdr::Vector{Float64}
     α_idr::Vector{Float64}
     α_vdf::Vector{Float64}
