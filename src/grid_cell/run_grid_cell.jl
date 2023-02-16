@@ -31,7 +31,30 @@ end
 
         jcolumn = jcell.columns[n]
 
-        run_column_step(jcolumn, jcell.atm, step)
+        run_column_step(jcolumn.N_i, jcolumn.N_s,
+                        jcolumn.T_frz, jcolumn.Δt, jcolumn.u_star,
+                        jcolumn.T_w, jcolumn.T_n,
+                        jcolumn.H_i_array, jcolumn.H_s_array,
+                        jcolumn.α_vdr, jcolumn.α_idr,
+                        jcolumn.α_vdf, jcolumn.α_idf,
+                        jcolumn.T_nplus,
+                        jcolumn.F_0, jcolumn.dF_0,
+                        jcolumn.Δh, jcolumn.S, jcolumn.c_i,
+                        jcolumn.K, jcolumn.K̄,
+                        jcolumn.I_pen,
+                        jcolumn.q, jcolumn.q_new,
+                        jcolumn.z_old, jcolumn.z_new,
+                        jcolumn.maindiag, jcolumn.subdiag, jcolumn.supdiag,
+                        jcolumn.F_Lu, jcolumn.F_s, jcolumn.F_l,
+                        jcolumn.dF_Lu, jcolumn.dF_s, jcolumn.dF_l,
+                        jcell.atm.F_SWvdr, jcell.atm.F_SWidr,
+                        jcell.atm.F_SWvdf, jcell.atm.F_SWidf,
+                        jcell.atm.F_Ld,
+                        jcell.atm.Θ_a, jcell.atm.ρ_a,
+                        jcell.atm.Q_a, jcell.atm.c_p,
+                        jcell.atm.c_u, jcell.atm.c_Θ, jcell.atm.c_q,
+                        jcell.atm.atm_u_star, jcell.atm.U_a,
+                        step)
 
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
