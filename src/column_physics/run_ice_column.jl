@@ -26,7 +26,7 @@ Output:
                         jcolumn.N_i+jcolumn.N_s+1, jcolumn.N_t,
                         jcolumn.T_frz, jcolumn.Δt, jcolumn.u_star,
                         jcolumn.T_w, jcolumn.T_n,
-                        jcolumn.H_i_array, jcolumn.H_s_array,
+                        jcolumn.H_i, jcolumn.H_iold, jcolumn.H_s,
                         jcolumn.α_vdr, jcolumn.α_idr,
                         jcolumn.α_vdf, jcolumn.α_idf,
                         jcolumn.T_nplus,
@@ -51,6 +51,9 @@ Output:
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus
         
+        jcolumn.H_i_array[step+1] = jcolumn.H_i[1]
+        jcolumn.H_s_array[step+1] = jcolumn.H_s[1]
+
         jcolumn.T_array[:, step+1] = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh
     end

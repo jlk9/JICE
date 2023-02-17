@@ -35,7 +35,7 @@ end
                         jcell.N_i+jcell.N_s+1, jcell.N_t,
                         jcell.T_frz, jcell.Δt, jcell.u_star,
                         jcell.T_w, jcolumn.T_n,
-                        jcolumn.H_i_array, jcolumn.H_s_array,
+                        jcolumn.H_i, jcolumn.H_iold, jcolumn.H_s,
                         jcolumn.α_vdr, jcolumn.α_idr,
                         jcolumn.α_vdf, jcolumn.α_idf,
                         jcolumn.T_nplus,
@@ -69,7 +69,7 @@ end
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-    add_new_ice(jcell, step)
+    add_new_ice(jcell)
     conservation_check_new_ice(jcell)
 
     # Melt ice laterally
@@ -80,6 +80,9 @@ end
     for n in 1:jcell.N_cat
 
         jcolumn = jcell.columns[n]
+        
+        jcolumn.H_i_array[step+1] = jcolumn.H_i[1]
+        jcolumn.H_s_array[step+1] = jcolumn.H_s[1]
 
         jcolumn.T_array[:,step+1]  = jcolumn.T_n
         jcolumn.Δh_array[:,step+1] = jcolumn.Δh

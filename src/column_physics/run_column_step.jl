@@ -13,7 +13,7 @@ include("./growth_melt.jl")
                                 N_layers, N_t,
                                 T_frz, Δt, u_star,
                                 T_w, T_n,
-                                H_i_array, H_s_array,
+                                H_i, H_iold, H_s,
                                 α_vdr, α_idr,
                                 α_vdf, α_idf,
                                 T_nplus,
@@ -36,39 +36,40 @@ include("./growth_melt.jl")
                                 step, index)
     
     # Computes the current albedo
-    generate_α(H_i_array[step], α_vdr, α_idr, α_vdf, α_idf, T_n[N_layers*index+1], index)
+    generate_α(H_i[1], α_vdr, α_idr, α_vdf, α_idf, T_n[N_layers*index+1], index)
     
     # Computes the surface fluxes at this time step
-    step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_n[N_layers*index+1], H_i_array[step], H_s_array[step],
+    step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_n[N_layers*index+1], H_i[1], H_s[1],
                          F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                          F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen,
                          c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star,
                          ρ_a, c_p, step, index)
     
     # Computes the temperature changes at this step
-    step_temp_change(N_i, N_s, H_s_array[step], S, T_frz, Δh, T_n,
+    step_temp_change(N_i, N_s, H_s[1], S, T_frz, Δh, T_n,
                      T_nplus, c_i, K, K̄, I_pen, F_0[N_t*index+step], dF_0[N_t*index+step],
                      maindiag, subdiag, supdiag, Δt, index)
 
     # Gets the growth/melt and rebalances
-    step_growth_melt(N_i, N_s, H_s_array[step], S, T_frz, Δh, T_nplus, K, K̄,
+    step_growth_melt(N_i, N_s, H_s[1], S, T_frz, Δh, T_nplus, K, K̄,
                       q, q_new, z_old, z_new, Δt, u_star, T_w, F_0[N_t*index+step], index)
 
     # Add up the layer thicknesses to get the new total thickness
-    readd_total_thickness(N_i, N_s, Δh, H_i_array, H_s_array, step, index)
+    readd_total_thickness(N_i, N_s, Δh, H_i, H_iold, H_s, step, index)
 
 end
 
 # Julia's sum() operation is memory inefficient for slices of arrays, this is oddly much faster
-function readd_total_thickness(N_i, N_s, Δh, H_i_array, H_s_array, step, index)
+function readd_total_thickness(N_i, N_s, Δh, H_i, H_iold, H_s, step, index)
 
-    H_s_array[step+1] = 0.0
-    H_i_array[step+1] = 0.0
+    H_iold[1] = H_i[1]
+    H_i[1]    = 0.0
+    H_s[1]    = 0.0
 
     for k in 1:(N_s+1)
-        H_s_array[step+1] += Δh[k]
+        H_s[1] += Δh[k]
     end
     for k in (N_s+2):(N_i+N_s+1)
-        H_i_array[step+1] += Δh[k]
+        H_i[1] += Δh[k]
     end
 end

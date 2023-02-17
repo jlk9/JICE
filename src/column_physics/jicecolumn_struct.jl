@@ -59,8 +59,9 @@ mutable struct JICEColumn
     T_n::Vector{Float64}
 
     # Variables that are created based on the above:
-    H_i_array::Vector{Float64}
-    H_s_array::Vector{Float64}
+    H_i::Vector{Float64}
+    H_iold::Vector{Float64}
+    H_s::Vector{Float64}
     α_vdr::Vector{Float64}
     α_idr::Vector{Float64}
     α_vdf::Vector{Float64}
@@ -92,6 +93,8 @@ mutable struct JICEColumn
     dF_s::Vector{Float64}
     dF_l::Vector{Float64}
 
+    H_i_array::Vector{Float64}
+    H_s_array::Vector{Float64}
     T_array::Matrix{Float64}
     Δh_array::Matrix{Float64}
 
@@ -110,10 +113,10 @@ function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w,
         Δh[k+N_s+1] = H_i / N_i
     end
 
-    jcolumn = JICEColumn(N_t, N_i, N_s, T_frz, Δt, u_star, T_w, deepcopy(T_0), H_i_array, H_s_array,
+    jcolumn = JICEColumn(N_t, N_i, N_s, T_frz, Δt, u_star, T_w, deepcopy(T_0), H_i .+ zeros(Float64,1), zeros(Float64,1), H_s .+ zeros(Float64,1),
                         zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
                         Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
-                        subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array)
+                        subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, H_i_array, H_s_array, T_array, Δh_array)
 
     # Some preliminary work before running the model:
     jcolumn.T_nplus[:] = jcolumn.T_n

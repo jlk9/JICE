@@ -9,14 +9,14 @@ include("./jicecell_struct.jl")
 @inline function linear_itd_change(jcell, step)
 
     # Compute energy sums remapping should conserve:
-    sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell, step)
+    sum_total_energy(jcell.i_energy_old, jcell.s_energy_old, jcell)
 
     #println(jcell.i_energy_old)
     #println(jcell.s_energy_old)
 
     # Compute thickness changes in each category
     for n in 1:jcell.N_cat
-        jcell.dH[n] = jcell.columns[n].H_i_array[step+1] - jcell.columns[n].H_i_array[step]
+        jcell.dH[n] = jcell.columns[n].H_i[1] - jcell.columns[n].H_iold[1]
     end
 
     # Compute new category boundaries
@@ -26,8 +26,8 @@ include("./jicecell_struct.jl")
         # To clean up indexing
         nplus1 = n+1
 
-        H_ioldn  = jcell.columns[n].H_i_array[step]
-        H_ioldnp = jcell.columns[nplus1].H_i_array[step]
+        H_ioldn  = jcell.columns[n].H_iold[1]
+        H_ioldnp = jcell.columns[nplus1].H_iold[1]
 
         if (H_ioldn > puny) && (H_ioldnp > puny)
 
@@ -53,7 +53,7 @@ include("./jicecell_struct.jl")
     # For last thickness category bound:
     N_catplus1 = jcell.N_cat+1
     if jcell.areas[jcell.N_cat] > puny
-        jcell.H_bnew[N_catplus1] = 3.0jcell.columns[jcell.N_cat].H_i_array[step+1] - 2.0jcell.H_bnew[jcell.N_cat]
+        jcell.H_bnew[N_catplus1] = 3.0jcell.columns[jcell.N_cat].H_i[1] - 2.0jcell.H_bnew[jcell.N_cat]
     else
         jcell.H_bnew[N_catplus1] = jcell.H_bds[N_catplus1]
     end
@@ -72,7 +72,7 @@ include("./jicecell_struct.jl")
     end
 
     # Compute g0, g1, hL, hR for remapping:
-    fit_line(jcell, step)
+    fit_line(jcell)
 
     # Find area lost due to melting of thin ice (line ~439) (NOTE: we keep track of all areas including open water)
     if jcell.areas[1] > puny
@@ -91,11 +91,11 @@ include("./jicecell_struct.jl")
                 da0 = jcell.g1[1]*x2 + jcell.g0[1]*x1 # total ice area removed
 
                 # Now constrain the new thickness so it is <= H_iold
-                damax = jcell.areas[1] * (1.0 - jcell.columns[1].H_i_array[step+1] / jcell.columns[1].H_i_array[step])
+                damax = jcell.areas[1] * (1.0 - jcell.columns[1].H_i[1] / jcell.columns[1].H_iold[1])
                 da0   = min(da0, damax)
 
                 # Remove this area, while conserving volume
-                jcell.columns[1].H_i_array[step+1] = jcell.columns[1].H_i_array[step+1] * jcell.areas[1] / (jcell.areas[1] - da0)
+                jcell.columns[1].H_i[1] = jcell.columns[1].H_i[1] * jcell.areas[1] / (jcell.areas[1] - da0)
                 jcell.areas[1]      -= da0
             end
         else #dh0 >= 0.0
@@ -136,13 +136,13 @@ include("./jicecell_struct.jl")
 
         # Shift 0 ice if dareas[n] too small:
         nd = jcell.donor[n]
-        if (jcell.dareas[n] < jcell.areas[nd]*puny) || (jcell.dvol_i[n] < jcell.columns[nd].H_i_array[step+1]*jcell.areas[n]*puny)
+        if (jcell.dareas[n] < jcell.areas[nd]*puny) || (jcell.dvol_i[n] < jcell.columns[nd].H_i[1]*jcell.areas[n]*puny)
             jcell.dareas[n] = 0.0
             jcell.donor[n]  = 0
         end
 
         # Shift entire category if dareas[n] is close to areas[n+1]:
-        if (jcell.dareas[n] > jcell.areas[nd]*(1.0-puny)) || (jcell.dvol_i[n] > jcell.columns[nd].H_i_array[step+1]*jcell.areas[n]*(1.0-puny))
+        if (jcell.dareas[n] > jcell.areas[nd]*(1.0-puny)) || (jcell.dvol_i[n] > jcell.columns[nd].H_i[1]*jcell.areas[n]*(1.0-puny))
             jcell.dareas[n] = jcell.areas[nd]
         end
     end
@@ -155,7 +155,7 @@ include("./jicecell_struct.jl")
         end
     end
     =#
-    shift_ice(jcell, step)
+    shift_ice(jcell)
     #=
     # Maintain negative definiteness of snow enthalpy:
     for n in 1:jcell.N_cat
@@ -165,7 +165,7 @@ include("./jicecell_struct.jl")
     end
     =#
     # Compute new energy sums remapping should still conserve:
-    sum_total_energy(jcell.i_energy, jcell.s_energy, jcell, step)
+    sum_total_energy(jcell.i_energy, jcell.s_energy, jcell)
 
     #println(jcell.i_energy)
     #println(jcell.s_energy)
@@ -177,10 +177,9 @@ end
     To reduce roundoff errors caused by large values of g0 and g1,
     we actually compute g(eta), where eta = h - hL, and hL is the
     left boundary.
-
     Compared to version in CICE, here we want to do it in one array
 =#
-@inline function fit_line(jcell, step)
+@inline function fit_line(jcell)
 
     # First for first column (different rules, line ~431 in icepack_therm_itd.F90)
     if (jcell.areas[1] > puny) && (jcell.H_bds[2] - jcell.H_bnew[1] > puny)
@@ -188,7 +187,7 @@ end
         # Initialize hL and hR
         hL   = jcell.H_bnew[1]
         hR   = jcell.H_bds[2]
-        hice = jcell.columns[1].H_i_array[step]
+        hice = jcell.columns[1].H_iold[1]
 
         # Change hL or hR if hicen(n) falls outside central third of range
         h13 = (2.0hL + hR) / 3.0
@@ -223,7 +222,7 @@ end
             # Initialize hL and hR
             hL   = jcell.H_bnew[n]
             hR   = jcell.H_bnew[nplus1]
-            hice = jcell.columns[n].H_i_array[step+1]
+            hice = jcell.columns[n].H_i[1]
 
             # Change hL or hR if hicen(n) falls outside central third of range
             h13 = (2.0hL + hR) / 3.0
@@ -263,13 +262,13 @@ end
 
 # Shifts ice between layers, as well as ice enthalpy for conservation of energy
 # Based on shift_ice in Icepack/icepack_itd.F90, line ~356
-@inline function shift_ice(jcell, step)
+@inline function shift_ice(jcell)
 
     # First set old areas and volumes:
     for n in 1:jcell.N_cat
         jcell.areas_old[n] = jcell.areas[n]
-        jcell.vol_i[n]     = jcell.columns[n].H_i_array[step+1] * jcell.areas[n]
-        jcell.vol_s[n]     = jcell.columns[n].H_s_array[step+1] * jcell.areas[n]
+        jcell.vol_i[n]     = jcell.columns[n].H_i[1] * jcell.areas[n]
+        jcell.vol_s[n]     = jcell.columns[n].H_s[1] * jcell.areas[n]
         jcell.vol_i_old[n] = jcell.vol_i[n]
         jcell.vol_s_old[n] = jcell.vol_s[n]
     end
@@ -453,15 +452,15 @@ end
 
         if jcell.areas[n] > puny
             if jcell.vol_s[n] > puny
-                jcolumn.H_s_array[step+1] = jcell.vol_s[n] / jcell.areas[n]
-                new_Δh_s    = jcolumn.H_s_array[step+1] / jcell.N_s
+                jcolumn.H_s[1] = jcell.vol_s[n] / jcell.areas[n]
+                new_Δh_s    = jcolumn.H_s[1] / jcell.N_s
                 for k in 2:(jcell.N_s+1)
                     jcolumn.Δh[k] = new_Δh_s
                 end
             end
             if jcell.vol_i[n] > puny
-                jcolumn.H_i_array[step+1] = jcell.vol_i[n] / jcell.areas[n]
-                new_Δh_i    = jcolumn.H_i_array[step+1] / jcell.N_i
+                jcolumn.H_i[1] = jcell.vol_i[n] / jcell.areas[n]
+                new_Δh_i    = jcolumn.H_i[1] / jcell.N_i
                 for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
                     jcolumn.Δh[k] = new_Δh_i
                 end
@@ -469,7 +468,7 @@ end
         end
     end
 
-    compute_new_enthalpy(jcell, step)
+    compute_new_enthalpy(jcell)
 
     return nothing
 end
@@ -477,7 +476,7 @@ end
 #=
     Computes the new enthalpy values based on the modified tracers
 =#
-@inline function compute_new_enthalpy(jcell, step)
+@inline function compute_new_enthalpy(jcell)
 
     # We need to divide our enthalpies by the new weighted area/volume
     for n in 1:jcell.N_cat
@@ -495,7 +494,7 @@ end
         end
 
         # And then get the new temperatures from these enthalpies:
-        generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s_array[step+1], jcolumn.q, jcolumn.S)
+        generate_T_from_q(jcolumn.T_n, jcell.N_i, jcell.N_s, jcolumn.H_s[1], jcolumn.q, jcolumn.S)
     end
 
     return nothing
@@ -503,11 +502,10 @@ end
 
 
 #= Adds up sum for total ice/snow energy
-
     ice_energy is either i_energy or i_energy_old
     sno_energy is either s_energy or s_energy_old, before or after model run
 =#
-@inline function sum_total_energy(ice_energy, sno_energy, jcell, step)
+@inline function sum_total_energy(ice_energy, sno_energy, jcell)
 
     for n in 1:jcell.N_cat
 
@@ -517,14 +515,14 @@ end
         sno_energy[n] = 0.0
         
         # Get snow energy if it exists
-        if jcolumn.H_s_array[step+1] > 0.0
-            w_s = jcell.areas[n]*jcolumn.H_s_array[step+1] / jcell.N_s
+        if jcolumn.H_s[1] > 0.0
+            w_s = jcell.areas[n]*jcolumn.H_s[1] / jcell.N_s
             for k in 2:(jcell.N_s+1)
                 sno_energy[n] += jcolumn.q[k] * w_s
             end
         end
         # Get ice energy
-        w_i = jcell.areas[n]*jcolumn.H_i_array[step+1] / jcell.N_i
+        w_i = jcell.areas[n]*jcolumn.H_i[1] / jcell.N_i
         for k in (jcell.N_s+2):(jcell.N_s+jcell.N_i+1)
             ice_energy[n] += jcolumn.q[k] * w_i
         end
