@@ -31,9 +31,10 @@ end
 
         jcolumn = jcell.columns[n]
 
-        run_column_step(jcolumn.N_i, jcolumn.N_s,
-                        jcolumn.T_frz, jcolumn.Δt, jcolumn.u_star,
-                        jcolumn.T_w, jcolumn.T_n,
+        run_column_step(jcell.N_i, jcell.N_s,
+                        jcell.N_i+jcell.N_s+1, jcell.N_t,
+                        jcell.T_frz, jcell.Δt, jcell.u_star,
+                        jcell.T_w, jcolumn.T_n,
                         jcolumn.H_i_array, jcolumn.H_s_array,
                         jcolumn.α_vdr, jcolumn.α_idr,
                         jcolumn.α_vdf, jcolumn.α_idf,
@@ -54,7 +55,7 @@ end
                         jcell.atm.Q_a, jcell.atm.c_p,
                         jcell.atm.c_u, jcell.atm.c_Θ, jcell.atm.c_q,
                         jcell.atm.atm_u_star, jcell.atm.U_a,
-                        step)
+                        step, 0)
 
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus

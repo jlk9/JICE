@@ -14,7 +14,6 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 
     d_H_i_cols      = zeros(Float64, jcell.N_cat)
     d_H_s_cols      = zeros(Float64, jcell.N_cat)
-    d_u_star_cols   = zeros(Float64, jcell.N_cat)
     d_thickness_bds = zeros(Float64, jcell.N_cat+1)
     d_areas         = zeros(Float64, jcell.N_cat)
 
@@ -25,7 +24,7 @@ function run_grid_cell_autodiff(jcell, ad_H_i_cols, ad_T_cols)
 
     # First we need to allocate memory for the derivatives of jcell:
     d_jcell = initialize_JICECell(jcell.N_cat, jcell.N_t, 0.0, 0.0, 0.0, 0.0, 0.0, jcell.N_i, jcell.N_s,
-                                    d_H_i_cols, d_H_s_cols, d_u_star_cols, d_T_0_cols,
+                                    d_H_i_cols, d_H_s_cols, 0.0, d_T_0_cols,
                                     0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, 0.0, zeros(Float64,3), d_thickness_bds, d_areas)
 
     # Now we zero-out nonzero terms in d_jcell:

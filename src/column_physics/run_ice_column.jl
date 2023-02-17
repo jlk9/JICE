@@ -23,6 +23,7 @@ Output:
     for step in 1:jcolumn.N_t
         
         run_column_step(jcolumn.N_i, jcolumn.N_s,
+                        jcolumn.N_i+jcolumn.N_s+1, jcolumn.N_t,
                         jcolumn.T_frz, jcolumn.Δt, jcolumn.u_star,
                         jcolumn.T_w, jcolumn.T_n,
                         jcolumn.H_i_array, jcolumn.H_s_array,
@@ -45,7 +46,7 @@ Output:
                         atmodel.Q_a, atmodel.c_p,
                         atmodel.c_u, atmodel.c_Θ, atmodel.c_q,
                         atmodel.atm_u_star, atmodel.U_a,
-                        step)
+                        step, 0)
 
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus

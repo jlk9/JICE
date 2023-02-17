@@ -3,7 +3,7 @@
 # and rebalances layers obeying conservation of energy.
 
 # Runs a single time step of the ice growth/melt in bottom layer and rebalancing
-@inline function step_growth_melt(N_i, N_s, H_s, S, T_frz, Δh, T_new, K, K̄, q, q_new, z_old, z_new, Δt, u_star, T_w, F_0)
+@inline function step_growth_melt(N_i, N_s, H_s, S, T_frz, Δh, T_new, K, K̄, q, q_new, z_old, z_new, Δt, u_star, T_w, F_0, index)
 
     # Updating ice enthalpy:
     generate_q_from_T(q, N_i, N_s, H_s, T_new, S)

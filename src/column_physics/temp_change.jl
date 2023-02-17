@@ -5,7 +5,7 @@
 #using LinearAlgebra
 
 # Runs a single time step of the temperature changes using FDM
-@inline function step_temp_change(N_i, N_s, H_s, S, T_frz, Δh, T_old, T_new, c_i, K, K̄, I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt)
+@inline function step_temp_change(N_i, N_s, H_s, S, T_frz, Δh, T_old, T_new, c_i, K, K̄, I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt, index)
 
     #=
     # Getting the average thicknesses of each layer:

@@ -5,10 +5,10 @@ include("../src/grid_cell/run_grid_cell_adjoint.jl")
 
 using Printf
 
-function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
+function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols, F_SWvdr, F_SWidr,
                         F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
-    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols,
                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     run_ice_cell(jcell)
@@ -52,13 +52,13 @@ function test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i
     println("Category areas are:")
     println(jcell.areas)
 
-    #@time run_ice_cell(jcell)
+    @time run_ice_cell(jcell)
 end
 
-function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr,
+function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols, F_SWvdr, F_SWidr,
                         F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
-    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), deepcopy(T_0_cols),
+    jcell = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), u_star, deepcopy(T_0_cols),
                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
 
     ad_H_i_cols = [1.0, 0.0, 0.0, 0.0, 0.0]
@@ -90,7 +90,7 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
         # Needs to be the same as our original T_0
         T_ϵp              = deepcopy(T_0_cols)
         T_ϵp[1][N_i+N_s] += ϵ
-        jcellp            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), T_ϵp,
+        jcellp            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), u_star, T_ϵp,
                                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcellp)
         
@@ -98,7 +98,7 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
 
         T_ϵn              = deepcopy(T_0_cols)
         T_ϵn[1][N_i+N_s] -= ϵ
-        jcelln            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), deepcopy(u_star_cols), T_ϵn,
+        jcelln            = initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, deepcopy(H_i_cols), deepcopy(H_s_cols), u_star, T_ϵn,
                                                 F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, deepcopy(thickness_bds), deepcopy(areas))
         run_ice_cell(jcelln)
 
@@ -139,7 +139,7 @@ T_0_cols      = [0.0 .- [20.8, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
                  0.0 .- [25.4, 20.9, 20.4, 19.4, 14.9, 10.4, 5.9, 1.4]]
 
 Δt            = 1.0
-u_star_cols   = 0.0005 .+ zeros(Float64, N_cat) # recommended minimum value of u_star in CICE
+u_star        = 0.0005 # recommended minimum value of u_star in CICE
 T_w           = 274.47 - 273.15 # typical temp in C for sea surface in arctic
 thickness_bds = [0.0, 0.3, 0.7, 1.2, 2.0, 999.9]
 areas         = [0.2, 0.1, 0.1, 0.1, 0.2] # Area of open water is 1 - sum(areas), in this case 0.3
@@ -163,9 +163,9 @@ frzmlt = 598.5*(T_w - -1.0)
 rside  = 0.000
 
 println("Testing cell run...")
-test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
 println("Testing adjoint...")
-test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols,
+test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols,
              F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)

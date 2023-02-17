@@ -72,6 +72,7 @@ mutable struct JICECell
 
     Δt::Float64
     T_frz::Float64
+    u_star::Float64
     T_w::Float64
 
     frzmlt::Float64 # freezing / melting potential (W/m^2)
@@ -131,7 +132,7 @@ end
 # Creates a JICECell object.
 # Fields ending with '_cols' are lists of the given data, organized for each column in the JICECell object.
 # It is assumed areas and all fields ending with '_cols' are the same length.
-function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star_cols, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
 
     # TODO: error checking to make sure lengths are consistent
     # Want all variables ending with 'cols' and areas to be length N_cat, and H_bds to be length N_cat+1
@@ -144,7 +145,7 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_
 
     for k in 1:N_cat
 
-        column = initialize_JICEColumn(N_t, N_i, N_s, H_i_cols[k], H_s_cols[k], T_frz, Δt, u_star_cols[k], T_w, T_0_cols[k])
+        column = initialize_JICEColumn(N_t, N_i, N_s, H_i_cols[k], H_s_cols[k], T_frz, Δt, u_star, T_w, T_0_cols[k])
         push!(columns, column)
     end
 
@@ -178,7 +179,7 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_
     rside_array   = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, T_w, frzmlt, rside, 0.0, 0.0, 0.0, false, false, false, false, false, false,
+    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, u_star, T_w, frzmlt, rside, 0.0, 0.0, 0.0, false, false, false, false, false, false,
                          thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
                          g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
                          d_area_i_new, d_area_total, vi0_new_array, rside_array, atm)

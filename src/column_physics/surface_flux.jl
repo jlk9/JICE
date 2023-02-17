@@ -4,7 +4,7 @@
 
 # Computes the (constant) atmospheric flux affecting the model
 @inline function step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
-                                    F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step)
+                                    F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, step, index)
 
     # Compute atmospheric fluxes dependent on ice:
     set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H_i, step)
@@ -139,7 +139,7 @@ end
 
 # Computes the albedo for this column's ice and snow, assumed to be constant throughout
 # model run (at least for now)
-@inline function generate_α(H_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc)
+@inline function generate_α(H_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc, index)
 
     # Get the albedo values for bare ice:
     fh       = min(atan(4.0H_i)/atan(4.0ahmax), 1.0)
