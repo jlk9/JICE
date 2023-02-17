@@ -3,7 +3,7 @@
 # our sea ice model, first running the model for each column, then
 # applying horizontal transport amongst columns
 
-include("../column_physics/run_ice_column.jl")
+include("../column_physics/run_column_step.jl")
 include("./jicecell_struct.jl")
 include("./linear_itd_change.jl")
 include("./add_new_ice.jl")
