@@ -46,7 +46,7 @@ Output:
                         atmodel.Q_a, atmodel.c_p,
                         atmodel.c_u, atmodel.c_Θ, atmodel.c_q,
                         atmodel.atm_u_star, atmodel.U_a,
-                        step, 0)
+                        step)
 
         # Update T_n and store current temps and thicknesses:
         jcolumn.T_n[:] = jcolumn.T_nplus

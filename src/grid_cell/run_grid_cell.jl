@@ -55,7 +55,7 @@ end
                         jcell.atm.Q_a, jcell.atm.c_p,
                         jcell.atm.c_u, jcell.atm.c_Θ, jcell.atm.c_q,
                         jcell.atm.atm_u_star, jcell.atm.U_a,
-                        step, 0)
+                        step)
 
         # Update T_n:
         jcolumn.T_n[:] = jcolumn.T_nplus
