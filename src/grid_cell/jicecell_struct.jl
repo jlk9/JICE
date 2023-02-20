@@ -74,7 +74,44 @@ mutable struct JICECell
     T_frz::Float64
     u_star::Float64
     T_w::Float64
+    
+    T_n::Vector{Float64}
 
+    # Variables that are created based on the above:
+    H_i::Vector{Float64}
+    H_iold::Vector{Float64}
+    H_s::Vector{Float64}
+    α_vdr::Vector{Float64}
+    α_idr::Vector{Float64}
+    α_vdf::Vector{Float64}
+    α_idf::Vector{Float64}
+
+    T_nplus::Vector{Float64}
+    F_0::Vector{Float64}
+    dF_0::Vector{Float64}
+
+    Δh::Vector{Float64}
+    S::Vector{Float64}
+    c_i::Vector{Float64}
+    K::Vector{Float64}
+    K̄::Vector{Float64}
+    I_pen::Vector{Float64}
+    q::Vector{Float64}
+    q_new::Vector{Float64}
+    z_old::Vector{Float64}
+    z_new::Vector{Float64}
+    maindiag::Vector{Float64}
+    subdiag::Vector{Float64}
+    supdiag::Vector{Float64}
+
+    F_Lu::Vector{Float64}
+    F_s::Vector{Float64}
+    F_l::Vector{Float64}
+
+    dF_Lu::Vector{Float64}
+    dF_s::Vector{Float64}
+    dF_l::Vector{Float64}
+    
     frzmlt::Float64 # freezing / melting potential (W/m^2)
     rside::Float64 # fraction of ice that metls laterally
 
@@ -149,6 +186,8 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_
         push!(columns, column)
     end
 
+    T_n, H_i, H_iold, H_s, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory_jcell(N_i, N_s, N_t, N_cat)
+
     H_bnew = zeros(Float64, N_cat+1)
     dH     = zeros(Float64, N_cat)
     vol_i  = zeros(Float64, N_cat)
@@ -179,9 +218,57 @@ function initialize_JICECell(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_
     rside_array   = zeros(Float64, N_cat)
 
     # Now construct grid cell object:
-    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, u_star, T_w, frzmlt, rside, 0.0, 0.0, 0.0, false, false, false, false, false, false,
+    grid_cell = JICECell(N_cat, N_t, N_i, N_s, Δt, T_frz, u_star, T_w, T_n,
+                         H_i, H_iold, H_s, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen,
+                         q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+                         frzmlt, rside, 0.0, 0.0, 0.0, false, false, false, false, false, false,
                          thickness_bds, H_bnew, dH, areas, vol_i, vol_s, areas_old, vol_i_old, vol_s_old, columns,
                          g0, g1, hL, hR, dareas, dvol_i, dvol_s, donor, i_energy, s_energy, i_energy_old, s_energy_old,
                          d_area_i_new, d_area_total, vi0_new_array, rside_array, atm)
     return grid_cell
+end
+
+# Allocates all necessary memory for intermediate variables in the model
+function allocate_memory_jcell(N_i, N_s, N_t, N_cat)
+
+    H_i = zeros(Float64, N_cat)
+    H_iold = zeros(Float64, N_cat)
+    H_s = zeros(Float64, N_cat)
+    α_vdr = zeros(Float64, 2*N_cat)
+    α_idr = zeros(Float64, 2*N_cat)
+    α_vdf = zeros(Float64, 2*N_cat)
+    α_idf = zeros(Float64, 2*N_cat)
+
+    T_n     = zeros(Float64, (N_i+N_s+1)*N_cat)
+    T_nplus = zeros(Float64, (N_i+N_s+1)*N_cat)
+
+    F_0  = zeros(Float64, N_t*N_cat)
+    dF_0 = zeros(Float64, N_t*N_cat)
+    Δh   = zeros(Float64, (N_i+N_s+1)*N_cat)
+
+    # Other intermediate data to keep:
+    S      = zeros(Float64, N_i*N_cat)
+    c_i    = zeros(Float64, (N_i+N_s+1)*N_cat)
+    K      = zeros(Float64, (N_i+N_s+1)*N_cat)
+    K̄      = zeros(Float64, (N_i+N_s)*N_cat)
+    I_pen  = zeros(Float64, N_i*N_cat)
+    q      = zeros(Float64, (N_i+N_s+1)*N_cat)
+    q_new = zeros(Float64, (N_i+N_s+1)*N_cat)
+    z_old  = zeros(Float64, (N_i+N_s+2)*N_cat)
+    z_new  = zeros(Float64, (N_i+N_s+2)*N_cat)
+
+    maindiag = zeros(Float64, (N_i+N_s+1)*N_cat)
+    subdiag  = zeros(Float64, (N_i+N_s)*N_cat)
+    supdiag  = zeros(Float64, (N_i+N_s)*N_cat)
+
+    F_Lu = zeros(Float64, N_t*N_cat)
+    F_s  = zeros(Float64, N_t*N_cat)
+    F_l  = zeros(Float64, N_t*N_cat)
+
+    dF_Lu = zeros(Float64, N_t*N_cat)
+    dF_s  = zeros(Float64, N_t*N_cat)
+    dF_l  = zeros(Float64, N_t*N_cat)
+
+    return T_n, H_i, H_iold, H_s, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l
+
 end
