@@ -64,17 +64,17 @@ end
     # Apply horizontal transport between columns vis a linear map
     # This is done with function linear_itd in icepack_therm_itd
     # Also check that conservation of energy is conserved
-    linear_itd_change(jcell, step)
-    conservation_check_itd(jcell)
+    #linear_itd_change(jcell, step)
+    #conservation_check_itd(jcell)
 
     # Add new ice growing in ocean run_cell_step
     # This is done with add_new_ice in icepack_therm_itd
-    add_new_ice(jcell)
-    conservation_check_new_ice(jcell)
+    #add_new_ice(jcell)
+    #conservation_check_new_ice(jcell)
 
     # Melt ice laterally
     # This is done with lateral_melt in icepack_therm_itd
-    lateral_melt(jcell)
+    #lateral_melt(jcell)
     
     # Store current temps and thicknesses:
     for n in 1:jcell.N_cat

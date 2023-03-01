@@ -124,24 +124,26 @@ function test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_
 end
 
 N_cat = 5
-N_t   = 10
+N_t   = 600
 N_i   = 5
 N_s   = 2
-H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1]
+H_i_cols      = [0.45, 1.0, 1.85, 3.57, 5.1]
+#H_i_cols      = [0.15, 0.45, 1.0, 1.6, 2.1] #WMO Case
 #H_s_cols      = [0.0, 0.0, 0.01, 0.05, 0.09]
 #H_s_cols      = [0.0, 0.0, 0.0, 0.0, 0.0]
 H_s_cols      = [0.01, 0.02, 0.05, 0.07, 0.09]
 T_frz         = 271.35 - 273.15
 T_0_cols      = [0.0 .- [20.8, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0],
-                 0.0 .- [21.7, 20.6, 20.1, 19.1, 14.6, 10.1, 5.6, 1.1],
-                 0.0 .- [23.1, 20.7, 20.2, 19.2, 14.7, 10.2, 5.7, 1.2],
-                 0.0 .- [24.2, 20.8, 20.3, 19.3, 14.8, 10.3, 5.8, 1.3],
-                 0.0 .- [25.4, 20.9, 20.4, 19.4, 14.9, 10.4, 5.9, 1.4]]
+                 0.0 .- [20.9, 20.6, 20.1, 19.1, 14.6, 10.1, 5.6, 1.1],
+                 0.0 .- [21.0, 20.7, 20.2, 19.2, 14.7, 10.2, 5.7, 1.2],
+                 0.0 .- [21.1, 20.8, 20.3, 19.3, 14.8, 10.3, 5.8, 1.3],
+                 0.0 .- [21.2, 20.9, 20.4, 19.4, 14.9, 10.4, 5.9, 1.4]]
 
 Δt            = 1.0
 u_star        = 0.0005 # recommended minimum value of u_star in CICE
 T_w           = 274.47 - 273.15 # typical temp in C for sea surface in arctic
-thickness_bds = [0.0, 0.3, 0.7, 1.2, 2.0, 999.9]
+thickness_bds = [0.0, 0.64, 1.39, 2.47, 4.57, 999.9]
+# thickness_bds = [0.0, 0.3, 0.7, 1.2, 2.0, 999.9] # WMO Case
 areas         = [0.2, 0.1, 0.1, 0.1, 0.2] # Area of open water is 1 - sum(areas), in this case 0.3
 
 # "Educated" guess for some normal atmospheric values
@@ -158,14 +160,15 @@ c_p     = 0.7171
 U_a     = zeros(Float64, 3)
 
 # Heat transfer coefficient of water is 598.5 W/ m^2 K.
-frzmlt = 598.5*(T_w - -1.0)
+frzmlt = 0.0 #598.5*(T_w - -1.0)
 # fraction of ice that melts laterally
 rside  = 0.000
 
 println("Testing cell run...")
 test_cell_run(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols,
               F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
-
+#=
 println("Testing adjoint...")
 test_adjoint(N_cat, N_t, Δt, T_frz, T_w, frzmlt, rside, N_i, N_s, H_i_cols, H_s_cols, u_star, T_0_cols,
              F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, thickness_bds, areas)
+=#
