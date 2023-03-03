@@ -11,6 +11,7 @@ const ρ_w    = 1025.0   # kg/m^3    density of seawater (based on common estima
 const ρ_s    = 330.0    # kg/m^3    density of snow
 const c_0    = 2106.0   # J/kg/K    specific heat of fresh ice
 const c_w    = 3900.0   # J kg K    specific heat of seawater (estimate)
+const c_ocn  = 4218.0   # J kg K    specific heat of the ocean
 const c_h    = 0.006    #           heat transfer coefficient
 const K_s    = 0.3      # W/m/deg   thermal conductivity of snow
 const L_0    = 334000.0 # J / kg    latent heat of fusion of fresh ice

@@ -2,6 +2,63 @@
 # Determines thermodynamic-induced growth and melting of sea ice,
 # and rebalances layers obeying conservation of energy.
 
+const m1 = 1.6e-6       # (m/s/deg^(-m2)) constant from Maykut & Perovich
+const m2 = 1.36         # (unitless)      constant from Maykut & Perovich
+const floeshape = 0.66  # (unitless)      constant
+const floediam  = 300.0 # (m)             effective floe diameter for lateral melt
+
+# Computre the preliminary bottom and lateral freeze/melt
+@inline function frzmlt_bottom_lateral(Δt, N_i, N_s, H_i, H_s, T_w, T_frz, frzmlt, area, u_star_min, rside, fside, f_bot)
+
+    rside[1] = 0.0
+    fside[1] = 0.0
+    T_bot    = T_frz
+    f_bot[1] = 0.0
+    w_lat    = 0.0
+
+    if (area > puny) && (frzmlt < 0.0)
+
+        # TODO: include ice-ocean stress to better compute u_star
+        δT        = max((T_w - T_bot), 0.0)
+        u_star    = u_star_min
+        cpchr     = -0.006c_ocn*ρ_w
+        f_bot[1]  = cpchr * u_star * δT
+        f_bot[1]  = max(f_bot[1], frzmlt) # limiting how much bottom flux can take place
+
+        # Next we compute rside
+        w_lat    = m1 * δT^m2
+        rside[1] = w_lat*Δt*pi / (floeshape*floediam)
+        rside[1] = max(0.0, min(rside, 1.0))
+
+
+        # Compute heat flux associated with this value of rside:
+        e_tot_s = 0.0
+        e_tot_i = 0.0
+
+        for k in 2:(N_s+1)
+            e_tot_s += q[k]
+        end
+        for k in (N_s+2):(N_i+N_s+1)
+            e_tot_i += q[k]
+        end
+        e_tot_s *= H_s * area
+        e_tot_i *= H_i * area
+
+        # Different here if we trace fsd:
+        fside[1] += rside[1]*(e_tot_s + e_tot_i) / Δt
+
+        # Limit bottom and lateral heat fluxes if necessary:
+        x_tmp     = frzmlt / (f_bot[1] + f_side[1] + puny)
+        x_tmp     = min(x_tmp, 1.0)
+        rside[1] *= x_tmp
+        fside[1] *= x_tmp
+        f_bot[1] *= x_tmp
+
+    end
+
+    return nothing
+end
+
 # Runs a single time step of the ice growth/melt in bottom layer and rebalancing
 @inline function step_growth_melt(N_i, N_s, H_s, S, T_frz, Δh, T_new, K, K̄, q, q_new, z_old, z_new, Δt, u_star, T_w, F_0)
 

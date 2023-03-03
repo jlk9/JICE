@@ -34,6 +34,27 @@ include("./growth_melt.jl")
                                 c_u, c_Θ, c_q,
                                 atm_u_star, U_a,
                                 step)
+
+
+    # Redo of column steps to more closely follow step_therm1
+    # First there are a bunch of optional tags
+
+    # Then we need to adjust the frzmlt for ice-ocean heat fluxes (frzmlt_bottom_lateral, line 2535)
+    #frzmlt_bottom_lateral(Δt, N_i, N_s, H_i, H_s, T_w, T_frz, frzmlt, area, u_star_min, rside, fside, f_bot)
+
+    # Then we might need to set a number of helper arrays to 0 (line 2550)
+
+
+    # Then calculate atmosphere boundary since we normally calculate T_sfc (line 2582):
+
+
+    # Calculate thermo vertical (line 2655)
+
+
+    # Increment area-weighted fluxes (line 2827)
+
+
+
     
     # Computes the current albedo
     generate_α(H_i[1], α_vdr, α_idr, α_vdf, α_idf, T_n[1])
