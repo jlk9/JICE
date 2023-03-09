@@ -2,7 +2,7 @@
 # Outlines JICECell, a Julia structure for a single grid cell in sea ice physics consisting of multiple columns,
 # their areas, and shared fields (including an atmosphere model).
 
-# MAJOR ASSUMPTION: each column has the same number of ice and snow layers, N_i and N_s
+# MAJOR ASSUMPTION: each column has the same number of ice and snow layers, N_i and N_s. This seems to be consistent with CICE.
 
 include("../column_physics/jicecolumn_struct.jl")
 include("../atmosphere_model/atmodel_struct.jl")
