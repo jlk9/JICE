@@ -27,7 +27,7 @@ include("./jicecell_struct.jl")
     =#
     flag = false
 
-    # Optional FSD stuff
+    # Optional FSD calculations
 
 
     # Computing average enthalpy of ice (line 1028)
