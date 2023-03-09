@@ -3,7 +3,7 @@
 
 include("./jicecell_struct.jl")
 
-#=
+#= TODO: add details here
 =#
 @inline function lateral_melt(jcell)
 

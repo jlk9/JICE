@@ -8,7 +8,7 @@ using Oceananigans
 
 #= JICEGrid struct
 Properties:
-
+ 
 cell_count   total number of grid cells
 cells        array of JICECell objects
 latlong      LatitudeLongitudeGrid object (from Oceananigans) to track positional coordinates
