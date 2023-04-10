@@ -17,22 +17,23 @@ Properties:
     c_q         exchange coefficient
     U_a         Wind velocity
 =#
-mutable struct ATModel
+mutable struct ATModelArrays
 
     N_t::Int64
+    N_c::Int64
 
-    F_SWvdr::Float64
-    F_SWidr::Float64
-    F_SWvdf::Float64
-    F_SWidf::Float64
+    F_SWvdr::Vector{Float64}
+    F_SWidr::Vector{Float64}
+    F_SWvdf::Vector{Float64}
+    F_SWidf::Vector{Float64}
 
-    F_Ld::Float64
+    F_Ld::Vector{Float64}
 
-    T_a::Float64
-    Θ_a::Float64
-    ρ_a::Float64
-    Q_a::Float64
-    c_p::Float64
+    T_a::Vector{Float64}
+    Θ_a::Vector{Float64}
+    ρ_a::Vector{Float64}
+    Q_a::Vector{Float64}
+    c_p::Vector{Float64}
 
     c_u::Vector{Float64}
     c_Θ::Vector{Float64}
@@ -45,10 +46,10 @@ mutable struct ATModel
 end
 
 # Creates an atmodel object and initial parameters
-function initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+function initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     
-    model = ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p,
-                    zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1), U_a)
+    model = ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p,
+                          zeros(Float64, N_c), zeros(Float64, N_c), zeros(Float64, N_c), zeros(Float64, N_c), U_a)
     
     return model
 end
