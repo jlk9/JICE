@@ -1,9 +1,11 @@
 # Written by Joseph Kump (josek97@utexas.edu)
 # Outlines JICEColumn, a Julia structure for single-column ice thermodynamics
 
-include("../constants/jice_constants.jl")
+using CUDA
 
-#= JICEColumn struct
+include("../../src/constants/jice_constants.jl")
+
+#= JICEColumnArrays struct
 Properties:
     N_t    (dim'less)   number of time steps, int
     N_i    (dim'less)   number of ice layers, int
@@ -44,17 +46,19 @@ Properties:
     T_array     (C)         array of temperatures stored at each timestep, Matrix{Float64}
     Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{Float64}
 =#
-mutable struct JICEColumn
+mutable struct JICEColumnArrays
 
     # Variables that must be provided to initialize the model
     N_t::Int64
+    N_c::Int64
     N_i::Int64
     N_s::Int64
+    N_layers::Int64
 
     T_frz::Float64
     Δt::Float64
     u_star::Float64
-    T_w::Float64
+    T_w::Vector{Float64}
 
     T_n::Vector{Float64}
 
@@ -98,94 +102,97 @@ mutable struct JICEColumn
     dF_s::Vector{Float64}
     dF_l::Vector{Float64}
 
-    H_i_array::Vector{Float64}
-    H_s_array::Vector{Float64}
-    T_array::Matrix{Float64}
-    Δh_array::Matrix{Float64}
-
 end
 
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
+function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-    H_i_array, H_s_array, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array = allocate_memory(N_i, N_s, N_t)
+    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t)
 
-    # Get initial thicknesses of each snow and ice layer:
-    for k in 1:N_s
-        Δh[k+1] = H_s / N_s
-    end
-    for k in 1:N_i
-        Δh[k+N_s+1] = H_i / N_i
-    end
-
-    jcolumn = JICEColumn(N_t, N_i, N_s, T_frz, Δt, u_star, T_w, deepcopy(T_0), H_i .+ zeros(Float64,1), zeros(Float64,1), H_s .+ zeros(Float64,1),
-                        zeros(Float64, 1), zeros(Float64, 1), zeros(Float64, 1),
-                        zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), zeros(Float64,2), T_nplus, F_0, dF_0,
-                        Δh, S, c_i, K, K̄, I_pen, q_i, q_inew, z_old, z_new, maindiag,
-                        subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, H_i_array, H_s_array, T_array, Δh_array)
+    jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, deepcopy(T_w), deepcopy(T_0),
+                               deepcopy(H_i), H_iold, deepcopy(H_s), rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
+                               T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag,
+                               F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l)
 
     # Some preliminary work before running the model:
-    jcolumn.T_nplus[:] = jcolumn.T_n
+    for k in 1:(jcolumn.N_layers*jcolumn.N_c)
+        jcolumn.T_nplus[k] = jcolumn.T_n[k]
+    end
 
-    generate_S(jcolumn.S, jcolumn.N_i)
+    generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_c)
     
-    # Set initial temperatures and thicknesses:
-    jcolumn.H_i_array[1]  = H_i
-    jcolumn.H_s_array[1]  = H_s
-    jcolumn.T_array[:, 1] = jcolumn.T_n
-    jcolumn.Δh_array[:,1] = jcolumn.Δh
+    # Get thicknesses of each snow and ice layer:
+    for n in 1:jcolumn.N_c
+        Δh_i = jcolumn.H_i[n] / jcolumn.N_i
+        Δh_s = jcolumn.H_s[n] / jcolumn.N_s
+        index = (n-1) * jcolumn.N_layers
+        for k in 2:(jcolumn.N_s+1)
+            jcolumn.Δh[index + k] = Δh_s
+        end
+        for k in (jcolumn.N_s+2):jcolumn.N_layers
+            jcolumn.Δh[index + k] = Δh_i
+        end
+    end
 
     return jcolumn
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(N_i, N_s, N_t)
+function allocate_memory(N_c, N_i, N_layers, N_t)
 
-    H_i_array = zeros(Float64, N_t+1)
-    H_s_array = zeros(Float64, N_t+1)
-    T_nplus   = zeros(Float64, N_i+N_s+1)
+    H_iold = zeros(Float64, N_c)
 
-    F_0  = zeros(Float64, N_t)
-    dF_0 = zeros(Float64, N_t)
-    Δh   = zeros(Float64, N_i+N_s+1)
+    rside = zeros(Float64, N_c)
+    fside = zeros(Float64, N_c)
+    f_bot = zeros(Float64, N_c)
+
+    α_vdr = zeros(Float64, 2N_c)
+    α_idr = zeros(Float64, 2N_c)
+    α_vdf = zeros(Float64, 2N_c)
+    α_idf = zeros(Float64, 2N_c)
+
+    T_nplus = zeros(Float64, N_layers*N_c)
+
+    F_0  = zeros(Float64, N_t*N_c)
+    dF_0 = zeros(Float64, N_t*N_c)
+    Δh   = zeros(Float64, N_layers*N_c)
 
     # Other intermediate data to keep:
-    S      = zeros(Float64, N_i)
-    c_i    = zeros(Float64, N_i+N_s+1)
-    K      = zeros(Float64, N_i+N_s+1)
-    K̄      = zeros(Float64, N_i+N_s)
-    I_pen  = zeros(Float64, N_i)
-    q      = zeros(Float64, N_i+N_s+1)
-    q_new = zeros(Float64, N_i+N_s+1)
-    z_old  = zeros(Float64, N_i+N_s+2)
-    z_new  = zeros(Float64, N_i+N_s+2)
+    S      = zeros(Float64, N_i*N_c)
+    c_i    = zeros(Float64, N_layers*N_c)
+    K      = zeros(Float64, N_layers*N_c)
+    K̄      = zeros(Float64, (N_layers-1)*N_c)
+    I_pen  = zeros(Float64, N_i*N_c)
+    q      = zeros(Float64, N_layers*N_c)
+    q_new  = zeros(Float64, N_layers*N_c)
+    z_old  = zeros(Float64, (N_layers+1)*N_c)
+    z_new  = zeros(Float64, (N_layers+1)*N_c)
 
-    maindiag = zeros(Float64, N_i+N_s+1)
-    subdiag  = zeros(Float64, N_i+N_s)
-    supdiag  = zeros(Float64, N_i+N_s)
+    maindiag = zeros(Float64, N_layers*N_c)
+    subdiag  = zeros(Float64, (N_layers-1)*N_c)
+    supdiag  = zeros(Float64, (N_layers-1)*N_c)
 
-    F_Lu = zeros(Float64, N_t)
-    F_s  = zeros(Float64, N_t)
-    F_l  = zeros(Float64, N_t)
+    F_Lu = zeros(Float64, N_t*N_c)
+    F_s  = zeros(Float64, N_t*N_c)
+    F_l  = zeros(Float64, N_t*N_c)
 
-    dF_Lu = zeros(Float64, N_t)
-    dF_s  = zeros(Float64, N_t)
-    dF_l  = zeros(Float64, N_t)
+    dF_Lu = zeros(Float64, N_t*N_c)
+    dF_s  = zeros(Float64, N_t*N_c)
+    dF_l  = zeros(Float64, N_t*N_c)
 
-    T_array  = zeros(Float64, N_i+N_s+1, N_t+1)
-    Δh_array = zeros(Float64, N_i+N_s+1, N_t+1)
-
-    return H_i_array, H_s_array, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, T_array, Δh_array
+    return H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l
 
 end
 
 # Gets the salinity profile for this column of sea ice. Since this obeys the BL99 model the salinity
 # is constant
-@inline function generate_S(S, N_i)
+@inline function generate_S(S, N_i, N_c)
 
     for k in 1:N_i
-        z    = k / N_i
-        S[k] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+        z = k / N_i
+        for l in 0:(N_c-1)
+            S[l*N_i + k] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+        end
     end
 
     return nothing
