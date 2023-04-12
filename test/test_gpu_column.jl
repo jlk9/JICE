@@ -2,8 +2,8 @@
 include("../gpu_src/gpu_atmosphere_model/gpu_atmodel_struct.jl")
 include("../gpu_src/gpu_column_physics/gpu_run_ice_column.jl")
 
-N_t    = 1
-N_c    = 10
+N_t    = 100
+N_c    = 2
 N_i    = 5
 N_s    = 2
 H_i    = 2.0 .+ zeros(Float64, N_c)
@@ -32,4 +32,7 @@ jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt,
 
 run_ice_column(jarrays, atmodels)
 
+println(jarrays.maindiag)
+println(jarrays.subdiag)
 println(jarrays.supdiag)
+println(jarrays.T_nplus)

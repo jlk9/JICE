@@ -46,7 +46,10 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println(jcmodel.H_s_array[N_t+1] + jcmodel.H_i_array[N_t+1])
     println(sum(jcmodel.Δh_array[:,N_t+1]))
     =#
+    println(jcmodel.maindiag)
+    println(jcmodel.subdiag)
     println(jcmodel.supdiag)
+    println(jcmodel.T_nplus)
 
     #println(jcmodel.F_0)
 
@@ -387,7 +390,7 @@ println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
-N_t    = 1
+N_t    = 100
 N_i    = 5
 N_s    = 2
 H_i    = 2.0

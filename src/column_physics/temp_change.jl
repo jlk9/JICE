@@ -23,7 +23,7 @@
     generate_matrix_rhs(N_i, N_s, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_old, T_new, Δt)
 
     #mat = Tridiagonal(subdiag, maindiag, supdiag)
-    #=
+    
     #println(c_i)
     #println(K)
     #println(T_old)
@@ -37,7 +37,7 @@
         T_new[1]     = T_new[N_s+1]
         T_new[N_s+1] = 0.0
     end
-    =#
+    
     return nothing
 end
 

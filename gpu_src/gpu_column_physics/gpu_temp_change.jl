@@ -19,25 +19,10 @@
     
     # Get the Matrix and RHS:
     generate_maindiag_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0[(step-1)*N_c+1:step*N_c], F_0, T_frz, I_pen, maindiag, T_new, T_old, Δt)
-    generate_subdiag_supdiag(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, subdiag, supdiag, T_old, Δt)
-    #generate_matrix_rhs(N_i, N_s, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_old, T_new, Δt)
-    #=
-    #mat = Tridiagonal(subdiag, maindiag, supdiag)
+    generate_subdiag_supdiag(N_c, N_s, N_layers, Δh, c_i, K̄, subdiag, supdiag, T_old, Δt)
 
-    #println(c_i)
-    #println(K)
-    #println(T_old)
-    #println(mat)
-    #println(T_new)
-    # Calculate new time step
-    tridiagonal_solve(T_new, N_i+N_s, maindiag, subdiag, supdiag)
-
-    # Shift surface temperature back if no snow:
-    if H_s < puny && N_s > 0
-        T_new[1]     = T_new[N_s+1]
-        T_new[N_s+1] = 0.0
-    end
-    =#
+    batched_tridiagonal_solve(T_new, N_layers-1, N_c, maindiag, subdiag, supdiag)
+    
     return nothing
 end
 
@@ -91,7 +76,7 @@ end
 end
 
 # Produces the first sub and super diagonals of the matrices for the tridiagonal solve and temperature changes
-@inline function generate_subdiag_supdiag(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, subdiag, supdiag, T_old, Δt)
+@inline function generate_subdiag_supdiag(N_c, N_s, N_layers, Δh, c_i, K̄, subdiag, supdiag, T_old, Δt)
 
     for index in 1:(N_c*(N_layers-1))
         col = ((index-1) ÷ (N_layers - 1)) + 1 # current column value
@@ -110,79 +95,27 @@ end
         η_k_sup /= ρ_s + (k > N_s) * (ρ_i - ρ_s) # conditional is for ice density
 
         subdiag[index] = -η_k_sub * K̄[sub_adj_index-1]
-        supdiag[index] = -K̄[sup_adj_index]
+        supdiag[index] = K̄[sup_adj_index]
         if k != 0
-            supdiag[index] *= η_k_sup
+            supdiag[index] *= -η_k_sup
         end
 
     end
     return nothing
 end
 
-# Generates the implicit (tridiagonal) matrix for time step T_nplus
-# I think this matrix is stable in the Thomas algorithm because it is
-# diagonally dominant
-# Based on formation of tridiagonal matrix in icepack_therm_bl99
-@inline function generate_matrix_rhs(N_i, N_s, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_old, rhs, Δt)
+# Solves a large number of tridiagonal systems in batch
+function batched_tridiagonal_solve(x, N, count, maindiag, subdiag, supdiag)
 
-    # Getting K̄ (length N_i):
-    # Trick: we'll move the surface temp to the N_s+1 layer when H_s < puny
-    if H_s < puny
-        K[N_s+1] = K[1]
+    for c in 1:count
+
+        x_n        = view(x, ((c-1)*(N+1)+1):c*(N+1))
+        maindiag_n = view(maindiag, ((c-1)*(N+1)+1):c*(N+1))
+        subdiag_n  = view(subdiag, ((c-1)*N+1):c*N)
+        supdiag_n  = view(supdiag, ((c-1)*N+1):c*N)
+
+        tridiagonal_solve(x_n, N, maindiag_n, subdiag_n, supdiag_n)
     end
-    for k in 1:(N_i+N_s)
-        K̄[k] = (2*K[k]*K[k+1]) / (Δh[k+1]*K[k] + Δh[k]*K[k+1])
-    end
-
-    # Set up dummy equations for when we don't need to solve for the surface or snow temp:
-    for k in 1:(N_s+1)
-
-        maindiag[k] = 1.0
-        subdiag[k]  = 0.0
-        supdiag[k]  = 0.0
-        rhs[k]      = 0.0
-    end
-
-    # Top surface, based on (50) in science guide and line 1074 in icepack_therm_bl99
-    if T_old[1] < 0
-        k = 1
-        if H_s < puny
-            k += N_s
-        end
-
-        maindiag[k] = (dF_0 - K̄[k])
-        supdiag[k]  = K̄[k]
-        rhs[k]      = dF_0*T_old[1] - F_0
-    end
-    
-    # Interior snow layers, based on (52) in science guide
-    if H_s >= puny
-        for k in 2:(N_s+1)
-            η_k          = Δt / (ρ_s*c_i[k]*Δh[k+1])
-            maindiag[k]  = 1 + η_k*(K̄[k-1] + K̄[k])
-            subdiag[k-1] = -η_k*K̄[k-1]
-            supdiag[k]   = -η_k*K̄[k]
-            rhs[k]       = T_old[k]
-        end
-    end
-
-    # Interior ice layers, based on (52) in science guide
-    for k in (N_s+2):(N_i+N_s)
-        η_k          = Δt / (ρ_i*c_i[k]*Δh[k+1])
-        #maindiag[k]  = 1 + η_k*(K̄[k-1] + K̄[k])
-        maindiag[k] = η_k
-        subdiag[k-1] = -η_k*K̄[k-1]
-        supdiag[k]   = -η_k*K̄[k]
-        rhs[k]       = T_old[k] + η_k*I_pen[k-N_s-1]
-    end
-
-    # Bottom surface
-    η_end               = Δt / (ρ_i*c_i[N_i+N_s+1]*Δh[N_i+N_s+1])
-    maindiag[N_i+N_s+1] = 1 + η_end*(K̄[N_i+N_s] + 0.5*K[N_i+N_s+1]) #1 + η_Ni*(K[N_i] + K[N_i+1])
-    subdiag[N_i+N_s]    = -η_end*K̄[N_i+N_s]
-    rhs[N_i+N_s+1]     += η_end*(I_pen[N_i] + 0.5*K[N_i+N_s+1]*T_frz) #η_Ni*(I_pen[N_i] + K[N_i+1]*T_frz)
-
-    return nothing
 end
 
 # Solves a tridiagonal system using the tridiagonal matrix algorithm (aka Thomas algorithm)
