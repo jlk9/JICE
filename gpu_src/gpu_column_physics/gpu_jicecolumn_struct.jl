@@ -119,7 +119,7 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
         jcolumn.T_nplus[k] = jcolumn.T_n[k]
     end
 
-    generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_c)
+    generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
     
     # Get thicknesses of each snow and ice layer:
     for n in 1:jcolumn.N_c
@@ -158,10 +158,10 @@ function allocate_memory(N_c, N_i, N_layers, N_t)
     Δh   = zeros(Float64, N_layers*N_c)
 
     # Other intermediate data to keep:
-    S      = zeros(Float64, N_i*N_c)
+    S      = zeros(Float64, N_layers*N_c)
     c_i    = zeros(Float64, N_layers*N_c)
     K      = zeros(Float64, N_layers*N_c)
-    K̄      = zeros(Float64, (N_layers-1)*N_c)
+    K̄      = zeros(Float64, N_layers*N_c)
     I_pen  = zeros(Float64, N_i*N_c)
     q      = zeros(Float64, N_layers*N_c)
     q_new  = zeros(Float64, N_layers*N_c)
@@ -186,12 +186,12 @@ end
 
 # Gets the salinity profile for this column of sea ice. Since this obeys the BL99 model the salinity
 # is constant
-@inline function generate_S(S, N_i, N_c)
+@inline function generate_S(S, N_i, N_s, N_c, N_layers)
 
     for k in 1:N_i
         z = k / N_i
         for l in 0:(N_c-1)
-            S[l*N_i + k] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+            S[l*N_layers + N_s + 1 + k] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
         end
     end
 

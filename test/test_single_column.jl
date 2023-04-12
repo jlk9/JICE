@@ -31,6 +31,7 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
     run_ice_column(jcmodel, atmodel)
 
+    #=
     println("1. Basic temp test. Initial temps are:")
     println(jcmodel.T_array[:,1])
     println("Temps over time are: (should be close to initial)")
@@ -44,6 +45,8 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println("Total sums updated correctly? Results are and should be:")
     println(jcmodel.H_s_array[N_t+1] + jcmodel.H_i_array[N_t+1])
     println(sum(jcmodel.Δh_array[:,N_t+1]))
+    =#
+    println(jcmodel.supdiag)
 
     #println(jcmodel.F_0)
 
@@ -384,7 +387,7 @@ println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
-N_t    = 100
+N_t    = 1
 N_i    = 5
 N_s    = 2
 H_i    = 2.0
@@ -394,6 +397,19 @@ T_0    = 0 .- [21.0, 20.5, 20.0, 19.0, 14.5, 10.0, 5.5, 1.0]
 Δt     = 1.0
 u_star = 0.0005 # recommended minimum value of u_star in CICE
 T_w    = 274.47 - 273.15 # typical temp in C for sea surface in arctic
+
+# "Educated" guess for some normal atmospheric values
+F_Ld    = 10.0
+F_SWvdr = 120.0
+F_SWidr = 0.0
+F_SWvdf = 0.0
+F_SWidf = 0.0
+T_a     = -34.0
+Θ_a     = (T_a*(1000.0/1045.6)^0.286)
+ρ_a     = 1.4224
+Q_a     = 0.005
+c_p     = 0.7171
+U_a     = zeros(Float64, 3)
 
 test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)

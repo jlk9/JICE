@@ -4,36 +4,12 @@
 # It also reduces the number of memory allocations substantially, increasing runtime
 # and lowering memory footprint.
 
-include("./surface_flux.jl")
-include("./temp_change.jl")
-include("./growth_melt.jl")
+include("./gpu_surface_flux.jl")
+include("./gpu_temp_change.jl")
+include("./gpu_growth_melt.jl")
 
 # Runs one step of ice process. 
-@inline function run_column_step(N_i, N_s,
-                                N_layers, N_t,
-                                T_frz, Δt, u_star,
-                                T_w, T_n,
-                                H_i, H_iold, H_s,
-                                α_vdr, α_idr,
-                                α_vdf, α_idf,
-                                T_nplus,
-                                F_0, dF_0,
-                                Δh, S, c_i,
-                                K, K̄,
-                                I_pen,
-                                q, q_new,
-                                z_old, z_new,
-                                maindiag, subdiag, supdiag,
-                                F_Lu, F_s, F_l,
-                                dF_Lu, dF_s, dF_l,
-                                F_SWvdr, F_SWidr,
-                                F_SWvdf, F_SWidf,
-                                F_Ld,
-                                Θ_a, ρ_a,
-                                Q_a, c_p,
-                                c_u, c_Θ, c_q,
-                                atm_u_star, U_a,
-                                step)
+@inline function run_column_step(jarrays, atmodels, step)
 
 
     # Redo of column steps to more closely follow step_therm1
@@ -55,7 +31,7 @@ include("./growth_melt.jl")
 
 
 
-    
+    #=
     # Computes the current albedo
     generate_α(H_i[1], α_vdr, α_idr, α_vdf, α_idf, T_n[1])
     
@@ -65,19 +41,19 @@ include("./growth_melt.jl")
                          F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen,
                          c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star,
                          ρ_a, c_p, step)
-    
+    =#
     # Computes the temperature changes at this step
-    step_temp_change(N_i, N_s, H_s[1], S, T_frz, Δh, T_n,
-                     T_nplus, c_i, K, K̄, I_pen, F_0[step], dF_0[step],
-                     maindiag, subdiag, supdiag, Δt)
-
+    step_temp_change(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.H_s, jarrays.S, jarrays.T_frz, jarrays.Δh, jarrays.T_n,
+                     jarrays.T_nplus, jarrays.c_i, jarrays.K, jarrays.K̄, jarrays.I_pen, jarrays.F_0, jarrays.dF_0,
+                     jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.Δt, step)
+    #=
     # Gets the growth/melt and rebalances
     step_growth_melt(N_i, N_s, H_s[1], S, T_frz, Δh, T_nplus, K, K̄,
                       q, q_new, z_old, z_new, Δt, u_star, T_w, F_0[step])
 
     # Add up the layer thicknesses to get the new total thickness
     readd_total_thickness(N_i, N_s, Δh, H_i, H_iold, H_s)
-
+    =#
 end
 
 # Julia's sum() operation is memory inefficient for slices of arrays, this is oddly much faster
