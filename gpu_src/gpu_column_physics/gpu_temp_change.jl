@@ -2,6 +2,8 @@
 # Computes the thermodynamic temperature changes in once column
 # of sea ice
 
+using CUDA
+
 # Runs a single time step of the temperature changes using FDM
 @inline function step_temp_change(N_c, N_i, N_s, N_layers, H_s, S, T_frz, Δh, T_old, T_new, c_i, K, K̄, I_pen, F_0, dF_0, maindiag, subdiag, supdiag, Δt, step)
 
@@ -18,7 +20,7 @@
     generate_c_i(c_i, N_c, N_s, N_layers, S, T_old, T_new)
     
     # Get the Matrix and RHS:
-    generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0[(step-1)*N_c+1:step*N_c], F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt)
+    generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt, step)
 
     batched_tridiagonal_solve(T_new, N_layers-1, N_c, maindiag, subdiag, supdiag)
 
@@ -26,7 +28,7 @@
 end
 
 # Produces the main diagonal of the matrices for the tridiagonal solve and temperature changes
-@inline function generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, rhs, T_old, Δt)
+@inline function generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, rhs, T_old, Δt, step)
 
     # First get K̄, then fill in entries of maindiag::
     for index in 1:(N_c*N_layers)
@@ -50,8 +52,8 @@ end
         η_k  = Δt / (c_i[index]*Δh[min(index+1, col*N_layers)])
         η_k /= ρ_s + (k > N_s) * (ρ_i - ρ_s) # conditional is for ice density
         if k == 0
-            maindiag[index] = dF_0[col] - K̄[index]
-            rhs[index]      = dF_0[col]*T_old[index] - F_0[col]
+            maindiag[index] = dF_0[N_c*(step-1) + col] - K̄[index]
+            rhs[index]      = dF_0[N_c*(step-1) + col]*T_old[index] - F_0[N_c*(step-1) + col]
         else
             maindiag[index] = 1 + η_k*(K̄[index-1] + K̄[index])
             rhs[index]      = T_old[index] #- (k > N_s) * 
@@ -135,6 +137,7 @@ end
         end
     end
     =#
+
     for index in 1:(N_c*N_layers)
         col      = ((index-1) ÷ N_layers) + 1
         k        = (index-1) % N_layers

@@ -43,10 +43,10 @@ Properties:
     dF_s        (W/m^2 C)   Derivative of sensible heat flux relative to T_sf
     dF_l        (W/m^2 C)   Derivative of latent heat flux relative to T_sf
 
-    T_array     (C)         array of temperatures stored at each timestep, Matrix{Float64}
-    Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{Float64}
+    T_array     (C)         array of temperatures stored at each timestep, Matrix{T}
+    Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{T}
 =#
-mutable struct JICEColumnArrays
+struct JICEColumnArrays
 
     # Variables that must be provided to initialize the model
     N_t::Int64
@@ -107,7 +107,9 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t)
+    typeT = Float64
+
+    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, typeT)
 
     jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, deepcopy(T_w), deepcopy(T_0),
                                deepcopy(H_i), H_iold, deepcopy(H_s), rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
@@ -138,7 +140,7 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(N_c, N_i, N_layers, N_t)
+function allocate_memory(N_c, N_i, N_layers, N_t, T)
 
     H_iold = zeros(Float64, N_c)
 

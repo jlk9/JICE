@@ -4,8 +4,6 @@
 # It also reduces the number of memory allocations substantially, increasing runtime
 # and lowering memory footprint.
 
-include("./gpu_jicecolumn_struct.jl")
-include("../gpu_atmosphere_model/gpu_atmodel_struct.jl")
 include("./gpu_run_column_step.jl")
 
 #= Model Function
@@ -17,16 +15,13 @@ Output:
     Technically nothing, but the function updates jcolumn's T_array and Δh_arrays to have a log
     of updated ice temperatures and thicknesses
 =#
-@inline function run_ice_column(jarrays, atmodels)
-
+@time function run_ice_column(jarrays::JICEColumnArrays, atmodels::ATModelArrays)
+    
     # Main loop of temperature modifications:
     for step in 1:jarrays.N_t
         
         run_column_step(jarrays, atmodels, step)
-
-        # Update T_n:
-        jarrays.T_n[:] = jarrays.T_nplus
     end
-
+    
     return nothing
 end
