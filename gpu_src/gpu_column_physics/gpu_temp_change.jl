@@ -18,41 +18,33 @@
     generate_c_i(c_i, N_c, N_s, N_layers, S, T_old, T_new)
     
     # Get the Matrix and RHS:
-    generate_maindiag_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0[(step-1)*N_c+1:step*N_c], F_0, T_frz, I_pen, maindiag, T_new, T_old, Δt)
-    generate_subdiag_supdiag(N_c, N_s, N_layers, Δh, c_i, K̄, subdiag, supdiag, T_old, Δt)
+    generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0[(step-1)*N_c+1:step*N_c], F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt)
 
     batched_tridiagonal_solve(T_new, N_layers-1, N_c, maindiag, subdiag, supdiag)
-    
+
     return nothing
 end
 
 # Produces the main diagonal of the matrices for the tridiagonal solve and temperature changes
-@inline function generate_maindiag_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, rhs, T_old, Δt)
+@inline function generate_matrix_rhs(N_c, N_i, N_s, N_layers, H_s, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, rhs, T_old, Δt)
 
-    #=
-    # First get K̄:
-    for col in 1:N_c
-        index = (col-1) * N_layers
-        for k in 1:(N_layers-1)
-            K̄[index+k] = (2*K[index+k]*K[index+k+1]) / (Δh[index+k+1]*K[index+k] + Δh[index+k]*K[index+k+1])
-        end
-        K̄[index+N_layers] = 0.5K[index+N_layers]
-    end
-    =#
     # First get K̄, then fill in entries of maindiag::
     for index in 1:(N_c*N_layers)
         col = ((index-1) ÷ N_layers) + 1
         k   = (index-1) % N_layers
 
+        # First get K̄:
         if index % N_layers == 0
             K̄[index] = 0.5K[index]
         else
             K̄[index] = (2*K[index]*K[index+1]) / (Δh[index+1]*K[index] + Δh[index]*K[index+1])
         end
 
-        # Initialize maindiag as 1's, rhs as 0's:
+        # Initialize maindiag as 1's, off diags and rhs as 0's:
         maindiag[index] = 1.0
         rhs[index]      = 0.0
+        subdiag[index]  = 0.0
+        supdiag[index]  = 0.0
 
         # Compute η_k (Δh index special for lower boundary), then multiply by snow or ice density
         η_k  = Δt / (c_i[index]*Δh[min(index+1, col*N_layers)])
@@ -71,35 +63,17 @@ end
                 rhs[index] += η_k * 0.5K[index]*T_frz
             end
         end
-    end
-    return nothing
-end
 
-# Produces the first sub and super diagonals of the matrices for the tridiagonal solve and temperature changes
-@inline function generate_subdiag_supdiag(N_c, N_s, N_layers, Δh, c_i, K̄, subdiag, supdiag, T_old, Δt)
-
-    for index in 1:(N_c*(N_layers-1))
-        col = ((index-1) ÷ (N_layers - 1)) + 1 # current column value
-        k   = (index-1) % (N_layers - 1) # current layer value, from 2 to end for subdiag (-2)
-
-        sub_adj_index = (col-1)*N_layers + k + 2
-        sup_adj_index = (col-1)*N_layers + k + 1
-
-        subdiag[index] = 0.0
-        supdiag[index] = 0.0
-
-        η_k_sub  = Δt / (c_i[sub_adj_index]*Δh[min(sub_adj_index+1, col*N_layers)])
-        η_k_sub /= ρ_s + (k > N_s-1) * (ρ_i - ρ_s) # conditional is for ice density
-
-        η_k_sup  = Δt / (c_i[sup_adj_index]*Δh[min(sup_adj_index+1, col*N_layers)])
-        η_k_sup /= ρ_s + (k > N_s) * (ρ_i - ρ_s) # conditional is for ice density
-
-        subdiag[index] = -η_k_sub * K̄[sub_adj_index-1]
-        supdiag[index] = K̄[sup_adj_index]
+        # Setting values of subdiag and supdiag
         if k != 0
-            supdiag[index] *= -η_k_sup
+            subdiag[index] = -η_k * K̄[index-1]
         end
-
+        if k != N_layers-1
+            supdiag[index] = K̄[index]
+            if k != 0
+                supdiag[index] *= -η_k
+            end
+        end
     end
     return nothing
 end
@@ -111,8 +85,8 @@ function batched_tridiagonal_solve(x, N, count, maindiag, subdiag, supdiag)
 
         x_n        = view(x, ((c-1)*(N+1)+1):c*(N+1))
         maindiag_n = view(maindiag, ((c-1)*(N+1)+1):c*(N+1))
-        subdiag_n  = view(subdiag, ((c-1)*N+1):c*N)
-        supdiag_n  = view(supdiag, ((c-1)*N+1):c*N)
+        subdiag_n  = view(subdiag, ((c-1)*(N+1)+2):c*(N+1))
+        supdiag_n  = view(supdiag, ((c-1)*(N+1)+1):c*(N+1)-1)
 
         tridiagonal_solve(x_n, N, maindiag_n, subdiag_n, supdiag_n)
     end

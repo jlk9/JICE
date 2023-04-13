@@ -169,8 +169,8 @@ function allocate_memory(N_c, N_i, N_layers, N_t)
     z_new  = zeros(Float64, (N_layers+1)*N_c)
 
     maindiag = zeros(Float64, N_layers*N_c)
-    subdiag  = zeros(Float64, (N_layers-1)*N_c)
-    supdiag  = zeros(Float64, (N_layers-1)*N_c)
+    subdiag  = zeros(Float64, N_layers*N_c)
+    supdiag  = zeros(Float64, N_layers*N_c)
 
     F_Lu = zeros(Float64, N_t*N_c)
     F_s  = zeros(Float64, N_t*N_c)
