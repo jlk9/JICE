@@ -30,7 +30,7 @@
     #println(mat)
     #println(T_new)
     # Calculate new time step
-    tridiagonal_solve(T_new, N_i+N_s, maindiag, subdiag, supdiag)
+    #tridiagonal_solve(T_new, N_i+N_s, maindiag, subdiag, supdiag)
 
     # Shift surface temperature back if no snow:
     if H_s < puny && N_s > 0
@@ -66,7 +66,7 @@ end
         supdiag[k]  = 0.0
         rhs[k]      = 0.0
     end
-
+    
     # Top surface, based on (50) in science guide and line 1074 in icepack_therm_bl99
     if T_old[1] < 0
         k = 1
@@ -106,6 +106,7 @@ end
     rhs[N_i+N_s+1]     += η_end*(I_pen[N_i] + 0.5*K[N_i+N_s+1]*T_frz) #η_Ni*(I_pen[N_i] + K[N_i+1]*T_frz)
 
     return nothing
+    
 end
 
 # Solves a tridiagonal system using the tridiagonal matrix algorithm (aka Thomas algorithm)
