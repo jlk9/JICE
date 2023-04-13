@@ -5,7 +5,7 @@ include("../gpu_src/gpu_column_physics/gpu_run_ice_column.jl")
 using BenchmarkTools
 
 N_t    = 100
-N_c    = 1000
+N_c    = 100000
 N_i    = 5
 N_s    = 2
 H_i    = 2.0 .+ zeros(Float64, N_c)
@@ -32,7 +32,7 @@ U_a     = zeros(Float64, 3*N_c)
 atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
 
-@time run_ice_column(jarrays, atmodels)
+@btime run_ice_column(jarrays, atmodels)
 
 #println(jarrays.maindiag)
 #println(jarrays.subdiag)

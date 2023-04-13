@@ -128,16 +128,7 @@ end
 # 2.03 is K_0, conductivity of fresh ice
 # 0.13 is β, an empirical constant
 @inline function generate_K(K, N_c, N_s, N_layers, H_s, S, T)
-    #=
-    for col in 1:N_c
-        index = (col - 1) * N_layers
-        # All layers. The structure is snow + (condoitional for ice surface) + (conditional for ice)
-        for k in 1:N_layers
-            K[index + k] = 0.3 + ((H_s[col] < puny) * (k == 1) * 1.73) + (k > (N_s + 1)) * (1.73 + (0.13S[k])/T[index + k])
-        end
-    end
-    =#
-
+    
     for index in 1:(N_c*N_layers)
         col      = ((index-1) ÷ N_layers) + 1
         k        = (index-1) % N_layers
@@ -150,15 +141,7 @@ end
 
 # gets the specific heat of sea ice
 @inline function generate_c_i(c_i, N_c, N_s, N_layers, S, T_old, T_new)
-    #=
-    for col in 1:N_c
-        index = (col - 1) * N_layers
-        # Snow and ice surface both match fresh ice, conditional for deeper ice:
-        for k in 1:N_layers
-            c_i[index + k] = c_0 + (k > (N_s + 1)) * (L_0*μ*S[index + k])/(T_old[index + k]*T_new[index + k])
-        end
-    end
-    =#
+    
     for index in 1:(N_c*N_layers)
         col        = ((index-1) ÷ N_layers) + 1
         k          = (index-1) % N_layers

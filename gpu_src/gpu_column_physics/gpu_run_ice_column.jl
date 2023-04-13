@@ -15,7 +15,7 @@ Output:
     Technically nothing, but the function updates jcolumn's T_array and Δh_arrays to have a log
     of updated ice temperatures and thicknesses
 =#
-@time function run_ice_column(jarrays::JICEColumnArrays, atmodels::ATModelArrays)
+function run_ice_column(jarrays::JICEColumnArrays, atmodels::ATModelArrays)
     
     # Main loop of temperature modifications:
     for step in 1:jarrays.N_t
