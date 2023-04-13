@@ -24,16 +24,16 @@ Properties:
     F_0    (W/m^2)      total heat flux at surface, array of floats
     dF_0   (W/m^2 C)    derivative total heat flux at surface, array of floats
 
-    Δh          (m)     thickness of each layer, Vector{Float64}
-    Δh̄          (m)     averaged thickness of each layer, Vector{Float64}
-    S           (ppt)   salinity, Vector{Float64}
-    c_i         (J/kg)  specific heat of ice, Vector{Float64}
-    K           (W/m K) thermal conductivity of sea ice, Vector{Float64}
-    K̄           (W/m K) pairwise-averaged thermal conductivity of sea ice, Vector{Float64}
-    I_pen       (W m^2) penetrating solar flux, Vector{Float64}
-    maindiag    ()      main diagonal of tridiagonal system to solve, Vector{Float64}
-    subdiag     ()      sub diagonal of tridiagonal system to solve, Vector{Float64}
-    supdiag     ()      super diagonal of tridiagonal system to solve, Vector{Float64}
+    Δh          (m)     thickness of each layer, AbstractArray{Float64, 1}
+    Δh̄          (m)     averaged thickness of each layer, AbstractArray{Float64, 1}
+    S           (ppt)   salinity, AbstractArray{Float64, 1}
+    c_i         (J/kg)  specific heat of ice, AbstractArray{Float64, 1}
+    K           (W/m K) thermal conductivity of sea ice, AbstractArray{Float64, 1}
+    K̄           (W/m K) pairwise-averaged thermal conductivity of sea ice, AbstractArray{Float64, 1}
+    I_pen       (W m^2) penetrating solar flux, AbstractArray{Float64, 1}
+    maindiag    ()      main diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
+    subdiag     ()      sub diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
+    supdiag     ()      super diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
 
     F_Lu        (W/m^2)     Upward longwave flux
     F_s         (W/m^2)     Sensible heat flux
@@ -58,58 +58,79 @@ struct JICEColumnArrays
     T_frz::Float64
     Δt::Float64
     u_star::Float64
-    T_w::Vector{Float64}
+    T_w::AbstractArray{Float64, 1}
 
-    T_n::Vector{Float64}
+    T_n::AbstractArray{Float64, 1}
 
     # Variables that are created based on the above:
-    H_i::Vector{Float64}
-    H_iold::Vector{Float64}
-    H_s::Vector{Float64}
+    H_i::AbstractArray{Float64, 1}
+    H_iold::AbstractArray{Float64, 1}
+    H_s::AbstractArray{Float64, 1}
 
-    rside::Vector{Float64}
-    fside::Vector{Float64}
-    f_bot::Vector{Float64}
+    rside::AbstractArray{Float64, 1}
+    fside::AbstractArray{Float64, 1}
+    f_bot::AbstractArray{Float64, 1}
 
-    α_vdr::Vector{Float64}
-    α_idr::Vector{Float64}
-    α_vdf::Vector{Float64}
-    α_idf::Vector{Float64}
+    α_vdr::AbstractArray{Float64, 1}
+    α_idr::AbstractArray{Float64, 1}
+    α_vdf::AbstractArray{Float64, 1}
+    α_idf::AbstractArray{Float64, 1}
 
-    T_nplus::Vector{Float64}
-    F_0::Vector{Float64}
-    dF_0::Vector{Float64}
+    T_nplus::AbstractArray{Float64, 1}
+    F_0::AbstractArray{Float64, 1}
+    dF_0::AbstractArray{Float64, 1}
 
-    Δh::Vector{Float64}
-    S::Vector{Float64}
-    c_i::Vector{Float64}
-    K::Vector{Float64}
-    K̄::Vector{Float64}
-    I_pen::Vector{Float64}
-    q::Vector{Float64}
-    q_new::Vector{Float64}
-    z_old::Vector{Float64}
-    z_new::Vector{Float64}
-    maindiag::Vector{Float64}
-    subdiag::Vector{Float64}
-    supdiag::Vector{Float64}
+    Δh::AbstractArray{Float64, 1}
+    S::AbstractArray{Float64, 1}
+    c_i::AbstractArray{Float64, 1}
+    K::AbstractArray{Float64, 1}
+    K̄::AbstractArray{Float64, 1}
+    I_pen::AbstractArray{Float64, 1}
+    q::AbstractArray{Float64, 1}
+    q_new::AbstractArray{Float64, 1}
+    z_old::AbstractArray{Float64, 1}
+    z_new::AbstractArray{Float64, 1}
+    maindiag::AbstractArray{Float64, 1}
+    subdiag::AbstractArray{Float64, 1}
+    supdiag::AbstractArray{Float64, 1}
 
-    F_Lu::Vector{Float64}
-    F_s::Vector{Float64}
-    F_l::Vector{Float64}
+    F_Lu::AbstractArray{Float64, 1}
+    F_s::AbstractArray{Float64, 1}
+    F_l::AbstractArray{Float64, 1}
 
-    dF_Lu::Vector{Float64}
-    dF_s::Vector{Float64}
-    dF_l::Vector{Float64}
+    dF_Lu::AbstractArray{Float64, 1}
+    dF_s::AbstractArray{Float64, 1}
+    dF_l::AbstractArray{Float64, 1}
 
 end
 
+struct JICEColumnArrays_Device
+
+    T_w::CuArray{Float64}
+    T_n::CuArray{Float64}
+    H_i::CuArray{Float64}
+    H_iold::CuArray{Float64}
+    H_s::CuArray{Float64}
+    T_nplus::CuArray{Float64}
+    F_0::CuArray{Float64}
+    dF_0::CuArray{Float64}
+    Δh::CuArray{Float64}
+    S::CuArray{Float64}
+    c_i::CuArray{Float64}
+    K::CuArray{Float64}
+    K̄::CuArray{Float64}
+    I_pen::CuArray{Float64}
+    maindiag::CuArray{Float64}
+    subdiag::CuArray{Float64}
+    supdiag::CuArray{Float64}
+
+end
+
+
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
+function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
 
-    typeT = Float64
-
-    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, typeT)
+    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onDevice)
 
     jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, deepcopy(T_w), deepcopy(T_0),
                                deepcopy(H_i), H_iold, deepcopy(H_s), rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
@@ -140,9 +161,7 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(N_c, N_i, N_layers, N_t, T)
-
-    H_iold = zeros(Float64, N_c)
+function allocate_memory(N_c, N_i, N_layers, N_t, onDevice)
 
     rside = zeros(Float64, N_c)
     fside = zeros(Float64, N_c)
@@ -153,26 +172,11 @@ function allocate_memory(N_c, N_i, N_layers, N_t, T)
     α_vdf = zeros(Float64, 2N_c)
     α_idf = zeros(Float64, 2N_c)
 
-    T_nplus = zeros(Float64, N_layers*N_c)
-
-    F_0  = zeros(Float64, N_t*N_c)
-    dF_0 = zeros(Float64, N_t*N_c)
-    Δh   = zeros(Float64, N_layers*N_c)
-
     # Other intermediate data to keep:
-    S      = zeros(Float64, N_layers*N_c)
-    c_i    = zeros(Float64, N_layers*N_c)
-    K      = zeros(Float64, N_layers*N_c)
-    K̄      = zeros(Float64, N_layers*N_c)
-    I_pen  = zeros(Float64, N_i*N_c)
     q      = zeros(Float64, N_layers*N_c)
     q_new  = zeros(Float64, N_layers*N_c)
     z_old  = zeros(Float64, (N_layers+1)*N_c)
     z_new  = zeros(Float64, (N_layers+1)*N_c)
-
-    maindiag = zeros(Float64, N_layers*N_c)
-    subdiag  = zeros(Float64, N_layers*N_c)
-    supdiag  = zeros(Float64, N_layers*N_c)
 
     F_Lu = zeros(Float64, N_t*N_c)
     F_s  = zeros(Float64, N_t*N_c)
@@ -181,6 +185,43 @@ function allocate_memory(N_c, N_i, N_layers, N_t, T)
     dF_Lu = zeros(Float64, N_t*N_c)
     dF_s  = zeros(Float64, N_t*N_c)
     dF_l  = zeros(Float64, N_t*N_c)
+
+    # Either on host or device:
+    if !onDevice
+        H_iold  = zeros(Float64, N_c)
+        T_nplus = zeros(Float64, N_layers*N_c)
+
+        F_0  = zeros(Float64, N_t*N_c)
+        dF_0 = zeros(Float64, N_t*N_c)
+        Δh   = zeros(Float64, N_layers*N_c)
+
+        S      = zeros(Float64, N_layers*N_c)
+        c_i    = zeros(Float64, N_layers*N_c)
+        K      = zeros(Float64, N_layers*N_c)
+        K̄      = zeros(Float64, N_layers*N_c)
+        I_pen  = zeros(Float64, N_i*N_c)
+
+        maindiag = zeros(Float64, N_layers*N_c)
+        subdiag  = zeros(Float64, N_layers*N_c)
+        supdiag  = zeros(Float64, N_layers*N_c)
+    else
+        H_iold  = CUDA.zeros(Float64, N_c)
+        T_nplus = CUDA.zeros(Float64, N_layers*N_c)
+
+        F_0  = CUDA.zeros(Float64, N_t*N_c)
+        dF_0 = CUDA.zeros(Float64, N_t*N_c)
+        Δh   = CUDA.zeros(Float64, N_layers*N_c)
+
+        S      = CUDA.zeros(Float64, N_layers*N_c)
+        c_i    = CUDA.zeros(Float64, N_layers*N_c)
+        K      = CUDA.zeros(Float64, N_layers*N_c)
+        K̄      = CUDA.zeros(Float64, N_layers*N_c)
+        I_pen  = CUDA.zeros(Float64, N_i*N_c)
+
+        maindiag = CUDA.zeros(Float64, N_layers*N_c)
+        subdiag  = CUDA.zeros(Float64, N_layers*N_c)
+        supdiag  = CUDA.zeros(Float64, N_layers*N_c)
+    end
 
     return H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l
 
