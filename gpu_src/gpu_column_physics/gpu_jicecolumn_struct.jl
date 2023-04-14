@@ -132,8 +132,22 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
 
     H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onDevice)
 
-    jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, deepcopy(T_w), deepcopy(T_0),
-                               deepcopy(H_i), H_iold, deepcopy(H_s), rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
+    if !onDevice
+        T_w_d = deepcopy(T_w)
+        T_0_d = deepcopy(T_0)
+        H_i_d = deepcopy(H_i)
+        H_s_d = deepcopy(H_s)
+    else
+        T_w_d = CuArray(T_w)
+        T_0_d = CuArray(T_0)
+        H_i_d = CuArray(H_i)
+        H_s_d = CuArray(H_s)
+    end
+
+    copyto!(T_nplus, T_0_d)
+
+    jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, T_w_d, T_0_d,
+                               H_i_d, H_iold, H_s_d, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
                                T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag,
                                F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l)
 
