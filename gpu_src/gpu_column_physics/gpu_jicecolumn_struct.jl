@@ -153,7 +153,7 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
    
     @cuda generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
 
-    @cuda generate_initial_thicknesses(jcolumn.Δh, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers, convert(Float64, N_i), convert(Float64, N_s))
+    @cuda generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers, convert(Float64, N_i), convert(Float64, N_s))
     
     return jcolumn
 end
@@ -241,15 +241,15 @@ end
 end
 
 # Generates initial thicknesses of ice columns.
-@inline function generate_initial_thicknesses(Δh, N_i, N_s, N_c, N_layers, N_i_float, N_s_float)
+@inline function generate_initial_thicknesses(Δh, H_i, H_s, N_i, N_s, N_c, N_layers, N_i_float, N_s_float)
     
     for index in 1:(N_layers*N_c)
         col = ((index - 1) ÷ N_layers) + 1
         k   = (index - 1) % N_layers + 1
         if k > 1 && k < N_s + 2
-            Δh[index] = H_s[col] / N_s_float
+            Δh[index] = H_s[col] / N_s
         elseif k > N_s + 1
-            Δh[index] = H_i[col] / N_i_float
+            Δh[index] = H_i[col] / N_i
         end
     end
 end
