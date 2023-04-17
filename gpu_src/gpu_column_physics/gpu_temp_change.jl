@@ -21,7 +21,7 @@ using CUDA
     @cuda generate_c_i(c_i, N_c, N_s, N_layers, S, T_old, T_new)
     
     # Get the Matrix and RHS:
-    #generate_matrix_rhs(N_c, N_i, N_s, N_layers, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt, step)
+    generate_matrix_rhs(N_c, N_i, N_s, N_layers, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt, step)
 
     #batched_tridiagonal_solve(T_new, N_layers-1, N_c, maindiag, subdiag, supdiag)
 
