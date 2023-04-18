@@ -137,33 +137,52 @@ end
 
 # Computes the albedo for this column's ice and snow, assumed to be constant throughout
 # model run (at least for now)
-@inline function generate_α(H_i, α_vdr, α_idr, α_vdf, α_idf, T_sfc)
+@inline function generate_α_i(N_c, N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, T_n)
 
-    # Get the albedo values for bare ice:
-    fh       = min(atan(4.0H_i)/atan(4.0ahmax), 1.0)
-    albo     = α_o*(1.0-fh)
-    α_vdf[1] = α_icev*fh + albo
-    α_idf[1] = α_icei*fh + albo
+    for index in 1:N_c
 
-    # Temperature dependence component:
-    dTs       = -T_sfc
-    fT        = min(dTs - 1.0, 0.0)
-    α_vdf[1] -= dα_mlt*fT
-    α_idf[1] -= dα_mlt*fT
+        # Get the albedo values for bare ice:
+        fh       = min(atan(4.0H_i[index])/atan(4.0ahmax), 1.0)
+        albo     = α_o*(1.0-fh)
+        α_vdf_i[index] = α_icev*fh + albo
+        α_idf_i[index] = α_icei*fh + albo
 
-    # Prevent negative albedos:
-    α_vdf[1] = max(α_vdf[1], α_o)
-    α_idf[1] = max(α_idf[1], α_o)
+        # Temperature dependence component:
+        dTs       = -T_n[(index-1)*N_layers + 1]
+        fT        = min(dTs - 1.0, 0.0)
+        α_vdf_i[index] -= dα_mlt*fT
+        α_idf_i[index] -= dα_mlt*fT
 
-    # Snow albedo:
-    α_vdf[2] = α_snowv - dα_mltv*fT
-    α_idf[2] = α_snowi - dα_mlti*fT
+        # Prevent negative albedos:
+        α_vdf_i[index] = max(α_vdf_i[index], α_o)
+        α_idf_i[index] = max(α_idf_i[index], α_o)
 
-    # Direct albedos (same as diffuse albedos for now)
-    α_vdr[1] = α_vdf[1]
-    α_idr[1] = α_idf[1]
-    α_vdr[2] = α_vdf[2]
-    α_idr[2] = α_idf[2]
+        # Direct albedos (same as diffuse albedos for now)
+        α_vdr_i[index]  = α_vdf_i[index]
+        α_idr_i[index]  = α_idf_i[index]
+    end
+
+    return nothing
+end
+
+# Computes the albedo for this column's ice and snow, assumed to be constant throughout
+# model run (at least for now)
+@inline function generate_α_s(N_c, N_layers, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
+
+    for index in 1:N_c
+
+        # Temperature dependence component:
+        dTs       = -T_n[(index-1)*N_layers + 1]
+        fT        = min(dTs - 1.0, 0.0)
+
+        # Snow albedo:
+        α_vdf_s[index] = α_snowv - dα_mltv*fT
+        α_idf_s[index] = α_snowi - dα_mlti*fT
+
+        # Direct albedos (same as diffuse albedos for now)
+        α_vdr_s[index] = α_vdf_s[index]
+        α_idr_s[index] = α_idf_s[index]
+    end
 
     return nothing
 end

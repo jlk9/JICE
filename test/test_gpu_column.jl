@@ -38,6 +38,7 @@ jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt,
 
 run_ice_column(jarrays, atmodels)
 
+#=
 println(jarrays.S)
 println(jarrays.Δh)
 println(jarrays.K)
@@ -46,3 +47,14 @@ println(jarrays.maindiag)
 println(jarrays.subdiag)
 println(jarrays.supdiag)
 println(jarrays.T_nplus)
+=#
+
+println(jarrays.α_vdr_i)
+println(jarrays.α_idr_i)
+println(jarrays.α_vdf_i)
+println(jarrays.α_idf_i)
+
+println(jarrays.α_vdr_s)
+println(jarrays.α_idr_s)
+println(jarrays.α_vdf_s)
+println(jarrays.α_idf_s)

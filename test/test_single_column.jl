@@ -54,7 +54,10 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println(jcmodel.supdiag)
     println(jcmodel.T_nplus)
     =#
-    
+    println(jcmodel.α_vdr)
+    println(jcmodel.α_idr)
+    println(jcmodel.α_vdf)
+    println(jcmodel.α_idf)
 
     #println(jcmodel.F_0)
 
