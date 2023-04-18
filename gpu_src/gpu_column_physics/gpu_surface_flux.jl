@@ -69,11 +69,9 @@ end
     end
     =#
     # Approach for work with AD
-    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-    set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    for i in 1:5
+        set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
+    end
 
     # Compute heatflux coefficients. TODO: wind stress?
     C_l = ρ_a * (L_vap + L_ice) * atm_u_star[1] * c_q[1]
