@@ -2,7 +2,7 @@
 include("../gpu_src/gpu_atmosphere_model/gpu_atmodel_struct.jl")
 include("../gpu_src/gpu_column_physics/gpu_run_ice_column.jl")
 
-using BenchmarkTools
+using BenchmarkTools, CUDA
 
 N_t    = 1
 N_c    = 2
@@ -29,7 +29,7 @@ Q_a     = 0.005 .+ zeros(Float64, N_c) #?
 c_p     = 0.7171 .+ zeros(Float64, N_c)
 U_a     = zeros(Float64, 3*N_c)
 
-onDevice = true
+onDevice = CUDA.has_cuda()
 
 atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
