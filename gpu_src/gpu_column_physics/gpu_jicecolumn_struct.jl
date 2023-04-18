@@ -48,6 +48,8 @@ Properties:
 =#
 struct JICEColumnArrays
 
+    onGPU::Bool
+
     # Variables that must be provided to initialize the model
     N_t::Int64
     N_c::Int64
@@ -128,11 +130,11 @@ end
 
 
 # Constructs a JICEColumn object given the initial parameters
-function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onGPU)
 
-    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onDevice)
+    H_iold, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onGPU)
 
-    if !onDevice
+    if !onGPU
         T_w_d = deepcopy(T_w)
         T_0_d = deepcopy(T_0)
         H_i_d = deepcopy(H_i)
@@ -146,20 +148,24 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
 
     copyto!(T_nplus, T_0_d)
 
-    jcolumn = JICEColumnArrays(N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, T_w_d, T_0_d,
+    jcolumn = JICEColumnArrays(onGPU, N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, T_w_d, T_0_d,
                                H_i_d, H_iold, H_s_d, rside, fside, f_bot, α_vdr, α_idr, α_vdf, α_idf,
                                T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag,
                                F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l)
    
-    @cuda generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
-
-    @cuda generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+    if onGPU
+        @cuda generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+        @cuda generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+    else
+        generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+        generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+    end
     
     return jcolumn
 end
 
 # Allocates all necessary memory for intermediate variables in the model
-function allocate_memory(N_c, N_i, N_layers, N_t, onDevice)
+function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
 
     rside = zeros(Float64, N_c)
     fside = zeros(Float64, N_c)
@@ -185,7 +191,7 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onDevice)
     dF_l  = zeros(Float64, N_t*N_c)
 
     # Either on host or device:
-    if !onDevice
+    if !onGPU
         H_iold  = zeros(Float64, N_c)
         T_nplus = zeros(Float64, N_layers*N_c)
 

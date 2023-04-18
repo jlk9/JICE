@@ -15,26 +15,6 @@ include("./gpu_jicecolumn_struct.jl")
 # Runs one step of ice process. 
 @inline function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, step)
 
-
-    # Redo of column steps to more closely follow step_therm1
-    # First there are a bunch of optional tags
-
-    # Then we need to adjust the frzmlt for ice-ocean heat fluxes (frzmlt_bottom_lateral, line 2535)
-    #frzmlt_bottom_lateral(Δt, N_i, N_s, H_i, H_s, T_w, T_frz, frzmlt, area, u_star_min, rside, fside, f_bot)
-
-    # Then we might need to set a number of helper arrays to 0 (line 2550)
-
-
-    # Then calculate atmosphere boundary since we normally calculate T_sfc (line 2582):
-
-
-    # Calculate thermo vertical (line 2655)
-
-
-    # Increment area-weighted fluxes (line 2827)
-
-
-
     #=
     # Computes the current albedo
     generate_α(H_i[1], α_vdr, α_idr, α_vdf, α_idf, T_n[1])
@@ -49,7 +29,7 @@ include("./gpu_jicecolumn_struct.jl")
     # Computes the temperature changes at this step
     step_temp_change(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.H_s, jarrays.S, jarrays.T_frz, jarrays.Δh, jarrays.T_n,
                      jarrays.T_nplus, jarrays.c_i, jarrays.K, jarrays.K̄, jarrays.I_pen, jarrays.F_0, jarrays.dF_0,
-                     jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.Δt, step)
+                     jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.Δt, jarrays.onGPU, step)
     #=
     # Gets the growth/melt and rebalances
     step_growth_melt(N_i, N_s, H_s[1], S, T_frz, Δh, T_nplus, K, K̄,
