@@ -18,22 +18,15 @@ include("./gpu_jicecolumn_struct.jl")
 @inline function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, step)
 
     
-    # Computes the current albedo
-    if jarrays.onGPU
-        @cuda generate_α_i(jarrays.N_c, jarrays.N_layers, jarrays.H_i, jarrays.α_vdr_i, jarrays.α_idr_i, jarrays.α_vdf_i, jarrays.α_idf_i, jarrays.T_n)
-        @cuda generate_α_s(jarrays.N_c, jarrays.N_layers, jarrays.α_vdr_s, jarrays.α_idr_s, jarrays.α_vdf_s, jarrays.α_idf_s, jarrays.T_n)
-    else
-        generate_α_i(jarrays.N_c, jarrays.N_layers, jarrays.H_i, jarrays.α_vdr_i, jarrays.α_idr_i, jarrays.α_vdf_i, jarrays.α_idf_i, jarrays.T_n)
-        generate_α_s(jarrays.N_c, jarrays.N_layers, jarrays.α_vdr_s, jarrays.α_idr_s, jarrays.α_vdf_s, jarrays.α_idf_s, jarrays.T_n)
-    end
-    #=
+    
     # Computes the surface fluxes at this time step
-    step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_n[1], H_i[1], H_s[1],
-                         F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
-                         F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen,
-                         c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star,
-                         ρ_a, c_p, step)
-    =#
+    step_surface_flux(jarrays.N_c, jarrays.N_i, jarrays.N_layers, jarrays.α_vdr_i, jarrays.α_idr_i, jarrays.α_vdf_i, jarrays.α_idf_i, jarrays.α_vdr_s, jarrays.α_idr_s, jarrays.α_vdf_s, jarrays.α_idf_s,
+                      jarrays.T_n, jarrays.H_i, jarrays.H_s,
+                      jarrays.F_0, jarrays.dF_0, jarrays.F_Lu, jarrays.F_s, jarrays.F_l, jarrays.dF_Lu, jarrays.dF_s, jarrays.dF_l,
+                      atmodels.F_SWvdr, atmodels.F_SWidr, atmodels.F_SWvdf, atmodels.F_SWidf, atmodels.F_Ld, jarrays.I_pen,
+                      atmodels.c_u, atmodels.c_Θ, atmodels.c_q, atmodels.U_a, atmodels.Θ_a, atmodels.Q_a, atmodels.atm_u_star,
+                      atmodels.ρ_a, atmodels.c_p, atmodels.Q_sfc, jarrays.onGPU, step)
+
     # Computes the temperature changes at this step
     #=
     step_temp_change(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.H_s, jarrays.S, jarrays.T_frz, jarrays.Δh, jarrays.T_n,

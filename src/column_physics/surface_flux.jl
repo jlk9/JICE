@@ -8,7 +8,7 @@
 
     # Compute atmospheric fluxes dependent on ice:
     set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H_i, step)
-
+    #=
     # Get the fractional snow cover:
     area_snow = 0.0
     if H_s > puny
@@ -48,7 +48,7 @@
     F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
     # And now compute derivative of flux:
     dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
-
+    =#
     return nothing
 end
 
@@ -59,9 +59,9 @@ end
     c_u[1] = κ / log(z_ref / z_ice)
     c_Θ[1] = c_u[1]
     c_q[1] = c_u[1]
-
+    
     Q_sfc = (q_1/ρ_a)*exp(-q_2 / (T_sfc + C_to_K))
-
+    
     # Iterate and update exchange coefficients:
     #=
     for k in 1:natmiter
@@ -74,7 +74,7 @@ end
     set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
     set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
     set_atm_helper_values_step(c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-
+    
     # Compute heatflux coefficients. TODO: wind stress?
     C_l = ρ_a * (L_vap + L_ice) * atm_u_star[1] * c_q[1]
     C_s = ρ_a * c_p * atm_u_star[1] * c_Θ[1] + 1
@@ -86,13 +86,13 @@ end
     # Sensible heat flux:
     F_s[step]  = C_s * (Θ_a[1] - (T_sfc + C_to_K))
     dF_s[step] = -C_s
-
+    
     # Latent heat flux:
     Q_sf       = (q_1/ρ_a) * exp(-q_2 / (T_sfc + C_to_K))
     dQ_sf      = Q_sf * (-q_2 / (T_sfc + C_to_K)^2)
     F_l[step]  = C_l  * (Q_a[1] - Q_sf)
     dF_l[step] = -C_l * dQ_sf
-
+    
     return nothing
 end
 

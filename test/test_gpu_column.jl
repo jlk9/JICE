@@ -31,7 +31,7 @@ U_a     = zeros(Float64, 3*N_c)
 
 onDevice = CUDA.has_cuda()
 
-atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
+atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
 jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
 
 #@btime run_ice_column(jarrays, atmodels)
@@ -48,7 +48,7 @@ println(jarrays.subdiag)
 println(jarrays.supdiag)
 println(jarrays.T_nplus)
 =#
-
+#=
 println(jarrays.α_vdr_i)
 println(jarrays.α_idr_i)
 println(jarrays.α_vdf_i)
@@ -58,3 +58,16 @@ println(jarrays.α_vdr_s)
 println(jarrays.α_idr_s)
 println(jarrays.α_vdf_s)
 println(jarrays.α_idf_s)
+=#
+#=
+println(atmodels.c_u)
+println(atmodels.c_Θ)
+println(atmodels.c_q)
+println(atmodels.Q_sfc)
+=#
+println(jarrays.F_Lu)
+println(jarrays.F_s)
+println(jarrays.F_l)
+println(jarrays.dF_Lu)
+println(jarrays.dF_s)
+println(jarrays.dF_l)

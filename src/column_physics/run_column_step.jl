@@ -60,14 +60,14 @@ include("./growth_melt.jl")
     generate_α(H_i[1], α_vdr, α_idr, α_vdf, α_idf, T_n[1])
     
     # Computes the surface fluxes at this time step
-    #=
+    
     step_surface_flux(N_i, α_vdr, α_idr, α_vdf, α_idf, T_n[1], H_i[1], H_s[1],
                          F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                          F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen,
                          c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star,
                          ρ_a, c_p, step)
     
-    =#
+    
     # Computes the temperature changes at this step
     #=
     step_temp_change(N_i, N_s, H_s[1], S, T_frz, Δh, T_n,
