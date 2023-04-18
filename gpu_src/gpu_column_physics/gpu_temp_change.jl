@@ -18,8 +18,8 @@ using CUDA
         # Get the Matrix and RHS:
         @cuda generate_matrix_rhs(N_c, N_i, N_s, N_layers, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt, step)
 
-        handle = 0
-        bufferSize = 0
+        handle     = Ptr{CUDA.CUSPARSE.cusparseContext}
+        bufferSize = Ptr{CUDA.CUSPARSE.cusparseContext}
         CUSPARSE.cusparseDgtsv2StridedBatch_bufferSizeExt(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, bufferSize)
     else
         # Ice thermal conductivity (length N_i+1)
