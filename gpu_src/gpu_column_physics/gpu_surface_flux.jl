@@ -7,7 +7,7 @@ using CUDA
 # Computes the (constant) atmospheric flux affecting the model
 @inline function step_surface_flux(N_c, N_i, N_layers, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                                     F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, F_SWsfc, F_SWpen, onGPU)
-
+    #=
     # Computes the current albedo
     if onGPU
         @cuda generate_α_i(N_c, N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, T_n)
@@ -16,6 +16,8 @@ using CUDA
         generate_α_i(N_c, N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, T_n)
         generate_α_s(N_c, N_layers, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
     end
+    =#
+    generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
     
     # Compute atmospheric fluxes dependent on ice:
     set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU)
@@ -164,7 +166,7 @@ end
 # Computes the albedo for this column's snow, assumed to be constant throughout
 # model run (at least for now)
 @inline function generate_α_s(N_c, N_layers, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
-
+    
     for index in 1:N_c
 
         # Temperature dependence component:
@@ -181,4 +183,36 @@ end
     end
 
     return nothing
+end
+
+# Computes all albedos using array programming
+@inline function generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
+
+    # Get the albedo values for bare ice:
+    α_vdf_i .= min.(atan.((4.0/atan(4.0ahmax)) .* H_i), 1.0) #fh
+
+    α_idf_i .= (α_icei - α_o).*α_vdf_i .+ α_o
+    α_vdf_i .= (α_icev - α_o).*α_vdf_i .+ α_o
+
+    # Temperature dependence component:
+    α_vdf_s .= -T_n[begin:N_layers:end]  # dTs
+    α_vdf_s .= min.(α_vdf_s .- 1.0, 0.0) # fT
+
+    α_vdf_i .-= dα_mlt.*α_vdf_s
+    α_idf_i .-= dα_mlt.*α_vdf_s
+
+    # Snow albedos
+    α_idf_s .= α_snowi .- dα_mlti.*α_vdf_s
+    α_vdf_s .= α_snowv .- dα_mltv.*α_vdf_s
+
+    # Prevent negative ice albedos:
+    α_vdf_i .= max.(α_vdf_i, α_o)
+    α_idf_i .= max.(α_idf_i, α_o)
+
+    # Direct albedos (same as diffuse albedos for now)
+    copyto!(α_vdr_i, α_vdf_i)
+    copyto!(α_idr_i, α_idf_i)
+    copyto!(α_vdr_s, α_vdf_s)
+    copyto!(α_idr_s, α_idf_s)
+
 end

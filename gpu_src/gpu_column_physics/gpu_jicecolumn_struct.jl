@@ -182,16 +182,16 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
     z_old  = zeros(Float64, (N_layers+1)*N_c)
     z_new  = zeros(Float64, (N_layers+1)*N_c)
 
-    F_Lu = zeros(Float64, N_c)
-    F_s  = zeros(Float64, N_c)
-    F_l  = zeros(Float64, N_c)
-
-    dF_Lu = zeros(Float64, N_c)
-    dF_s  = zeros(Float64, N_c)
-    dF_l  = zeros(Float64, N_c)
-
     # Either on host or device:
     if !onGPU
+        F_Lu = zeros(Float64, N_c)
+        F_s  = zeros(Float64, N_c)
+        F_l  = zeros(Float64, N_c)
+
+        dF_Lu = zeros(Float64, N_c)
+        dF_s  = zeros(Float64, N_c)
+        dF_l  = zeros(Float64, N_c)
+
         α_vdr_i = zeros(Float64, N_c)
         α_idr_i = zeros(Float64, N_c)
         α_vdf_i = zeros(Float64, N_c)
@@ -219,6 +219,13 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
         subdiag  = zeros(Float64, N_layers*N_c)
         supdiag  = zeros(Float64, N_layers*N_c)
     else
+        F_Lu = CUDA.zeros(Float64, N_c)
+        F_s  = CUDA.zeros(Float64, N_c)
+        F_l  = CUDA.zeros(Float64, N_c)
+
+        dF_Lu = CUDA.zeros(Float64, N_c)
+        dF_s  = CUDA.zeros(Float64, N_c)
+        dF_l  = CUDA.zeros(Float64, N_c)
 
         α_vdr_i = CUDA.zeros(Float64, N_c)
         α_idr_i = CUDA.zeros(Float64, N_c)
