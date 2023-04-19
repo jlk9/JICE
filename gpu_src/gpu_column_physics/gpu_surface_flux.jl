@@ -6,7 +6,7 @@ using CUDA
 
 # Computes the (constant) atmospheric flux affecting the model
 @inline function step_surface_flux(N_c, N_i, N_layers, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
-                                    F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, onGPU, step)
+                                    F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, F_SWsfc, F_SWpen, onGPU)
 
     # Computes the current albedo
     if onGPU
@@ -18,54 +18,47 @@ using CUDA
     end
     
     # Compute atmospheric fluxes dependent on ice:
-    set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU, step)
-    #=
+    set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU)
+    
     # Get the fractional snow cover:
-    area_snow = 0.0
-    if H_s > puny
-        area_snow = H_s / (H_s+0.02)
-    end
-    area_no_snow = 1.0 - area_snow
-
+    F_SWsfc .= max.(H_s ./ (H_s .+ 0.02), puny / (0.02 + puny))
+    F_SWpen .= 1.0 .- F_SWsfc
+    
     # Reduce shortwave fluxes with albedo, getting absorbed shortwave fluxes.
     # Note that the albedo terms include ice and snow components:
-    F_SWabsv = F_SWvdr * ((1.0-α_vdr[1])*area_no_snow + (1.0-α_vdr[2])*area_snow) + F_SWvdf * ((1.0-α_vdf[1])*area_no_snow + (1.0-α_vdf[2])*area_snow)
-    F_SWabsi = F_SWidr * ((1.0-α_idr[1])*area_no_snow + (1.0-α_idr[2])*area_snow) + F_SWidf * ((1.0-α_idf[1])*area_no_snow + (1.0-α_idf[2])*area_snow)
-    F_SWabs  = F_SWabsv + F_SWabsi
+    # F_SWabs = F_SWabsv .+ F_SWabsi
+    F_SWsfc .= (F_SWvdr .* ((1.0.-α_vdr_i).*F_SWpen .+ (1.0.-α_vdr_s).*F_SWsfc) .+ F_SWvdf .* ((1.0.-α_vdf_i).*F_SWpen .+ (1.0.-α_vdf_s).*F_SWsfc)
+            .+  F_SWidr .* ((1.0.-α_idr_i).*F_SWpen .+ (1.0.-α_idr_s).*F_SWsfc) .+ F_SWidf .* ((1.0.-α_idf_i).*F_SWpen .+ (1.0.-α_idf_s).*F_SWsfc))
 
-    F_SWpenvdr = F_SWvdr * (1.0-α_vdr[1]) * area_no_snow * i0vis
-    F_SWpenvdf = F_SWvdf * (1.0-α_vdf[1]) * area_no_snow * i0vis
+    F_SWpen .*= (F_SWvdr .* (1.0.-α_vdr_i) .+ F_SWvdf .* (1.0.-α_vdf_i)) .* i0vis # F_SWpenvdr + F_SWpenvdr
+    # This is the SW surface flux, which is added to F_0 (F_SWsfc = F_SWabs .- F_SWpen):
+    F_SWsfc .-= F_SWpen
 
-    # The total penetrating SW radiation, only visible flux that enters the ice penetrates
-    F_SWpen = F_SWpenvdr + F_SWpenvdf
-    # This is the SW surface flux, which is added to F_0:
-    F_SWsfc = F_SWabs - F_SWpen
-    
     # Transmittance at the top of the ice:
-    trantop = 1.0
-    tranbot = 0.0
+    # let trantop be c_u, tranbot be c_q:
+    c_u .= 1.0
+    c_q .= 0.0
     for k in 1:N_i
-        tranbot  = exp(-κ_i*(H_i/N_i)*k)
-        I_pen[k] = F_SWpen * (trantop - tranbot)
-        trantop  = tranbot
+        c_q              .= exp.((-κ_i*k/N_i).*H_i)
+        I_pen[k:N_i:end] .= F_SWpen .* (c_u .- c_q)
+        c_u              .= c_q
     end
 
     # TODO: want to compute dF_SWsfc. Can we use enzyme for this?
     
-
+    
     # Now compute total surface flux:
     #println(F_SWsfc)
     #println(F_Ld + F_Lu[step] + F_l[step] + F_s[step])
-    F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
+    F_0 .= F_SWsfc .+ F_Ld .+ F_Lu .+ F_l .+ F_s
     # And now compute derivative of flux:
-    dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
+    dF_0 .= dF_Lu .+ dF_s .+ dF_l
 
     return nothing
-    =#
 end
 
 # Sets helper values needed to compute flux
-@inline function set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU, step)
+@inline function set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU)
 
     # Compute initial exchange coefficients:
     c_u .= κ ./ log.(z_ref ./ H_i)
@@ -85,24 +78,21 @@ end
     end
     
     # Compute heatflux coefficients. TODO: wind stress?
-    begin_index = (step-1) * N_c + 1
-    end_index   = step * N_c
-
-    dF_l[begin_index:end_index] = (L_vap + L_ice) .* ρ_a .* atm_u_star .* c_q #C_l
-    dF_s[begin_index:end_index] = ρ_a .* c_p .* atm_u_star .* c_Θ .+ 1 #C_s
+    dF_l .= (L_vap + L_ice) .* ρ_a .* atm_u_star .* c_q #C_l
+    dF_s .= ρ_a .* c_p .* atm_u_star .* c_Θ .+ 1 #C_s
 
     # Outgoing longwave flux:
-    F_Lu[begin_index:end_index]  .= (emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^4
-    dF_Lu[begin_index:end_index] .= (4.0emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^3
+    F_Lu  .= (emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^4
+    dF_Lu .= (4.0emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^3
 
     # Sensible heat flux:
-    F_s[begin_index:end_index]   .= dF_s[begin_index:end_index] .* (Θ_a .- (T_n[begin:N_layers:end] .+ C_to_K))
-    dF_s[begin_index:end_index] .*= -1.0
+    F_s   .= dF_s .* (Θ_a .- (T_n[begin:N_layers:end] .+ C_to_K))
+    dF_s .*= -1.0
 
     
     # Latent heat flux:
-    F_l[begin_index:end_index]  = dF_l[begin_index:end_index] .* (Q_a .- Q_sfc)
-    dF_l[begin_index:end_index] = -dF_l[begin_index:end_index] .* Q_sfc .* (-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K).^2) #-C_l * dQ_sf
+    F_l  .= dF_l .* (Q_a .- Q_sfc)
+    dF_l .= -dF_l .* Q_sfc .* (-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K).^2) #-C_l * dQ_sf
     
     return nothing
 end

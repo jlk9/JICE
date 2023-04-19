@@ -52,8 +52,9 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println(jcmodel.maindiag)
     println(jcmodel.subdiag)
     println(jcmodel.supdiag)
+    =#
     println(jcmodel.T_nplus)
-    
+    #=
     println(jcmodel.α_vdr)
     println(jcmodel.α_idr)
     println(jcmodel.α_vdf)
@@ -63,19 +64,21 @@ function test_temp_thickness(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     println(atmodel.c_Θ)
     println(atmodel.c_q)
     =#
-
+    #=
     println(jcmodel.F_Lu)
     println(jcmodel.F_s)
     println(jcmodel.F_l)
     println(jcmodel.dF_Lu)
     println(jcmodel.dF_s)
     println(jcmodel.dF_l)
-
-    #println(jcmodel.F_0)
+    println(jcmodel.I_pen)
+    println(jcmodel.F_0)
+    println(jcmodel.dF_0)
+    =#
 
     atmodel = initialize_ATModel(N_t, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
     jcmodel = initialize_JICEColumn(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0)
-    @time run_ice_column(jcmodel, atmodel)
+    #@time run_ice_column(jcmodel, atmodel)
     #@time compute_surface_flux(jcmodel, atmodel)
 
 end
@@ -322,7 +325,7 @@ function test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0,
     println(rel_errors)
 end
 
-N_t    = 100
+N_t    = 1
 N_i    = 5
 N_s    = 0
 H_i    = 2.0
@@ -360,7 +363,7 @@ println("")
 test_adjoint_T_w(N_t, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, deepcopy(T_0),
                     F_Ld, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, T_a, Θ_a, ρ_a, Q_a, c_p, U_a)
 =#
-N_t    = 100
+N_t    = 1
 N_i    = 5
 N_s    = 2
 H_i    = 2.0
@@ -410,7 +413,7 @@ println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
-N_t    = 1
+N_t    = 10
 N_i    = 5
 N_s    = 2
 H_i    = 2.0

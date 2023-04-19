@@ -4,7 +4,7 @@ include("../gpu_src/gpu_column_physics/gpu_run_ice_column.jl")
 
 using BenchmarkTools, CUDA
 
-N_t    = 1
+N_t    = 10
 N_c    = 2
 N_i    = 5
 N_s    = 2
@@ -46,8 +46,9 @@ println(jarrays.c_i)
 println(jarrays.maindiag)
 println(jarrays.subdiag)
 println(jarrays.supdiag)
-println(jarrays.T_nplus)
 =#
+println(jarrays.T_nplus)
+
 #=
 println(jarrays.α_vdr_i)
 println(jarrays.α_idr_i)
@@ -65,9 +66,14 @@ println(atmodels.c_Θ)
 println(atmodels.c_q)
 println(atmodels.Q_sfc)
 =#
+#=
 println(jarrays.F_Lu)
 println(jarrays.F_s)
 println(jarrays.F_l)
 println(jarrays.dF_Lu)
 println(jarrays.dF_s)
 println(jarrays.dF_l)
+println(jarrays.I_pen)
+println(jarrays.F_0)
+println(jarrays.dF_0)
+=#

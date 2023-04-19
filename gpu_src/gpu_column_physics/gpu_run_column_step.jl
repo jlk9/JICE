@@ -25,14 +25,14 @@ include("./gpu_jicecolumn_struct.jl")
                       jarrays.F_0, jarrays.dF_0, jarrays.F_Lu, jarrays.F_s, jarrays.F_l, jarrays.dF_Lu, jarrays.dF_s, jarrays.dF_l,
                       atmodels.F_SWvdr, atmodels.F_SWidr, atmodels.F_SWvdf, atmodels.F_SWidf, atmodels.F_Ld, jarrays.I_pen,
                       atmodels.c_u, atmodels.c_Θ, atmodels.c_q, atmodels.U_a, atmodels.Θ_a, atmodels.Q_a, atmodels.atm_u_star,
-                      atmodels.ρ_a, atmodels.c_p, atmodels.Q_sfc, jarrays.onGPU, step)
+                      atmodels.ρ_a, atmodels.c_p, atmodels.Q_sfc, atmodels.F_SWsfc, atmodels.F_SWpen, jarrays.onGPU)
 
     # Computes the temperature changes at this step
-    #=
+    
     step_temp_change(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.H_s, jarrays.S, jarrays.T_frz, jarrays.Δh, jarrays.T_n,
                      jarrays.T_nplus, jarrays.c_i, jarrays.K, jarrays.K̄, jarrays.I_pen, jarrays.F_0, jarrays.dF_0,
-                     jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.Δt, jarrays.onGPU, step)
-    =#
+                     jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.Δt, jarrays.onGPU)
+    
     #=
     # Gets the growth/melt and rebalances
     step_growth_melt(N_i, N_s, H_s[1], S, T_frz, Δh, T_nplus, K, K̄,

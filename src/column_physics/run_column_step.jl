@@ -69,11 +69,11 @@ include("./growth_melt.jl")
     
     
     # Computes the temperature changes at this step
-    #=
+    
     step_temp_change(N_i, N_s, H_s[1], S, T_frz, Δh, T_n,
                      T_nplus, c_i, K, K̄, I_pen, F_0[step], dF_0[step],
                      maindiag, subdiag, supdiag, Δt)
-    =#
+    
     #=
     # Gets the growth/melt and rebalances
     step_growth_melt(N_i, N_s, H_s[1], S, T_frz, Δh, T_nplus, K, K̄,

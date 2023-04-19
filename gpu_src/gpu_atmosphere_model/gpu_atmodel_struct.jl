@@ -44,6 +44,8 @@ mutable struct ATModelArrays
     U_a::AbstractArray{Float64, 1}
 
     Q_sfc::AbstractArray{Float64, 1}
+    F_SWsfc::AbstractArray{Float64, 1}
+    F_SWpen::AbstractArray{Float64, 1}
 
 end
 
@@ -69,6 +71,8 @@ function initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, 
 
         atm_u_star_d = CUDA.zeros(Float64, N_c)
         Q_sfc_d      = CUDA.zeros(Float64, N_c)
+        F_SWsfc_d    = CUDA.zeros(Float64, N_c)
+        F_SWpen_d    = CUDA.zeros(Float64, N_c)
     else
         F_SWvdr_d = deepcopy(F_SWvdr)
         F_SWidr_d = deepcopy(F_SWidr)
@@ -88,10 +92,12 @@ function initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, 
 
         atm_u_star_d = zeros(Float64, N_c)
         Q_sfc_d      = zeros(Float64, N_c)
+        F_SWsfc_d    = zeros(Float64, N_c)
+        F_SWpen_d    = zeros(Float64, N_c)
     end
     
     model = ATModelArrays(N_t, N_c, F_SWvdr_d, F_SWidr_d, F_SWvdf_d, F_SWidf_d, F_Ld_d, T_a_d, Θ_a_d, ρ_a_d, Q_a_d, c_p_d,
-                          c_u_d, c_Θ_d, c_q_d, atm_u_star_d, U_a, Q_sfc_d)
+                          c_u_d, c_Θ_d, c_q_d, atm_u_star_d, U_a, Q_sfc_d, F_SWsfc_d, F_SWpen_d)
     
     return model
 end

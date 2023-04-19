@@ -8,14 +8,14 @@
 
     # Compute atmospheric fluxes dependent on ice:
     set_atm_flux_values(F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, T_sfc, H_i, step)
-    #=
+    
     # Get the fractional snow cover:
     area_snow = 0.0
     if H_s > puny
         area_snow = H_s / (H_s+0.02)
     end
     area_no_snow = 1.0 - area_snow
-
+    
     # Reduce shortwave fluxes with albedo, getting absorbed shortwave fluxes.
     # Note that the albedo terms include ice and snow components:
     F_SWabsv = F_SWvdr * ((1.0-α_vdr[1])*area_no_snow + (1.0-α_vdr[2])*area_snow) + F_SWvdf * ((1.0-α_vdf[1])*area_no_snow + (1.0-α_vdf[2])*area_snow)
@@ -24,11 +24,12 @@
 
     F_SWpenvdr = F_SWvdr * (1.0-α_vdr[1]) * area_no_snow * i0vis
     F_SWpenvdf = F_SWvdf * (1.0-α_vdf[1]) * area_no_snow * i0vis
-
+    
     # The total penetrating SW radiation, only visible flux that enters the ice penetrates
     F_SWpen = F_SWpenvdr + F_SWpenvdf
     # This is the SW surface flux, which is added to F_0:
     F_SWsfc = F_SWabs - F_SWpen
+    
     
     # Transmittance at the top of the ice:
     trantop = 1.0
@@ -41,14 +42,14 @@
 
     # TODO: want to compute dF_SWsfc. Can we use enzyme for this?
     
-
+    
     # Now compute total surface flux:
     #println(F_SWsfc)
     #println(F_Ld + F_Lu[step] + F_l[step] + F_s[step])
     F_0[step] = F_SWsfc + F_Ld + F_Lu[step] + F_l[step] + F_s[step]
     # And now compute derivative of flux:
     dF_0[step] = dF_Lu[step] + dF_s[step] + dF_l[step]
-    =#
+    
     return nothing
 end
 

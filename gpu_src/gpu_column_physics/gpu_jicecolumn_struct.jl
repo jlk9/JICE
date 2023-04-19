@@ -182,13 +182,13 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
     z_old  = zeros(Float64, (N_layers+1)*N_c)
     z_new  = zeros(Float64, (N_layers+1)*N_c)
 
-    F_Lu = zeros(Float64, N_t*N_c)
-    F_s  = zeros(Float64, N_t*N_c)
-    F_l  = zeros(Float64, N_t*N_c)
+    F_Lu = zeros(Float64, N_c)
+    F_s  = zeros(Float64, N_c)
+    F_l  = zeros(Float64, N_c)
 
-    dF_Lu = zeros(Float64, N_t*N_c)
-    dF_s  = zeros(Float64, N_t*N_c)
-    dF_l  = zeros(Float64, N_t*N_c)
+    dF_Lu = zeros(Float64, N_c)
+    dF_s  = zeros(Float64, N_c)
+    dF_l  = zeros(Float64, N_c)
 
     # Either on host or device:
     if !onGPU
@@ -205,8 +205,8 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
         H_iold  = zeros(Float64, N_c)
         T_nplus = zeros(Float64, N_layers*N_c)
 
-        F_0  = zeros(Float64, N_t*N_c)
-        dF_0 = zeros(Float64, N_t*N_c)
+        F_0  = zeros(Float64, N_c)
+        dF_0 = zeros(Float64, N_c)
         Δh   = zeros(Float64, N_layers*N_c)
 
         S      = zeros(Float64, N_layers*N_c)
@@ -233,8 +233,8 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
         H_iold  = CUDA.zeros(Float64, N_c)
         T_nplus = CUDA.zeros(Float64, N_layers*N_c)
 
-        F_0  = CUDA.zeros(Float64, N_t*N_c)
-        dF_0 = CUDA.zeros(Float64, N_t*N_c)
+        F_0  = CUDA.zeros(Float64, N_c)
+        dF_0 = CUDA.zeros(Float64, N_c)
         Δh   = CUDA.zeros(Float64, N_layers*N_c)
 
         S      = CUDA.zeros(Float64, N_layers*N_c)
