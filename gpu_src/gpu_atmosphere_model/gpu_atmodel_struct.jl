@@ -97,7 +97,7 @@ function initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, 
     end
     
     model = ATModelArrays(N_t, N_c, F_SWvdr_d, F_SWidr_d, F_SWvdf_d, F_SWidf_d, F_Ld_d, T_a_d, Θ_a_d, ρ_a_d, Q_a_d, c_p_d,
-                          c_u_d, c_Θ_d, c_q_d, atm_u_star_d, U_a, Q_sfc_d, F_SWsfc_d, F_SWpen_d)
+                          c_u_d, c_Θ_d, c_q_d, atm_u_star_d, U_a_d, Q_sfc_d, F_SWsfc_d, F_SWpen_d)
     
     return model
 end
