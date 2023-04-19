@@ -30,7 +30,7 @@
     #println(mat)
     #println(T_new)
     # Calculate new time step
-    tridiagonal_solve(T_new, N_i+N_s, maindiag, subdiag, supdiag)
+    #tridiagonal_solve(T_new, N_i+N_s, maindiag, subdiag, supdiag)
 
     # Shift surface temperature back if no snow:
     if H_s < puny && N_s > 0

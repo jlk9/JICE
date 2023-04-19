@@ -21,8 +21,8 @@ using CUDA
         handle     = CUSPARSE.cusparseCreate()
         bufferTemp = zeros(UInt64, 1)
 	    bufferSize = pointer(bufferTemp)
-        CUSPARSE.cusparseDgtsv2StridedBatch_bufferSizeExt(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, bufferSize)
-	    println(bufferSizeInBytes)
+        #CUSPARSE.cusparseDgtsv2StridedBatch_bufferSizeExt(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, bufferSize)
+	    #println(bufferSize)
     else
         # Ice thermal conductivity (length N_i+1)
         generate_K(K, N_c, N_s, N_layers, S, T_old)
