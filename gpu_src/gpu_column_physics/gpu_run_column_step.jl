@@ -41,12 +41,9 @@ include("./gpu_jicecolumn_struct.jl")
     # Add up the layer thicknesses to get the new total thickness
     readd_total_thickness(N_i, N_s, Δh, H_i, H_iold, H_s)
     =#
-    #=
     # Update T_n
-    for i in 1:(jarrays.N_c*jarrays.N_layers)
-        jarrays.T_n[i] = jarrays.T_nplus[i]
-    end
-    =#
+    jarrays.T_n .= jarrays.T_nplus
+    
 end
 
 # Julia's sum() operation is memory inefficient for slices of arrays, this is oddly much faster
