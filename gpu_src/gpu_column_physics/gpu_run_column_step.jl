@@ -15,7 +15,7 @@ include("./gpu_jicecolumn_struct.jl")
 #using CUDA
 
 # Runs one step of ice process. 
-@inline function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, step)
+function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, step)
 
     
     
