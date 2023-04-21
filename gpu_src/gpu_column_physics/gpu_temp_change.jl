@@ -17,7 +17,7 @@ function step_temp_change(N_c, N_i, N_s, N_layers, H_s, S, T_frz, Δh, T_old, T_
         
         # Get the Matrix and RHS:
         @cuda generate_matrix_rhs(N_c, N_i, N_s, N_layers, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt)
-
+	#=
         handle     = CUSPARSE.cusparseCreate()
         #bufferTemp = zeros(UInt64, 1)
 	#bufferSize = 0
@@ -25,8 +25,11 @@ function step_temp_change(N_c, N_i, N_s, N_layers, H_s, S, T_frz, Δh, T_old, T_
         CUSPARSE.cusparseDgtsv2StridedBatch_bufferSizeExt(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pointer(bufferSize))
 	#println(bufferSize)
 	pbuffer = CUDA.CuPtr{Nothing}
-	CUDA.Mem.alloc(pbuffer, bufferSize)
+	CUDA.cudaMalloc(pointer(pbuffer), bufferSize)
+	#CUDA.Mem.alloc(pbuffer, bufferSize)
 	CUSPARSE.cusparseDgtsv2StridedBatch(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pbuffer)
+	=#
+	gtsv2!(subdiag, maindiag, supdiag, T_new, SparseChar='O'; Bool=false)
     else
         # Ice thermal conductivity (length N_i+1)
         generate_K(K, N_c, N_s, N_layers, S, T_old)
