@@ -29,7 +29,7 @@ function step_temp_change(N_c, N_i, N_s, N_layers, H_s, S, T_frz, Δh, T_old, T_
 	#CUDA.Mem.alloc(pbuffer, bufferSize)
 	CUSPARSE.cusparseDgtsv2StridedBatch(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pbuffer)
 	=#
-	gtsv2!(subdiag, maindiag, supdiag, T_new, SparseChar='O'; Bool=false)
+	CUDA.gtsv2!(subdiag, maindiag, supdiag, T_new, SparseChar='O'; Bool=false)
     else
         # Ice thermal conductivity (length N_i+1)
         generate_K(K, N_c, N_s, N_layers, S, T_old)
