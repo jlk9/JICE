@@ -70,8 +70,9 @@ end
     Q_sfc .= (q_1./ρ_a).*exp.(-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K))
     
     if onGPU
+        numblocks = ceil(Int, N_c/256)
         for i in 1:5
-            @cuda set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+            @cuda threads=256 blocks=numblocks gpu_set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
         end
     else
         for i in 1:5
@@ -96,6 +97,43 @@ end
     F_l  .= dF_l .* (Q_a .- Q_sfc)
     dF_l .= -dF_l .* Q_sfc .* (-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K).^2) #-C_l * dQ_sf
     
+    return nothing
+end
+
+# Performs one step in the iteration for set_atm_helper_values
+@inline function gpu_set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+
+    index_start  = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    stride       = gridDim().x * blockDim().x
+
+    for index in index_start:stride:N_c
+        # Update turbulent scales
+        U_a_index = (index - 1) * 3
+        atm_u_star[index] = c_u[index] * max(U_dmin, (U_a[U_a_index+1]^2+U_a[U_a_index+2]^2+U_a[U_a_index+3]^2)^.5)
+
+        Θ_star = c_Θ[index] * (Θ_a[index] - T_n[(index-1)*N_layers + 1])
+        Q_star = c_q[index] * (Q_a[index] - Q_sfc[index])
+
+        # Update Y and compute χ
+        Y = (κ*g*z_deg)*(Θ_star / (Θ_a[index]*(1+0.606Q_a[index])) + Q_star / (1.0/0.606 + Q_a[index]))/(atm_u_star[index]^2)
+
+        # Compute ψ_m and ψ_s TODO: add alternative if Y is unstable? (< 0)
+        ψ_m = -(0.7Y + 0.75*(Y-14.3)*exp(-0.35Y) + 10.7)
+        ψ_s = ψ_m
+
+        if Y < 0.0
+            # try to simplify this, might be an issue with derivative
+            χ = (1 - 16.0Y)^0.25
+            ψ_m = 2*log(0.5*(1+χ)) + log(0.5*(1+χ^2)) - 2*atan(χ) + π/2
+            ψ_s = 2*log(0.5*(1+χ^2))
+        end
+
+        # Update exchange coefficients
+        c_u[index] /= 1 + c_u[index]*(λ - ψ_m)/κ
+        c_Θ[index] /= 1 + c_Θ[index]*(λ - ψ_s)/κ
+        c_q[index]  = c_Θ[index]
+    end
+
     return nothing
 end
 
