@@ -413,7 +413,7 @@ println("")
 println("NEXT, TESTS FEATURING SNOW")
 println("")
 
-N_t    = 10
+N_t    = 1
 N_i    = 5
 N_s    = 2
 H_i    = 2.0
