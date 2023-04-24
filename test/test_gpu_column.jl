@@ -4,6 +4,17 @@ include("../gpu_src/gpu_column_physics/gpu_run_ice_column.jl")
 
 using BenchmarkTools, CUDA
 
+function test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+
+    atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+    jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+
+    run_ice_column(jarrays, atmodels)
+
+    return jarrays.T_nplus
+end
+
+
 N_t    = 10
 N_c    = 2
 N_i    = 5
@@ -29,14 +40,42 @@ Q_a     = 0.005 .+ zeros(Float64, N_c) #?
 c_p     = 0.7171 .+ zeros(Float64, N_c)
 U_a     = zeros(Float64, 3*N_c)
 
-onDevice = CUDA.has_cuda()
+#onDevice = CUDA.has_cuda()
 
-atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
-jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+#atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+#jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
 
 #@btime run_ice_column(jarrays, atmodels)
 
-run_ice_column(jarrays, atmodels)
+#run_ice_column(jarrays, atmodels)
+
+println("First test correctness of CPU vs gpu model. On CPU:")
+
+cpu_temps = test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, false)
+gpu_temps = test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
+
+println(cpu_temps)
+println("Then on GPU:")
+println(gpu_temps)
+println("Relative error is:")
+println(abs(cpu_temps - gpu_temps) / abs(cpu_temps))
+println("For performance, in a problem with 1000 columns:")
+N_c = 1000
+
+println("CPU model time is:")
+@btime test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, false)
+println("GPU model time is:")
+@btime test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
+
+
+println("For performance, in a problem with 100000 columns:")
+N_c = 100000
+
+println("CPU model time is:")
+@btime test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, false)
+println("GPU model time is:")
+@btime test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
+
 
 #=
 println(jarrays.S)
@@ -47,7 +86,7 @@ println(jarrays.maindiag)
 println(jarrays.subdiag)
 println(jarrays.supdiag)
 =#
-println(jarrays.T_nplus)
+#println(jarrays.T_nplus)
 
 #=
 println(jarrays.α_vdr_i)
