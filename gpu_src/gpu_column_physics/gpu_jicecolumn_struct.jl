@@ -63,6 +63,7 @@ struct JICEColumnArrays
     T_w::AbstractArray{Float64, 1}
 
     T_n::AbstractArray{Float64, 1}
+    T_sfc::AbstractArray{Float64, 1}
 
     # Variables that are created based on the above:
     H_i::AbstractArray{Float64, 1}
@@ -137,7 +138,7 @@ end
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onGPU)
 
-    H_iold, rside, fside, f_bot, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onGPU)
+    H_iold, rside, fside, f_bot, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_nplus, T_sfc, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l = allocate_memory(N_c, N_i, N_i+N_s+1, N_t, onGPU)
 
     if !onGPU
         T_w_d = deepcopy(T_w)
@@ -153,7 +154,7 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
 
     copyto!(T_nplus, T_0_d)
 
-    jcolumn = JICEColumnArrays(onGPU, N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, T_w_d, T_0_d,
+    jcolumn = JICEColumnArrays(onGPU, N_t, N_c, N_i, N_s, N_i+N_s+1, T_frz, Δt, u_star, T_w_d, T_0_d, T_sfc,
                                H_i_d, H_iold, H_s_d, rside, fside, f_bot, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s,
                                T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag,
                                F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l)
@@ -171,16 +172,17 @@ end
 
 # Allocates all necessary memory for intermediate variables in the model
 function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
-
-    rside = zeros(Float64, N_c)
-    fside = zeros(Float64, N_c)
-    f_bot = zeros(Float64, N_c)
+    
+    rside = zeros(Float64, 1) #N_c)
+    fside = zeros(Float64, 1) #N_c)
+    f_bot = zeros(Float64, 1) #N_c)
 
     # Other intermediate data to keep:
-    q      = zeros(Float64, N_layers*N_c)
-    q_new  = zeros(Float64, N_layers*N_c)
-    z_old  = zeros(Float64, (N_layers+1)*N_c)
-    z_new  = zeros(Float64, (N_layers+1)*N_c)
+    q      = zeros(Float64, 1) #N_layers*N_c)
+    q_new  = zeros(Float64, 1) #N_layers*N_c)
+    z_old  = zeros(Float64, 1) #(N_layers+1)*N_c)
+    z_new  = zeros(Float64, 1) #(N_layers+1)*N_c)
+    
 
     # Either on host or device:
     if !onGPU
@@ -204,6 +206,7 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
 
         H_iold  = zeros(Float64, N_c)
         T_nplus = zeros(Float64, N_layers*N_c)
+        T_sfc   = zeros(Float64, N_c)
 
         F_0  = zeros(Float64, N_c)
         dF_0 = zeros(Float64, N_c)
@@ -239,6 +242,7 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
 
         H_iold  = CUDA.zeros(Float64, N_c)
         T_nplus = CUDA.zeros(Float64, N_layers*N_c)
+        T_sfc   = CUDA.zeros(Float64, N_c)
 
         F_0  = CUDA.zeros(Float64, N_c)
         dF_0 = CUDA.zeros(Float64, N_c)
@@ -255,7 +259,7 @@ function allocate_memory(N_c, N_i, N_layers, N_t, onGPU)
         supdiag  = CUDA.zeros(Float64, N_layers*N_c)
     end
 
-    return H_iold, rside, fside, f_bot, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_nplus, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l
+    return H_iold, rside, fside, f_bot, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_nplus, T_sfc, F_0, dF_0, Δh, S, c_i, K, K̄, I_pen, q, q_new, z_old, z_new, maindiag, subdiag, supdiag, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l
 
 end
 

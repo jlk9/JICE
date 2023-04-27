@@ -5,22 +5,13 @@
 using CUDA
 
 # Computes the (constant) atmospheric flux affecting the model
-@inline function step_surface_flux(N_c, N_i, N_layers, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
+@inline function step_surface_flux(N_c, N_i, N_layers, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_sfc, H_i, H_s, F_0, dF_0, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l,
                                     F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, I_pen, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, F_SWsfc, F_SWpen, onGPU)
-    #=
-    # Computes the current albedo
-    if onGPU
-        @cuda generate_α_i(N_c, N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, T_n)
-        @cuda generate_α_s(N_c, N_layers, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
-    else
-        generate_α_i(N_c, N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, T_n)
-        generate_α_s(N_c, N_layers, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
-    end
-    =#
-    generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
+    
+    generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_sfc)
     
     # Compute atmospheric fluxes dependent on ice:
-    set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU)
+    set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_sfc, H_i, onGPU)
     
     # Get the fractional snow cover:
     F_SWsfc .= max.(H_s ./ (H_s .+ 0.02), puny / (0.02 + puny))
@@ -60,23 +51,23 @@ using CUDA
 end
 
 # Sets helper values needed to compute flux
-@inline function set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_n, H_i, onGPU)
+@inline function set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_sfc, H_i, onGPU)
 
     # Compute initial exchange coefficients:
     c_u .= κ ./ log.(z_ref ./ H_i)
     copyto!(c_Θ, c_u)
     copyto!(c_q, c_u)
     
-    Q_sfc .= (q_1./ρ_a).*exp.(-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K))
+    Q_sfc .= (q_1./ρ_a).*exp.(-q_2 ./ (T_sfc .+ C_to_K))
     
     if onGPU
         numblocks = ceil(Int, N_c/256)
         for i in 1:5
-            @cuda threads=256 blocks=numblocks gpu_set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+            @cuda threads=256 blocks=numblocks gpu_set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
         end
     else
         for i in 1:5
-            set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+            set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
         end
     end
     
@@ -85,23 +76,23 @@ end
     dF_s .= ρ_a .* c_p .* atm_u_star .* c_Θ .+ 1 #C_s
 
     # Outgoing longwave flux:
-    F_Lu  .= (emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^4
-    dF_Lu .= (4.0emissivity*sbc) .* (T_n[begin:N_layers:end] .+ C_to_K).^3
+    F_Lu  .= (emissivity*sbc) .* (T_sfc .+ C_to_K).^4
+    dF_Lu .= (4.0emissivity*sbc) .* (T_sfc .+ C_to_K).^3
 
     # Sensible heat flux:
-    F_s   .= dF_s .* (Θ_a .- (T_n[begin:N_layers:end] .+ C_to_K))
+    F_s   .= dF_s .* (Θ_a .- (T_sfc .+ C_to_K))
     dF_s .*= -1.0
 
     
     # Latent heat flux:
     F_l  .= dF_l .* (Q_a .- Q_sfc)
-    dF_l .= -dF_l .* Q_sfc .* (-q_2 ./ (T_n[begin:N_layers:end] .+ C_to_K).^2) #-C_l * dQ_sf
+    dF_l .= -dF_l .* Q_sfc .* (-q_2 ./ (T_sfc .+ C_to_K).^2) #-C_l * dQ_sf
     
     return nothing
 end
 
 # Performs one step in the iteration for set_atm_helper_values
-@inline function gpu_set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+@inline function gpu_set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
 
     index_start  = (blockIdx().x - 1) * blockDim().x + threadIdx().x
     stride       = gridDim().x * blockDim().x
@@ -111,7 +102,7 @@ end
         U_a_index = (index - 1) * 3
         atm_u_star[index] = c_u[index] * max(U_dmin, (U_a[U_a_index+1]^2+U_a[U_a_index+2]^2+U_a[U_a_index+3]^2)^.5)
 
-        Θ_star = c_Θ[index] * (Θ_a[index] - T_n[(index-1)*N_layers + 1])
+        Θ_star = c_Θ[index] * (Θ_a[index] - T_sfc[index])
         Q_star = c_q[index] * (Q_a[index] - Q_sfc[index])
 
         # Update Y and compute χ
@@ -138,14 +129,14 @@ end
 end
 
 # Performs one step in the iteration for set_atm_helper_values
-@inline function set_atm_helper_values_step(N_c, N_layers, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_n, Q_sfc)
+@inline function set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
 
     for index in 1:N_c
         # Update turbulent scales
         U_a_index = (index - 1) * 3
         atm_u_star[index] = c_u[index] * max(U_dmin, (U_a[U_a_index+1]^2+U_a[U_a_index+2]^2+U_a[U_a_index+3]^2)^.5)
 
-        Θ_star = c_Θ[index] * (Θ_a[index] - T_n[(index-1)*N_layers + 1])
+        Θ_star = c_Θ[index] * (Θ_a[index] - T_sfc[index])
         Q_star = c_q[index] * (Q_a[index] - Q_sfc[index])
 
         # Update Y and compute χ
@@ -224,7 +215,7 @@ end
 end
 
 # Computes all albedos using array programming
-@inline function generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_n)
+@inline function generate_α(N_layers, H_i, α_vdr_i, α_idr_i, α_vdf_i, α_idf_i, α_vdr_s, α_idr_s, α_vdf_s, α_idf_s, T_sfc)
 
     # Get the albedo values for bare ice:
     α_vdf_i .= min.(atan.((4.0/atan(4.0ahmax)) .* H_i), 1.0) #fh
@@ -233,7 +224,7 @@ end
     α_vdf_i .= (α_icev - α_o).*α_vdf_i .+ α_o
 
     # Temperature dependence component:
-    α_vdf_s .= -T_n[begin:N_layers:end]  # dTs
+    α_vdf_s .= -T_sfc  # dTs
     α_vdf_s .= min.(α_vdf_s .- 1.0, 0.0) # fT
 
     α_vdf_i .-= dα_mlt.*α_vdf_s
