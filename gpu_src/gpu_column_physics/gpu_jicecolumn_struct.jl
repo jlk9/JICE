@@ -112,28 +112,6 @@ struct JICEColumnArrays
 
 end
 
-struct JICEColumnArrays_Device
-
-    T_w::CuArray{Float64}
-    T_n::CuArray{Float64}
-    H_i::CuArray{Float64}
-    H_iold::CuArray{Float64}
-    H_s::CuArray{Float64}
-    T_nplus::CuArray{Float64}
-    F_0::CuArray{Float64}
-    dF_0::CuArray{Float64}
-    Δh::CuArray{Float64}
-    S::CuArray{Float64}
-    c_i::CuArray{Float64}
-    K::CuArray{Float64}
-    K̄::CuArray{Float64}
-    I_pen::CuArray{Float64}
-    maindiag::CuArray{Float64}
-    subdiag::CuArray{Float64}
-    supdiag::CuArray{Float64}
-
-end
-
 
 # Constructs a JICEColumn object given the initial parameters
 function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onGPU)
@@ -160,8 +138,10 @@ function initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u
                                F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l)
    
     if onGPU
-        @cuda generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
-        @cuda generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+        numblocks = ceil(Int, jcolumn.N_layers*jcolumn.N_c/256)
+
+        @cuda threads=256 blocks=numblocks generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
+        @cuda threads=256 blocks=numblocks generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
     else
         generate_S(jcolumn.S, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
         generate_initial_thicknesses(jcolumn.Δh, jcolumn.H_i, jcolumn.H_s, jcolumn.N_i, jcolumn.N_s, jcolumn.N_c, jcolumn.N_layers)
@@ -278,10 +258,45 @@ end
     return nothing
 end
 
+# Gets the salinity profile for this column of sea ice. Since this obeys the BL99 model the salinity
+# is constant
+@inline function gpu_generate_S(S, N_i, N_s, N_c, N_layers)
+    
+    index_start  = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    stride       = gridDim().x * blockDim().x
+
+    for index in index_start:stride:(N_c*N_layers)
+        k = (index - 1) % N_layers + 1
+        z = (k - N_s - 1) / N_i
+        if k > N_s + 1
+            S[index] = 0.5S_max * (1 - cos(pi*z^(0.407/(z+0.573))))
+        end
+    end
+
+    return nothing
+end
+
 # Generates initial thicknesses of ice columns.
 @inline function generate_initial_thicknesses(Δh, H_i, H_s, N_i, N_s, N_c, N_layers)
     
     for index in 1:(N_layers*N_c)
+        col = ((index - 1) ÷ N_layers) + 1
+        k   = (index - 1) % N_layers + 1
+        if k > 1 && k < N_s + 2
+            Δh[index] = H_s[col] / N_s
+        elseif k > N_s + 1
+            Δh[index] = H_i[col] / N_i
+        end
+    end
+end
+
+# Generates initial thicknesses of ice columns.
+@inline function gpu_generate_initial_thicknesses(Δh, H_i, H_s, N_i, N_s, N_c, N_layers)
+    
+    index_start  = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    stride       = gridDim().x * blockDim().x
+
+    for index in index_start:stride:(N_c*N_layers)
         col = ((index - 1) ÷ N_layers) + 1
         k   = (index - 1) % N_layers + 1
         if k > 1 && k < N_s + 2
