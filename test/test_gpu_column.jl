@@ -14,7 +14,7 @@ function test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
     return jarrays.T_nplus
 end
 
-#=
+
 N_t    = 10
 N_c    = 2
 N_i    = 5
@@ -59,7 +59,7 @@ println("Then on GPU:")
 println(gpu_temps)
 #println("Relative error is:")
 #println(abs(cpu_temps - gpu_temps) / abs(cpu_temps))
-=#
+
 #=
 println("For performance, in a problem with 1000 columns:")
 N_c = 1000
