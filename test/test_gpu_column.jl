@@ -15,7 +15,7 @@ function test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
 end
 
 
-N_t    = 10
+N_t    = 1 #10
 N_c    = 2
 N_i    = 5
 N_s    = 2
@@ -91,7 +91,7 @@ println("CPU model time is:")
 println("GPU model time is:")
 @benchmark test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
 =#
-
+#=
 println("For performance, in a problem with 100000 columns:")
 N_t = 10
 N_c = 100000
@@ -117,14 +117,14 @@ T_a     = -34.0 .+ zeros(Float64, N_c)
 Q_a     = 0.005 .+ zeros(Float64, N_c) #?
 c_p     = 0.7171 .+ zeros(Float64, N_c)
 U_a     = zeros(Float64, 3*N_c)
-
+=#
 #println("CPU model time is:")
 #@benchmark test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, false)
 #println("GPU model time is:")
 
 #@benchmark test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
 
-test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
+#test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
 
 #=
 println("For performance, in a problem with 10^6 columns:")
