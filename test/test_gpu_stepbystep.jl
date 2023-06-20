@@ -82,7 +82,7 @@ CUDA.@time @cuda threads=256 blocks=numblocks gpu_generate_c_i(jarrays.c_i, jarr
 println("Generate mat and rhs:")
 CUDA.@time @cuda threads=256 blocks=numblocks gpu_generate_matrix_rhs(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.Δh, jarrays.c_i, jarrays.K, jarrays.K̄, jarrays.dF_0, jarrays.F_0, jarrays.T_frz, jarrays.I_pen, jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.T_nplus, jarrays.T_n, jarrays.Δt)
 println("Tridiagonal solve:")
-CUDA.@time CUSPARSE.gtsv2!(jarrays.subdiag, jarrays.maindiag, jarrays.supdiag, jarrays.T_nplus)
+CUDA.@time @cuda threads=256 blocks=numblocks gpu_batched_tridiagonal_solve(jarrays.T_new, jarrays.N_layers-1, jarrays.N_c, jarrays.maindiag, jarrays.subdiag, jarrays.supdiag)
 
 
 
@@ -113,7 +113,8 @@ CUDA.@time @cuda threads=256 blocks=numblocks gpu_generate_c_i(jarrays.c_i, jarr
 println("Generate mat and rhs:")
 CUDA.@time @cuda threads=256 blocks=numblocks gpu_generate_matrix_rhs(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.Δh, jarrays.c_i, jarrays.K, jarrays.K̄, jarrays.dF_0, jarrays.F_0, jarrays.T_frz, jarrays.I_pen, jarrays.maindiag, jarrays.subdiag, jarrays.supdiag, jarrays.T_nplus, jarrays.T_n, jarrays.Δt)
 println("Tridiagonal solve:")
-CUDA.@time CUSPARSE.gtsv2!(jarrays.subdiag, jarrays.maindiag, jarrays.supdiag, jarrays.T_nplus)
+#CUDA.@time CUSPARSE.gtsv2!(jarrays.subdiag, jarrays.maindiag, jarrays.supdiag, jarrays.T_nplus)
+CUDA.@time @cuda threads=256 blocks=numblocks gpu_batched_tridiagonal_solve(jarrays.T_new, jarrays.N_layers-1, jarrays.N_c, jarrays.maindiag, jarrays.subdiag, jarrays.supdiag)
 
 
 println("For reference, let's test the CPU version step by step:")
