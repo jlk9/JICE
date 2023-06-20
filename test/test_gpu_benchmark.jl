@@ -150,7 +150,7 @@ onDevice = false
 
 #run_ice_column(jarrays, atmodels)
 
-println("First test correctness of CPU vs gpu model. On CPU:")
+#println("First test correctness of CPU vs gpu model. On CPU:")
 #=
 cpu_temps = test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, false)
 gpu_temps = test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, true)
