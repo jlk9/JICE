@@ -19,20 +19,22 @@ function step_temp_change(N_c, N_i, N_s, N_layers, H_s, S, T_frz, Δh, T_old, T_
         
         # Get the Matrix and RHS:
         @cuda threads=256 blocks=numblocks gpu_generate_matrix_rhs(N_c, N_i, N_s, N_layers, Δh, c_i, K, K̄, dF_0, F_0, T_frz, I_pen, maindiag, subdiag, supdiag, T_new, T_old, Δt)
-	#=
+	    #=
         handle     = CUSPARSE.cusparseCreate()
         #bufferTemp = zeros(UInt64, 1)
-	#bufferSize = 0
-	bufferSize = zeros(UInt64, 1)
+	    #bufferSize = 0
+	    bufferSize = zeros(UInt64, 1)
         CUSPARSE.cusparseDgtsv2StridedBatch_bufferSizeExt(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pointer(bufferSize))
-	#println(bufferSize)
-	pbuffer = CUDA.CuPtr{Nothing}
-	CUDA.cudaMalloc(pointer(pbuffer), bufferSize)
-	#CUDA.Mem.alloc(pbuffer, bufferSize)
-	CUSPARSE.cusparseDgtsv2StridedBatch(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pbuffer)
-	CUSPARSE.gtsv2!(subdiag, maindiag, supdiag, T_new, 'O', false)
-    =#
-	CUSPARSE.gtsv2!(subdiag, maindiag, supdiag, T_new)
+	    #println(bufferSize)
+	    pbuffer = CUDA.CuPtr{Nothing}
+	    CUDA.cudaMalloc(pointer(pbuffer), bufferSize)
+	    #CUDA.Mem.alloc(pbuffer, bufferSize)
+	    CUSPARSE.cusparseDgtsv2StridedBatch(handle, N_layers, subdiag, maindiag, supdiag, T_new, N_c, N_layers, pbuffer)
+	    CUSPARSE.gtsv2!(subdiag, maindiag, supdiag, T_new, 'O', false)
+        =#
+	    #CUSPARSE.gtsv2!(subdiag, maindiag, supdiag, T_new)
+        numblocks = ceil(Int, N_c/256)
+        @cuda threads=256 blocks=numblocks gpu_batched_tridiagonal_solve(T_new, N_layers-1, N_c, maindiag, subdiag, supdiag)
     else
         # Ice thermal conductivity (length N_i+1)
         generate_K(K, N_c, N_s, N_layers, S, T_old)
@@ -157,6 +159,31 @@ end
         end
     end
     return nothing
+end
+
+# Solves a large number of tridiagonal systems in batch on a GPU
+function gpu_batched_tridiagonal_solve(x, N, count, maindiag, subdiag, supdiag)
+
+    index_start  = (blockIdx().x - 1) * blockDim().x + threadIdx().x
+    stride       = gridDim().x * blockDim().x
+
+    for c in index_start:stride:count
+
+        # First entry for the tridiagonal system this thread solves:
+        system_start = (c-1) * (N+1) + 1
+
+        for i in (system_start+1):(system_start+N)
+            w           = (subdiag[i-1]/maindiag[i-1])
+            maindiag[i] = maindiag[i] - w*supdiag[i-1]
+            x[i]        = x[i] - w*x[i-1]
+        end
+
+        x[N+system_start] = x[N+system_start]/maindiag[N+system_start]
+
+        for i in N+system_start-1:-1:system_start
+            x[i] = (x[i] - supdiag[i]*x[i+1])/maindiag[i]
+        end
+    end
 end
 
 # Solves a large number of tridiagonal systems in batch
