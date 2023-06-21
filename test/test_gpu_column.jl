@@ -11,11 +11,11 @@ function test_model_run(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T
 
     run_ice_column(jarrays, atmodels)
 
-    return jarrays.T_nplus, jarrays.maindiag
+    return jarrays.T_nplus
 end
 
 
-N_t    = 1 #10
+N_t    = 10
 N_c    = 2
 N_i    = 5
 N_s    = 2
