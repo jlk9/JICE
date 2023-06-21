@@ -173,7 +173,7 @@ function gpu_batched_tridiagonal_solve(x, N, count, maindiag, subdiag, supdiag)
         system_start = (c-1) * (N+1) + 1
         
         for i in (system_start+1):(system_start+N)
-            w           = (subdiag[i-1]/maindiag[i-1])
+            w           = (subdiag[i]/maindiag[i-1])
             maindiag[i] = maindiag[i] - w*supdiag[i-1]
             #x[i]        = x[i] - w*x[i-1]
         end
