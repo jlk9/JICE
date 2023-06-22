@@ -46,7 +46,7 @@ Properties:
     T_array     (C)         array of temperatures stored at each timestep, Matrix{T}
     Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{T}
 =#
-struct JICEColumnArrays
+mutable struct JICEColumnArrays
 
     onGPU::Bool
 
