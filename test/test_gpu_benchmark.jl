@@ -53,9 +53,18 @@ CUDA.@time run_ice_column(jarrays, atmodels)
 
 println("Now for the CPU comparison:")
 onDevice = false
-@btime atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
-@btime jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
-@btime run_ice_column(jarrays, atmodels)
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
+
+println("Second run:")
+onDevice = false
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
+
 
 # LONGER TIME
 N_t    = 1000
@@ -96,12 +105,20 @@ CUDA.@time run_ice_column(jarrays, atmodels)
 
 println("Now for the CPU comparison:")
 onDevice = false
-@btime atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
-@btime jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
-@btime run_ice_column(jarrays, atmodels)
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
+
+println("Second run:")
+onDevice = false
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
 
 
-N_t    = 100000
+N_t    = 10000
 N_c    = 100000
 N_i    = 5
 N_s    = 2
@@ -127,7 +144,7 @@ c_p     = 0.7171 .+ zeros(Float64, N_c)
 U_a     = zeros(Float64, 3*N_c)
 
 onDevice = CUDA.has_cuda()
-println("Performance for: initializing atmodel, initializing jarrays, running on 10^5 col for 10^5 time steps:")
+println("Performance for: initializing atmodel, initializing jarrays, running on 10^5 col for 10^4 time steps:")
 CUDA.@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
 CUDA.@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
 CUDA.@time run_ice_column(jarrays, atmodels)
@@ -139,12 +156,17 @@ CUDA.@time run_ice_column(jarrays, atmodels)
 
 println("Now for the CPU comparison:")
 onDevice = false
-@btime atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
-@btime jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
-@btime run_ice_column(jarrays, atmodels)
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
 
-
-
+println("Second run:")
+onDevice = false
+@time atmodels = initialize_ATModelArrays(N_t, N_c, F_SWvdr, F_SWidr, F_SWvdf, F_SWidf, F_Ld, T_a, Θ_a, ρ_a, Q_a, c_p, U_a, onDevice)
+@time jarrays  = initialize_JICEColumnArrays(N_t, N_c, N_i, N_s, H_i, H_s, T_frz, Δt, u_star, T_w, T_0, onDevice)
+println(jarrays.onGPU)
+@time run_ice_column(jarrays, atmodels)
 
 
 
