@@ -17,7 +17,10 @@ include("./gpu_jicecolumn_struct.jl")
 # Runs one step of ice process. 
 function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, step)
 
-    copyto!(jarrays.T_sfc, jarrays.T_n[begin:jarrays.N_layers:end])
+    #copyto!(jarrays.T_sfc, jarrays.T_n[begin:jarrays.N_layers:end])
+    for i in 1:jarrays.N_c
+        jarrays.T_sfc[i] = jarrays.T_n[1 + (i-1)*jarrays.N_layers]
+    end
     
     # Computes the surface fluxes at this time step
     step_surface_flux(jarrays.N_c, jarrays.N_i, jarrays.N_layers, jarrays.α_vdr_i, jarrays.α_idr_i, jarrays.α_vdf_i, jarrays.α_idf_i, jarrays.α_vdr_s, jarrays.α_idr_s, jarrays.α_vdf_s, jarrays.α_idf_s,
@@ -26,7 +29,7 @@ function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, ste
                       atmodels.F_SWvdr, atmodels.F_SWidr, atmodels.F_SWvdf, atmodels.F_SWidf, atmodels.F_Ld, jarrays.I_pen,
                       atmodels.c_u, atmodels.c_Θ, atmodels.c_q, atmodels.U_a, atmodels.Θ_a, atmodels.Q_a, atmodels.atm_u_star,
                       atmodels.ρ_a, atmodels.c_p, atmodels.Q_sfc, atmodels.F_SWsfc, atmodels.F_SWpen, jarrays.onGPU)
-
+    
     # Computes the temperature changes at this step
     
     step_temp_change(jarrays.N_c, jarrays.N_i, jarrays.N_s, jarrays.N_layers, jarrays.H_s, jarrays.S, jarrays.T_frz, jarrays.Δh, jarrays.T_n,
@@ -42,7 +45,7 @@ function run_column_step(jarrays::JICEColumnArrays, atmodels::ATModelArrays, ste
     readd_total_thickness(N_i, N_s, Δh, H_i, H_iold, H_s)
     =#
     # Update T_n
-    copyto!(jarrays.T_n, jarrays.T_nplus)
+    #copyto!(jarrays.T_n, jarrays.T_nplus)
     
 end
 

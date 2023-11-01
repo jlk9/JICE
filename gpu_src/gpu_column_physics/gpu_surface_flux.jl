@@ -14,6 +14,7 @@ using CUDA
     set_atm_flux_values(N_c, N_layers, F_Lu, F_s, F_l, dF_Lu, dF_s, dF_l, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, ρ_a, c_p, Q_sfc, T_sfc, H_i, onGPU)
     
     # Get the fractional snow cover:
+    F_SWsfc .= max.(H_s, puny)
     F_SWsfc .= max.(H_s ./ (H_s .+ 0.02), puny / (0.02 + puny))
     F_SWpen .= 1.0 .- F_SWsfc
     
@@ -46,7 +47,7 @@ using CUDA
     F_0 .= F_SWsfc .+ F_Ld .+ F_Lu .+ F_l .+ F_s
     # And now compute derivative of flux:
     dF_0 .= dF_Lu .+ dF_s .+ dF_l
-
+    
     return nothing
 end
 
@@ -60,11 +61,11 @@ end
     
     Q_sfc .= (q_1./ρ_a).*exp.(-q_2 ./ (T_sfc .+ C_to_K))
     
-    if onGPU
+    if onGPU#=
         numblocks = ceil(Int, N_c/256)
         for i in 1:5
             @cuda threads=256 blocks=numblocks gpu_set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
-        end
+        end=#
     else
         for i in 1:5
             set_atm_helper_values_step(N_c, c_u, c_Θ, c_q, U_a, Θ_a, Q_a, atm_u_star, T_sfc, Q_sfc)
