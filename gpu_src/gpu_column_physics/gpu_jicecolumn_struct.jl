@@ -24,16 +24,16 @@ Properties:
     F_0    (W/m^2)      total heat flux at surface, array of floats
     dF_0   (W/m^2 C)    derivative total heat flux at surface, array of floats
 
-    Δh          (m)     thickness of each layer, AbstractArray{Float64, 1}
-    Δh̄          (m)     averaged thickness of each layer, AbstractArray{Float64, 1}
-    S           (ppt)   salinity, AbstractArray{Float64, 1}
-    c_i         (J/kg)  specific heat of ice, AbstractArray{Float64, 1}
-    K           (W/m K) thermal conductivity of sea ice, AbstractArray{Float64, 1}
-    K̄           (W/m K) pairwise-averaged thermal conductivity of sea ice, AbstractArray{Float64, 1}
-    I_pen       (W m^2) penetrating solar flux, AbstractArray{Float64, 1}
-    maindiag    ()      main diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
-    subdiag     ()      sub diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
-    supdiag     ()      super diagonal of tridiagonal system to solve, AbstractArray{Float64, 1}
+    Δh          (m)     thickness of each layer, VFT
+    Δh̄          (m)     averaged thickness of each layer, VFT
+    S           (ppt)   salinity, VFT
+    c_i         (J/kg)  specific heat of ice, VFT
+    K           (W/m K) thermal conductivity of sea ice, VFT
+    K̄           (W/m K) pairwise-averaged thermal conductivity of sea ice, VFT
+    I_pen       (W m^2) penetrating solar flux, VFT
+    maindiag    ()      main diagonal of tridiagonal system to solve, VFT
+    subdiag     ()      sub diagonal of tridiagonal system to solve, VFT
+    supdiag     ()      super diagonal of tridiagonal system to solve, VFT
 
     F_Lu        (W/m^2)     Upward longwave flux
     F_s         (W/m^2)     Sensible heat flux
@@ -46,69 +46,69 @@ Properties:
     T_array     (C)         array of temperatures stored at each timestep, Matrix{T}
     Δh_array    (m)         array of layer thicknesses stored at each timestep, Matrix{T}
 =#
-mutable struct JICEColumnArrays
+mutable struct JICEColumnArrays{I, FT, VFT}
 
     onGPU::Bool
 
     # Variables that must be provided to initialize the model
-    N_t::Int64
-    N_c::Int64
-    N_i::Int64
-    N_s::Int64
-    N_layers::Int64
+    N_t::I
+    N_c::I
+    N_i::I
+    N_s::I
+    N_layers::I
 
-    T_frz::Float64
-    Δt::Float64
-    u_star::Float64
-    T_w::AbstractArray{Float64, 1}
+    T_frz::FT
+    Δt::FT
+    u_star::FT
+    T_w::VFT
 
-    T_n::AbstractArray{Float64, 1}
-    T_sfc::AbstractArray{Float64, 1}
+    T_n::VFT
+    T_sfc::VFT
 
     # Variables that are created based on the above:
-    H_i::AbstractArray{Float64, 1}
-    H_iold::AbstractArray{Float64, 1}
-    H_s::AbstractArray{Float64, 1}
+    H_i::VFT
+    H_iold::VFT
+    H_s::VFT
 
-    rside::AbstractArray{Float64, 1}
-    fside::AbstractArray{Float64, 1}
-    f_bot::AbstractArray{Float64, 1}
+    rside::VFT
+    fside::VFT
+    f_bot::VFT
 
-    α_vdr_i::AbstractArray{Float64, 1}
-    α_idr_i::AbstractArray{Float64, 1}
-    α_vdf_i::AbstractArray{Float64, 1}
-    α_idf_i::AbstractArray{Float64, 1}
+    α_vdr_i::VFT
+    α_idr_i::VFT
+    α_vdf_i::VFT
+    α_idf_i::VFT
 
-    α_vdr_s::AbstractArray{Float64, 1}
-    α_idr_s::AbstractArray{Float64, 1}
-    α_vdf_s::AbstractArray{Float64, 1}
-    α_idf_s::AbstractArray{Float64, 1}
+    α_vdr_s::VFT
+    α_idr_s::VFT
+    α_vdf_s::VFT
+    α_idf_s::VFT
 
-    T_nplus::AbstractArray{Float64, 1}
-    F_0::AbstractArray{Float64, 1}
-    dF_0::AbstractArray{Float64, 1}
+    T_nplus::VFT
+    F_0::VFT
+    dF_0::VFT
 
-    Δh::AbstractArray{Float64, 1}
-    S::AbstractArray{Float64, 1}
-    c_i::AbstractArray{Float64, 1}
-    K::AbstractArray{Float64, 1}
-    K̄::AbstractArray{Float64, 1}
-    I_pen::AbstractArray{Float64, 1}
-    q::AbstractArray{Float64, 1}
-    q_new::AbstractArray{Float64, 1}
-    z_old::AbstractArray{Float64, 1}
-    z_new::AbstractArray{Float64, 1}
-    maindiag::AbstractArray{Float64, 1}
-    subdiag::AbstractArray{Float64, 1}
-    supdiag::AbstractArray{Float64, 1}
+    Δh::VFT
+    S::VFT
+    c_i::VFT
+    K::VFT
+    K̄::VFT
+    I_pen::VFT
+    q::VFT
+    q_new::VFT
+    z_old::VFT
+    z_new::VFT
+    maindiag::VFT
+    subdiag::VFT
+    supdiag::VFT
 
-    F_Lu::AbstractArray{Float64, 1}
-    F_s::AbstractArray{Float64, 1}
-    F_l::AbstractArray{Float64, 1}
+    F_Lu::VFT
+    F_s::VFT
+    F_l::VFT
 
-    dF_Lu::AbstractArray{Float64, 1}
-    dF_s::AbstractArray{Float64, 1}
-    dF_l::AbstractArray{Float64, 1}
+    dF_Lu::VFT
+    dF_s::VFT
+    dF_l::VFT
 
 end
 
